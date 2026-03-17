@@ -1,0 +1,50 @@
+# SentinelDLP Server Configuration
+# Copy to .env or set environment variables with DLP_ prefix.
+# Example: DLP_DATABASE_URL=postgresql+asyncpg://...
+
+# --- Database ---
+# DLP_DATABASE_URL=postgresql+asyncpg://sentinel:sentinel@localhost:5432/sentinel_dlp
+
+# --- Redis ---
+# DLP_REDIS_URL=redis://localhost:6379/0
+
+# --- gRPC (agent communication) ---
+# DLP_GRPC_HOST=0.0.0.0
+# DLP_GRPC_PORT=50051
+# DLP_GRPC_TLS_ENABLED=true
+# DLP_GRPC_TLS_CA_CERT=certs/ca.pem
+# DLP_GRPC_TLS_SERVER_CERT=certs/server.pem
+# DLP_GRPC_TLS_SERVER_KEY=certs/server-key.pem
+
+# --- SIEM Integration ---
+# DLP_SIEM_ENABLED=true
+# DLP_SIEM_ENDPOINT=http://siem-host:9200/api/v1/ingest
+# DLP_SIEM_API_KEY=your-api-key
+# DLP_SIEM_SOURCE_TYPE=sentinel_dlp
+# DLP_SIEM_BATCH_SIZE=100
+# DLP_SIEM_FLUSH_INTERVAL_SECONDS=10
+
+# --- Network Monitor ---
+# DLP_NETWORK_HTTP_PROXY_ENABLED=true
+# DLP_NETWORK_HTTP_PROXY_PORT=8080
+# DLP_NETWORK_SMTP_RELAY_ENABLED=true
+# DLP_NETWORK_SMTP_RELAY_PORT=2525
+# DLP_NETWORK_SMTP_UPSTREAM_HOST=localhost
+# DLP_NETWORK_SMTP_UPSTREAM_PORT=1025
+
+# --- Auth ---
+# DLP_JWT_SECRET=change-me-in-production
+# DLP_ACCESS_TOKEN_EXPIRE_MINUTES=15
+# DLP_REFRESH_TOKEN_EXPIRE_DAYS=7
+# DLP_LOGIN_RATE_LIMIT=5
+# DLP_LOGIN_RATE_WINDOW_SECONDS=30
+
+# --- Server ---
+# DLP_HOST=0.0.0.0
+# DLP_PORT=8000
+# DLP_DEBUG=false
+
+# --- Logging ---
+# DLP_LOG_LEVEL=info
+# DLP_LOG_FORMAT=json
+# DLP_LOG_FILE=
