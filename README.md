@@ -2,7 +2,7 @@
 
 A proof-of-concept Data Loss Prevention (DLP) platform that detects, monitors, and prevents sensitive data from leaving an organization through endpoints, network channels, and data at rest.
 
-Policy engine derived from the Symantec DLP 16.0 Help Center (2,111 pages). Shares kernel driver infrastructure with SentinelEDR.
+Shares kernel driver infrastructure with SentinelEDR.
 
 ---
 
@@ -18,7 +18,7 @@ Organizations generate and handle sensitive data constantly. Without DLP, that d
 
 - **Policy enforcement.** Detection alone isn't enough. DLP enforces response actions — block the transfer, notify the user, require justification, quarantine the file — based on configurable policies with severity tiers and exception logic.
 
-- **Prevention, not just detection.** A minifilter driver intercepts file system operations *before* they complete. When a user copies a file containing 50 credit card numbers to a USB drive, the write is blocked before bytes reach the device. This is the same approach Symantec, Digital Guardian, and Forcepoint use in production.
+- **Prevention, not just detection.** A minifilter driver intercepts file system operations *before* they complete. When a user copies a file containing 50 credit card numbers to a USB drive, the write is blocked before bytes reach the device. This is the same approach enterprise DLP vendors use in production.
 
 - **Visibility across channels.** Sensitive data leaves through many paths — USB drives, network shares, clipboard, browser uploads, email, printing. DLP monitors all of them with channel-specific interception mechanisms.
 
@@ -40,7 +40,7 @@ Understanding how DLP works at the implementation level — minifilter drivers, 
 
 ## What It Does
 
-SentinelDLP inspects content across endpoints, network channels, and data at rest using a multi-technology detection engine and a Symantec DLP 16.0-derived policy evaluation model.
+SentinelDLP inspects content across endpoints, network channels, and data at rest using a multi-technology detection engine and an enterprise-grade policy evaluation model.
 
 **Highlights:**
 
@@ -114,7 +114,7 @@ SentinelDLP inspects content across endpoints, network channels, and data at res
 │  ├── DataIdentifier    → validators (Luhn, MOD-97, ABA, etc)   │
 │  ├── FileTypeAnalyzer  → python-magic (binary signatures)      │
 │  ├── FingerprintAnalyzer → simhash rolling hash                │
-│  └── PolicyEvaluator   → Symantec DLP 16.0 evaluation logic    │
+│  └── PolicyEvaluator   → compound rule evaluation logic        │
 │                                                                 │
 │  sentinel-dlp-network (Python)                                  │
 │  ├── HTTP Proxy        → mitmproxy (inspect uploads, block)    │
@@ -137,7 +137,7 @@ SentinelDLP inspects content across endpoints, network channels, and data at res
 | **sentinel-dlp-driver** | C (WDK) | Windows minifilter driver. IRP_MJ_WRITE pre/post callbacks on monitored volumes. Filter communication port to user-mode agent. Shares architectural patterns with SentinelEDR's driver. |
 | **sentinel-dlp-agent** | C++17 (MSVC) | Endpoint agent Windows service. Hyperscan SIMD regex, Aho-Corasick keywords, data identifier validators. Policy cache, incident queue, clipboard/browser monitors, gRPC client. |
 | **sentinel-dlp-server** | Python/FastAPI | Management server. REST API, policy CRUD, incident management, user/role administration, gRPC service for agent communication, SIEM event emission. |
-| **sentinel-dlp-detect** | Python | Server-side detection engine. Pluggable analyzers (regex, keyword, data identifier, file type, fingerprint). Policy evaluation with Symantec-derived AND/OR/exception logic. |
+| **sentinel-dlp-detect** | Python | Server-side detection engine. Pluggable analyzers (regex, keyword, data identifier, file type, fingerprint). Policy evaluation with compound AND/OR/exception logic. |
 | **sentinel-dlp-network** | Python | Network monitor. HTTP proxy (mitmproxy) and SMTP relay (aiosmtpd) with inline prevent capability (block, modify, redirect). |
 | **sentinel-dlp-console** | React/TypeScript | Web dashboard. Policy editor, incident triage, agent management, Endpoint Discover, reporting, user risk scoring. Dark mode with SentinelSIEM shared design system. |
 
@@ -360,5 +360,4 @@ This is an educational proof-of-concept built for learning and portfolio purpose
 
 ## Acknowledgments
 
-- Symantec Data Loss Prevention 16.0 Help Center — the architectural reference for policy engine design
 - *Evading EDR* by Matt Hand (No Starch Press, 2023) — shared kernel driver infrastructure patterns with SentinelEDR
