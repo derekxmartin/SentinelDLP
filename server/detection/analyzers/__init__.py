@@ -76,10 +76,16 @@ from server.detection.analyzers.keyword_analyzer import (
     KeywordDictionaryConfig,
     ProximityRule,
 )
+from server.detection.analyzers.data_identifier_analyzer import (
+    DataIdentifierAnalyzer,
+    DataIdentifierConfig,
+)
 
 __all__ = [
     "BaseAnalyzer",
     "CaseMode",
+    "DataIdentifierAnalyzer",
+    "DataIdentifierConfig",
     "KeywordAnalyzer",
     "KeywordDictionaryConfig",
     "ProximityRule",
