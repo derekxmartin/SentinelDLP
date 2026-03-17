@@ -53,6 +53,7 @@ proto:
 		--grpc_python_out=server/proto \
 		--pyi_out=server/proto \
 		proto/sentineldlp.proto
+	sed -i 's/^import sentineldlp_pb2/from server.proto import sentineldlp_pb2/' server/proto/sentineldlp_pb2_grpc.py
 
 # --- Quality ---
 lint:
