@@ -1,0 +1,324 @@
+syntax = "proto3";
+
+package sentineldlp;
+
+option go_package = "sentineldlp/proto";
+
+import "google/protobuf/timestamp.proto";
+
+// =============================================================================
+// Service
+// =============================================================================
+
+service SentinelDLPService {
+  // Agent registration — called once on startup
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+
+  // Periodic heartbeat — agent reports health, server returns commands
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+
+  // Pull current policies for the agent
+  rpc GetPolicies(GetPoliciesRequest) returns (GetPoliciesResponse);
+
+  // Server-stream — pushes policy updates to connected agents in real time
+  rpc PolicyUpdates(PolicyUpdatesRequest) returns (stream PolicyUpdate);
+
+  // Agent reports a policy violation incident
+  rpc ReportIncident(ReportIncidentRequest) returns (ReportIncidentResponse);
+
+  // Two-Tier Detection — agent sends content for server-side evaluation
+  rpc DetectContent(DetectContentRequest) returns (DetectContentResponse);
+}
+
+// =============================================================================
+// Register
+// =============================================================================
+
+message RegisterRequest {
+  string hostname = 1;
+  string os_version = 2;
+  string agent_version = 3;
+  string driver_version = 4;
+  string ip_address = 5;
+  AgentCapabilities capabilities = 6;
+}
+
+message AgentCapabilities {
+  bool usb_monitor = 1;
+  bool network_share_monitor = 2;
+  bool clipboard_monitor = 3;
+  bool browser_monitor = 4;
+  bool discover = 5;
+}
+
+message RegisterResponse {
+  string agent_id = 1;
+  bool success = 2;
+  string message = 3;
+  int64 heartbeat_interval_seconds = 4;
+}
+
+// =============================================================================
+// Heartbeat
+// =============================================================================
+
+message HeartbeatRequest {
+  string agent_id = 1;
+  int32 policy_version = 2;
+  AgentStatus status = 3;
+  AgentMetrics metrics = 4;
+  google.protobuf.Timestamp timestamp = 5;
+}
+
+message AgentStatus {
+  bool driver_loaded = 1;
+  bool detection_engine_ready = 2;
+  int32 pending_incidents = 3;
+  int64 uptime_seconds = 4;
+}
+
+message AgentMetrics {
+  int64 files_scanned = 1;
+  int64 files_blocked = 2;
+  int64 incidents_reported = 3;
+  int64 ttd_requests = 4;
+  double cpu_usage_percent = 5;
+  int64 memory_usage_bytes = 6;
+}
+
+message HeartbeatResponse {
+  bool success = 1;
+  bool policy_update_available = 2;
+  int32 latest_policy_version = 3;
+  repeated AgentCommand commands = 4;
+}
+
+message AgentCommand {
+  string command_type = 1; // "update_config", "run_discover", "restart"
+  map<string, string> parameters = 2;
+}
+
+// =============================================================================
+// GetPolicies
+// =============================================================================
+
+message GetPoliciesRequest {
+  string agent_id = 1;
+  int32 current_version = 2; // 0 = fetch all
+}
+
+message GetPoliciesResponse {
+  int32 policy_version = 1;
+  repeated PolicyDefinition policies = 2;
+}
+
+message PolicyDefinition {
+  string policy_id = 1;
+  string name = 2;
+  string description = 3;
+  Severity severity = 4;
+  string status = 5;
+  string ttd_fallback = 6; // "allow", "block", "log"
+  repeated SeverityThreshold severity_thresholds = 7;
+  repeated DetectionRuleDef detection_rules = 8;
+  repeated PolicyExceptionDef exceptions = 9;
+  ResponseRuleDef response_rule = 10;
+}
+
+message SeverityThreshold {
+  int32 threshold = 1;
+  Severity severity = 2;
+}
+
+message DetectionRuleDef {
+  string rule_id = 1;
+  string name = 2;
+  string rule_type = 3; // "detection" or "group"
+  repeated RuleConditionDef conditions = 4;
+}
+
+message RuleConditionDef {
+  string condition_type = 1; // regex, keyword, data_identifier, file_type, fingerprint, identity
+  string component = 2;      // envelope, subject, body, attachment, generic
+  string config_json = 3;    // JSON-encoded condition config
+  int32 match_count_min = 4;
+}
+
+message PolicyExceptionDef {
+  string exception_id = 1;
+  string name = 2;
+  string scope = 3;          // "entire_message" or "matched_component"
+  string exception_type = 4; // "detection" or "group"
+  repeated RuleConditionDef conditions = 5;
+}
+
+message ResponseRuleDef {
+  string rule_id = 1;
+  string name = 2;
+  repeated ResponseActionDef actions = 3;
+}
+
+message ResponseActionDef {
+  string action_type = 1; // block, notify, user_cancel, log, quarantine
+  string config_json = 2;
+  int32 order = 3;
+}
+
+// =============================================================================
+// PolicyUpdates (server-stream)
+// =============================================================================
+
+message PolicyUpdatesRequest {
+  string agent_id = 1;
+  int32 current_version = 2;
+}
+
+message PolicyUpdate {
+  PolicyUpdateType update_type = 1;
+  int32 new_version = 2;
+  PolicyDefinition policy = 3; // present for ADD/MODIFY
+  string policy_id = 4;        // present for REMOVE
+}
+
+enum PolicyUpdateType {
+  POLICY_UPDATE_TYPE_UNSPECIFIED = 0;
+  POLICY_ADD = 1;
+  POLICY_MODIFY = 2;
+  POLICY_REMOVE = 3;
+  POLICY_FULL_SYNC = 4;
+}
+
+// =============================================================================
+// ReportIncident
+// =============================================================================
+
+message ReportIncidentRequest {
+  string agent_id = 1;
+  IncidentReport incident = 2;
+}
+
+message IncidentReport {
+  string policy_id = 1;
+  string policy_name = 2;
+  Severity severity = 3;
+  Channel channel = 4;
+  string source_type = 5;
+
+  // File metadata
+  string file_path = 6;
+  string file_name = 7;
+  int64 file_size = 8;
+  string file_type = 9;
+
+  // Context
+  string user = 10;
+  string source_ip = 11;
+  string destination = 12;
+
+  // Detection details
+  int32 match_count = 13;
+  repeated MatchDetail matches = 14;
+  string action_taken = 15;
+  string user_justification = 16;
+
+  google.protobuf.Timestamp detected_at = 17;
+}
+
+message MatchDetail {
+  string identifier = 1;
+  string pattern = 2;
+  repeated string matched_values = 3;
+  int32 count = 4;
+  string component = 5;
+}
+
+message ReportIncidentResponse {
+  bool success = 1;
+  string incident_id = 2;
+  string message = 3;
+}
+
+// =============================================================================
+// DetectContent (Two-Tier Detection)
+// =============================================================================
+
+message DetectContentRequest {
+  string agent_id = 1;
+  string request_id = 2;
+
+  // Content to scan
+  bytes file_content = 3;
+  string file_name = 4;
+  string file_type = 5;
+  int64 file_size = 6;
+
+  // For large files (>50MB): hash + excerpt instead of full content
+  string file_hash_sha256 = 7;
+  bytes content_excerpt = 8;
+
+  // Which policies to evaluate (empty = all active)
+  repeated string policy_ids = 9;
+
+  // TTD config
+  int32 timeout_seconds = 10;
+  string fallback_action = 11; // "allow", "block", "log"
+
+  // Context
+  string user = 12;
+  string source_ip = 13;
+  Channel channel = 14;
+
+  google.protobuf.Timestamp requested_at = 15;
+}
+
+message DetectContentResponse {
+  string request_id = 1;
+  TTDVerdict verdict = 2;
+  Severity severity = 3;
+
+  // Match details
+  repeated TTDPolicyResult policy_results = 4;
+  int32 total_match_count = 5;
+
+  string message = 6;
+}
+
+message TTDPolicyResult {
+  string policy_id = 1;
+  string policy_name = 2;
+  bool matched = 3;
+  Severity severity = 4;
+  repeated MatchDetail matches = 5;
+  int32 match_count = 6;
+}
+
+enum TTDVerdict {
+  TTD_VERDICT_UNSPECIFIED = 0;
+  TTD_ALLOW = 1;
+  TTD_BLOCK = 2;
+  TTD_LOG = 3;
+}
+
+// =============================================================================
+// Shared Enums
+// =============================================================================
+
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  SEVERITY_INFO = 1;
+  SEVERITY_LOW = 2;
+  SEVERITY_MEDIUM = 3;
+  SEVERITY_HIGH = 4;
+  SEVERITY_CRITICAL = 5;
+}
+
+enum Channel {
+  CHANNEL_UNSPECIFIED = 0;
+  CHANNEL_USB = 1;
+  CHANNEL_NETWORK_SHARE = 2;
+  CHANNEL_CLIPBOARD = 3;
+  CHANNEL_BROWSER_UPLOAD = 4;
+  CHANNEL_EMAIL = 5;
+  CHANNEL_HTTP_UPLOAD = 6;
+  CHANNEL_DISCOVER = 7;
+}

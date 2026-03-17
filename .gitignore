@@ -29,10 +29,7 @@ Thumbs.db
 # Docker
 pgdata/
 
-# Proto generated
-server/proto/*_pb2.py
-server/proto/*_pb2_grpc.py
-server/proto/*_pb2.pyi
+# Proto generated (committed for convenience — regenerate with `make proto`)
 
 # Logs
 *.log
