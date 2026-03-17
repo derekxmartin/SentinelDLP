@@ -80,15 +80,25 @@ from server.detection.analyzers.data_identifier_analyzer import (
     DataIdentifierAnalyzer,
     DataIdentifierConfig,
 )
+from server.detection.analyzers.file_type_analyzer import (
+    FileCategory,
+    FileTypeAnalyzer,
+    FileTypeRule,
+    detect_file_type,
+)
 
 __all__ = [
     "BaseAnalyzer",
     "CaseMode",
     "DataIdentifierAnalyzer",
     "DataIdentifierConfig",
+    "FileCategory",
+    "FileTypeAnalyzer",
+    "FileTypeRule",
     "KeywordAnalyzer",
     "KeywordDictionaryConfig",
     "ProximityRule",
     "RegexAnalyzer",
     "RegexPattern",
+    "detect_file_type",
 ]
