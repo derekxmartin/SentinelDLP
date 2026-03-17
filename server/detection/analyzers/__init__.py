@@ -69,4 +69,6 @@ class BaseAnalyzer(ABC):
         return f"{self.__class__.__name__}(name={self.name!r}, targets={targets})"
 
 
-__all__ = ["BaseAnalyzer"]
+from server.detection.analyzers.regex_analyzer import RegexAnalyzer, RegexPattern
+
+__all__ = ["BaseAnalyzer", "RegexAnalyzer", "RegexPattern"]
