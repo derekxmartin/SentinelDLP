@@ -70,5 +70,19 @@ class BaseAnalyzer(ABC):
 
 
 from server.detection.analyzers.regex_analyzer import RegexAnalyzer, RegexPattern
+from server.detection.analyzers.keyword_analyzer import (
+    CaseMode,
+    KeywordAnalyzer,
+    KeywordDictionaryConfig,
+    ProximityRule,
+)
 
-__all__ = ["BaseAnalyzer", "RegexAnalyzer", "RegexPattern"]
+__all__ = [
+    "BaseAnalyzer",
+    "CaseMode",
+    "KeywordAnalyzer",
+    "KeywordDictionaryConfig",
+    "ProximityRule",
+    "RegexAnalyzer",
+    "RegexPattern",
+]
