@@ -1,0 +1,50 @@
+# SentinelDLP Agent Configuration
+server:
+  host: "localhost"
+  port: 50051
+  tls:
+    enabled: true
+    ca_cert: "certs/ca.pem"
+    client_cert: "certs/agent.pem"
+    client_key: "certs/agent-key.pem"
+
+driver:
+  port_name: "\\SentinelDLPPort"
+  max_connections: 4
+  message_buffer_size: 65536
+
+detection:
+  # Hyperscan pattern database rebuild interval (seconds)
+  pattern_rebuild_interval: 300
+  # Max file size to scan locally (bytes, 50MB)
+  max_scan_size: 52428800
+  # TTD timeout (seconds)
+  ttd_timeout: 30
+  ttd_fallback: "log"  # allow | block | log
+
+monitoring:
+  usb: true
+  network_shares: true
+  clipboard: true
+  browser_upload: true
+  print: false  # v1 stretch goal
+
+policy_cache:
+  path: "C:\\SentinelDLP\\cache\\policies.db"
+
+incident_queue:
+  path: "C:\\SentinelDLP\\queue\\incidents.mmap"
+  max_entries: 1000
+
+recovery:
+  path: "C:\\SentinelDLP\\Recovery"
+
+logging:
+  level: "info"
+  file: "C:\\SentinelDLP\\logs\\agent.log"
+  max_size_mb: 50
+  max_files: 5
+
+heartbeat:
+  interval_seconds: 60
+  backoff_max_seconds: 300
