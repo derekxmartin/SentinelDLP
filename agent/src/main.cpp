@@ -16,6 +16,7 @@
 
 #include "sentinel/agent_service.h"
 #include "sentinel/config.h"
+#include "sentinel/grpc_client.h"
 
 #include <iostream>
 #include <string>
@@ -246,10 +247,13 @@ int main(int argc, char* argv[]) {
 
         AgentService service;
 
+        /* Register gRPC client component */
+        auto grpc_client = std::make_shared<GrpcClient>(config);
+        service.RegisterComponent(grpc_client);
+
         /*
-         * TODO: Register components here:
+         * TODO: Register remaining components:
          *   service.RegisterComponent(std::make_shared<DriverComm>(config));
-         *   service.RegisterComponent(std::make_shared<GrpcClient>(config));
          *   service.RegisterComponent(std::make_shared<PolicyCache>(config));
          *   service.RegisterComponent(std::make_shared<IncidentQueue>(config));
          */
