@@ -1,15 +1,105 @@
 cmake_minimum_required(VERSION 3.20)
-project(SentinelDLPAgent VERSION 0.1.0 LANGUAGES CXX)
 
+# ---------------------------------------------------------------------------
+# vcpkg toolchain (must be set before project())
+# ---------------------------------------------------------------------------
+if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        CACHE STRING "vcpkg toolchain file")
+endif()
+
+project(SentinelDLPAgent
+    VERSION 0.1.0
+    DESCRIPTION "SentinelDLP Endpoint Agent"
+    LANGUAGES CXX C
+)
+
+# ---------------------------------------------------------------------------
+# Global settings
+# ---------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# --- Options ---
+# MSVC-specific flags
+if(MSVC)
+    add_compile_options(
+        /W4         # Warning level 4
+        /WX         # Warnings as errors
+        /MP         # Multi-processor compilation
+        /permissive-  # Strict conformance
+        /utf-8      # UTF-8 source and execution
+        /Zc:__cplusplus  # Correct __cplusplus macro
+    )
+
+    # Debug-specific
+    add_compile_options($<$<CONFIG:Debug>:/Zi>)       # Full debug info
+    add_compile_options($<$<CONFIG:Debug>:/Od>)       # No optimization
+    add_compile_options($<$<CONFIG:Debug>:/RTC1>)     # Runtime checks
+
+    # Release-specific
+    add_compile_options($<$<CONFIG:Release>:/O2>)     # Max speed optimization
+    add_compile_options($<$<CONFIG:Release>:/GL>)     # Whole program optimization
+    add_compile_options($<$<CONFIG:Release>:/Gy>)     # Function-level linking
+
+    # Link-time code generation for Release
+    add_link_options($<$<CONFIG:Release>:/LTCG>)
+    add_link_options($<$<CONFIG:Release>:/OPT:REF>)   # Remove unreferenced code
+    add_link_options($<$<CONFIG:Release>:/OPT:ICF>)   # COMDAT folding
+endif()
+
+# Platform definitions
+add_compile_definitions(
+    UNICODE
+    _UNICODE
+    WIN32_LEAN_AND_MEAN
+    NOMINMAX
+    _CRT_SECURE_NO_WARNINGS
+)
+
+# ---------------------------------------------------------------------------
+# Options
+# ---------------------------------------------------------------------------
 option(BUILD_TESTS "Build unit tests" ON)
 option(BUILD_DRIVER "Build minifilter driver (requires WDK)" OFF)
 
-# --- Agent executable ---
+# ---------------------------------------------------------------------------
+# Dependencies (via vcpkg)
+# ---------------------------------------------------------------------------
+
+# gRPC + Protobuf
+find_package(gRPC CONFIG QUIET)
+find_package(Protobuf CONFIG QUIET)
+
+# Hyperscan (Intel regex engine)
+find_package(unofficial-hyperscan CONFIG QUIET)
+
+# SQLite3
+find_package(unofficial-sqlite3 CONFIG QUIET)
+
+# libcurl
+find_package(CURL CONFIG QUIET)
+
+# yaml-cpp
+find_package(yaml-cpp CONFIG QUIET)
+
+# spdlog (structured logging)
+find_package(spdlog CONFIG QUIET)
+
+# Report dependency status
+message(STATUS "--- Dependency Status ---")
+message(STATUS "  gRPC:       ${gRPC_FOUND}")
+message(STATUS "  Protobuf:   ${Protobuf_FOUND}")
+message(STATUS "  Hyperscan:  ${unofficial-hyperscan_FOUND}")
+message(STATUS "  SQLite3:    ${unofficial-sqlite3_FOUND}")
+message(STATUS "  CURL:       ${CURL_FOUND}")
+message(STATUS "  yaml-cpp:   ${yaml-cpp_FOUND}")
+message(STATUS "  spdlog:     ${spdlog_FOUND}")
+message(STATUS "-------------------------")
+
+# ---------------------------------------------------------------------------
+# Agent executable
+# ---------------------------------------------------------------------------
 add_executable(sentinel-dlp-agent
     src/main.cpp
 )
@@ -18,16 +108,151 @@ target_include_directories(sentinel-dlp-agent PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-# --- Driver (conditional, requires WDK) ---
+# Link available dependencies
+if(spdlog_FOUND)
+    target_link_libraries(sentinel-dlp-agent PRIVATE spdlog::spdlog)
+    target_compile_definitions(sentinel-dlp-agent PRIVATE HAS_SPDLOG)
+endif()
+
+if(yaml-cpp_FOUND)
+    target_link_libraries(sentinel-dlp-agent PRIVATE yaml-cpp::yaml-cpp)
+    target_compile_definitions(sentinel-dlp-agent PRIVATE HAS_YAML_CPP)
+endif()
+
+if(gRPC_FOUND)
+    target_link_libraries(sentinel-dlp-agent PRIVATE
+        gRPC::grpc++
+        protobuf::libprotobuf
+    )
+    target_compile_definitions(sentinel-dlp-agent PRIVATE HAS_GRPC)
+endif()
+
+if(unofficial-hyperscan_FOUND)
+    target_link_libraries(sentinel-dlp-agent PRIVATE unofficial::hyperscan::hyperscan)
+    target_compile_definitions(sentinel-dlp-agent PRIVATE HAS_HYPERSCAN)
+endif()
+
+if(unofficial-sqlite3_FOUND)
+    target_link_libraries(sentinel-dlp-agent PRIVATE unofficial::sqlite3::sqlite3)
+    target_compile_definitions(sentinel-dlp-agent PRIVATE HAS_SQLITE3)
+endif()
+
+if(CURL_FOUND)
+    target_link_libraries(sentinel-dlp-agent PRIVATE CURL::libcurl)
+    target_compile_definitions(sentinel-dlp-agent PRIVATE HAS_CURL)
+endif()
+
+# Windows-specific libraries
+if(WIN32)
+    target_link_libraries(sentinel-dlp-agent PRIVATE
+        advapi32    # Service Control Manager
+        fltlib      # Minifilter user-mode API
+        ws2_32      # Winsock
+    )
+endif()
+
+# ---------------------------------------------------------------------------
+# Protobuf/gRPC code generation
+# ---------------------------------------------------------------------------
+if(gRPC_FOUND AND Protobuf_FOUND)
+    set(PROTO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../proto")
+    set(PROTO_FILES "${PROTO_DIR}/sentineldlp.proto")
+    set(PROTO_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/proto")
+
+    file(MAKE_DIRECTORY ${PROTO_OUT_DIR})
+
+    # Find protoc and grpc_cpp_plugin
+    find_program(_PROTOC protoc HINTS ${Protobuf_PROTOC_EXECUTABLE})
+    find_program(_GRPC_CPP_PLUGIN grpc_cpp_plugin)
+
+    if(_PROTOC AND _GRPC_CPP_PLUGIN AND EXISTS "${PROTO_FILES}")
+        # Generate protobuf sources
+        add_custom_command(
+            OUTPUT
+                "${PROTO_OUT_DIR}/sentineldlp.pb.h"
+                "${PROTO_OUT_DIR}/sentineldlp.pb.cc"
+                "${PROTO_OUT_DIR}/sentineldlp.grpc.pb.h"
+                "${PROTO_OUT_DIR}/sentineldlp.grpc.pb.cc"
+            COMMAND ${_PROTOC}
+                --proto_path=${PROTO_DIR}
+                --proto_path=${Protobuf_INCLUDE_DIR}
+                --cpp_out=${PROTO_OUT_DIR}
+                --grpc_out=${PROTO_OUT_DIR}
+                --plugin=protoc-gen-grpc=${_GRPC_CPP_PLUGIN}
+                ${PROTO_FILES}
+            DEPENDS ${PROTO_FILES}
+            COMMENT "Generating C++ protobuf/gRPC stubs"
+        )
+
+        # Add generated sources to agent (suppress warnings on generated code)
+        set_source_files_properties(
+            "${PROTO_OUT_DIR}/sentineldlp.pb.cc"
+            "${PROTO_OUT_DIR}/sentineldlp.grpc.pb.cc"
+            PROPERTIES COMPILE_FLAGS "/W0"
+        )
+        target_sources(sentinel-dlp-agent PRIVATE
+            "${PROTO_OUT_DIR}/sentineldlp.pb.cc"
+            "${PROTO_OUT_DIR}/sentineldlp.grpc.pb.cc"
+        )
+        target_include_directories(sentinel-dlp-agent PRIVATE ${PROTO_OUT_DIR})
+
+        message(STATUS "Protobuf/gRPC code generation configured")
+    else()
+        message(STATUS "Protobuf/gRPC codegen skipped (protoc or proto file not found)")
+    endif()
+endif()
+
+# ---------------------------------------------------------------------------
+# Driver (conditional, requires WDK)
+# ---------------------------------------------------------------------------
 if(BUILD_DRIVER)
-    add_subdirectory(driver)
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+    find_package(WDK)
+
+    if(WDK_FOUND)
+        add_subdirectory(driver)
+    else()
+        message(WARNING "BUILD_DRIVER=ON but WDK not found. Skipping driver build.")
+    endif()
 endif()
 
-# --- Tests ---
+# ---------------------------------------------------------------------------
+# Tests (GoogleTest)
+# ---------------------------------------------------------------------------
 if(BUILD_TESTS)
-    enable_testing()
-    # Tests will be added as source files are created
+    find_package(GTest CONFIG QUIET)
+
+    if(GTest_FOUND)
+        enable_testing()
+        # Test targets will be added as source files are created
+        message(STATUS "Testing enabled (GoogleTest found)")
+    else()
+        message(STATUS "GoogleTest not found. Tests disabled.")
+    endif()
 endif()
 
-# --- Install ---
-install(TARGETS sentinel-dlp-agent DESTINATION bin)
+# ---------------------------------------------------------------------------
+# Install
+# ---------------------------------------------------------------------------
+install(TARGETS sentinel-dlp-agent
+    RUNTIME DESTINATION bin
+)
+
+install(FILES config/config.yaml.example
+    DESTINATION etc/sentinel-dlp
+    RENAME config.yaml
+)
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+message(STATUS "")
+message(STATUS "=== SentinelDLP Agent Build Configuration ===")
+message(STATUS "  Version:     ${PROJECT_VERSION}")
+message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "  Build Type:  ${CMAKE_BUILD_TYPE}")
+message(STATUS "  Compiler:    ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "  Build Tests: ${BUILD_TESTS}")
+message(STATUS "  Build Driver: ${BUILD_DRIVER}")
+message(STATUS "=============================================")
+message(STATUS "")
