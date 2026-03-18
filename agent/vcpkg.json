@@ -16,6 +16,6 @@
     "gtest",
     "spdlog"
   ],
-  "builtin-baseline": "2024.12.16",
+  "builtin-baseline": "717f2c1db552beed995736e41accdf4f6f4ca986",
   "overrides": []
 }
