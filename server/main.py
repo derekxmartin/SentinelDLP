@@ -18,9 +18,13 @@ from server.api.users import router as users_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Startup — launch gRPC server alongside FastAPI
+    from server.grpc_server import serve as grpc_serve
+
+    grpc_server = await grpc_serve(port=settings.grpc_port)
     yield
     # Shutdown
+    await grpc_server.stop(grace=5)
 
 
 app = FastAPI(

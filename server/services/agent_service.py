@@ -22,6 +22,7 @@ from server.models.policy import (
     PolicyStatus,
     Severity,
 )
+from server.models.response import ResponseRule
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +117,7 @@ async def get_active_policies(db: AsyncSession) -> list[Policy]:
         .options(
             selectinload(Policy.detection_rules).selectinload(DetectionRule.conditions),
             selectinload(Policy.exceptions).selectinload(PolicyException.conditions),
-            selectinload(Policy.response_rule),
+            selectinload(Policy.response_rule).selectinload(ResponseRule.actions),
         )
     )
     result = await db.execute(stmt)

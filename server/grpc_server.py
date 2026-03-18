@@ -470,11 +470,11 @@ async def serve(
             root_certificates=ca_data,
             require_client_auth=True,
         )
-        server.add_secure_port(f"[::]:{port}", creds)
+        server.add_secure_port(f"0.0.0.0:{port}", creds)
         logger.info("gRPC server starting on port %d with mTLS", port)
     else:
         # Insecure (development)
-        server.add_insecure_port(f"[::]:{port}")
+        server.add_insecure_port(f"0.0.0.0:{port}")
         logger.info("gRPC server starting on port %d (insecure)", port)
 
     await server.start()
