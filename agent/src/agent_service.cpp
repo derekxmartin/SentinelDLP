@@ -276,6 +276,11 @@ void AgentService::Shutdown() {
     state_ = AgentState::Stopping;
     StopComponents();
     state_ = AgentState::Stopped;
+
+    /* Flush all log buffers before exit */
+#ifdef HAS_SPDLOG
+    spdlog::shutdown();
+#endif
 }
 
 /* ================================================================== */
