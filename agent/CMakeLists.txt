@@ -102,6 +102,8 @@ message(STATUS "-------------------------")
 # ---------------------------------------------------------------------------
 add_executable(sentinel-dlp-agent
     src/main.cpp
+    src/config.cpp
+    src/agent_service.cpp
 )
 
 target_include_directories(sentinel-dlp-agent PRIVATE
@@ -224,7 +226,25 @@ if(BUILD_TESTS)
 
     if(GTest_FOUND)
         enable_testing()
-        # Test targets will be added as source files are created
+
+        # Config tests
+        add_executable(test_config
+            tests/test_config.cpp
+            src/config.cpp
+        )
+        target_include_directories(test_config PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        target_link_libraries(test_config PRIVATE
+            GTest::gtest_main
+            yaml-cpp::yaml-cpp
+        )
+        if(spdlog_FOUND)
+            target_link_libraries(test_config PRIVATE spdlog::spdlog)
+            target_compile_definitions(test_config PRIVATE HAS_SPDLOG)
+        endif()
+        add_test(NAME ConfigTests COMMAND test_config)
+
         message(STATUS "Testing enabled (GoogleTest found)")
     else()
         message(STATUS "GoogleTest not found. Tests disabled.")
