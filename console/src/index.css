@@ -3,18 +3,29 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  /* SentinelSIEM shared palette */
-  --color-surface-page: #020617;      /* slate-950 */
-  --color-surface-sidebar: #0f172a;   /* slate-900 */
-  --color-surface-card: #1e293b;      /* slate-800 */
-  --color-accent: #6366f1;            /* indigo-500 */
-
-  /* Severity colors */
+  /* Severity colors (shared across themes) */
   --color-severity-critical: #ef4444; /* red-500 */
   --color-severity-high: #f97316;     /* orange-500 */
   --color-severity-medium: #eab308;   /* yellow-500 */
   --color-severity-low: #3b82f6;      /* blue-500 */
   --color-severity-info: #64748b;     /* slate-500 */
+}
+
+/* Dark theme (default) */
+:root,
+:root.dark {
+  --color-surface-page: #020617;      /* slate-950 */
+  --color-surface-sidebar: #0f172a;   /* slate-900 */
+  --color-surface-card: #1e293b;      /* slate-800 */
+  --color-accent: #6366f1;            /* indigo-500 */
+}
+
+/* Light theme */
+:root.light {
+  --color-surface-page: #f8fafc;      /* slate-50 */
+  --color-surface-sidebar: #ffffff;   /* white */
+  --color-surface-card: #ffffff;      /* white */
+  --color-accent: #4f46e5;            /* indigo-600 */
 }
 
 * {
@@ -33,3 +44,23 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* Light mode text overrides */
+:root.light {
+  color: #0f172a;
+}
+
+:root.light .text-slate-50 { color: #0f172a; }
+:root.light .text-slate-200 { color: #1e293b; }
+:root.light .text-slate-300 { color: #334155; }
+:root.light .text-slate-400 { color: #64748b; }
+:root.light .text-slate-500 { color: #94a3b8; }
+
+:root.light .bg-slate-800\/50 { background-color: rgb(226 232 240 / 0.5); }
+:root.light .border-slate-600 { border-color: #cbd5e1; }
+:root.light .border-slate-700 { border-color: #e2e8f0; }
+:root.light .border-slate-800 { border-color: #e2e8f0; }
+:root.light .bg-slate-700 { background-color: #e2e8f0; }
+:root.light .bg-slate-800 { background-color: #f1f5f9; }
+:root.light .hover\:bg-slate-800:hover { background-color: #f1f5f9; }
+:root.light .hover\:bg-slate-700\/50:hover { background-color: rgb(226 232 240 / 0.5); }
