@@ -19,9 +19,13 @@ import AuthGuard from './components/AuthGuard';
 import CommandPalette from './components/CommandPalette';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
+import Incidents from './pages/Incidents';
+import IncidentSnapshot from './pages/IncidentSnapshot';
 import Login from './pages/Login';
 import MFAVerify from './pages/MFAVerify';
 import Placeholder from './pages/Placeholder';
+import Policies from './pages/Policies';
+import PolicyEditor from './pages/PolicyEditor';
 
 function ProtectedLayout() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -60,11 +64,13 @@ function App() {
         {/* Protected routes — Layout renders <Outlet> for child pages */}
         <Route element={<ProtectedLayout />}>
           <Route index element={<Dashboard />} />
-          <Route path="incidents/*" element={<Placeholder title="Incidents" task="P2-T9" />} />
-          <Route path="policies/*" element={<Placeholder title="Policies" task="P2-T10" />} />
-          <Route path="detection" element={<Placeholder title="Detection" task="P2-T3 Console" />} />
-          <Route path="identifiers" element={<Placeholder title="Data Identifiers" task="P2-T5 Console" />} />
-          <Route path="users" element={<Placeholder title="Users" task="P2-T5 Console" />} />
+          <Route path="incidents" element={<Incidents />} />
+          <Route path="incidents/:id" element={<IncidentSnapshot />} />
+          <Route path="policies" element={<Policies />} />
+          <Route path="policies/:id" element={<PolicyEditor />} />
+          <Route path="detection" element={<Placeholder title="Detection" task="a future sprint" />} />
+          <Route path="identifiers" element={<Placeholder title="Data Identifiers" task="a future sprint" />} />
+          <Route path="users" element={<Placeholder title="Users" task="a future sprint" />} />
         </Route>
       </Routes>
     </BrowserRouter>
