@@ -10,17 +10,11 @@ import tarfile
 import zipfile
 
 import py7zr
-import pytest
 
-from server.detection.models import ComponentType, ParsedMessage
+from server.detection.models import ComponentType
 from server.detection.archive_inspector import (
     ArchiveInspector,
     ArchiveLimits,
-    ArchiveSafetyError,
-    MaxDepthError,
-    MaxFilesError,
-    MaxSizeError,
-    ZipBombError,
 )
 
 

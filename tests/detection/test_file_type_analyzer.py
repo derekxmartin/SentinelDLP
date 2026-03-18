@@ -9,12 +9,10 @@ import io
 import struct
 import zipfile
 
-import pytest
 
 from server.detection.models import ComponentType, ParsedMessage
 from server.detection.analyzers.file_type_analyzer import (
     FileCategory,
-    FileInfo,
     FileTypeAnalyzer,
     FileTypeRule,
     detect_file_type,

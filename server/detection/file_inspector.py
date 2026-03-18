@@ -10,12 +10,10 @@ sheet name, slide number, attachment filename, etc.).
 
 from __future__ import annotations
 
-import csv
 import email
 import email.policy
 import io
 import logging
-from email.message import EmailMessage
 from html.parser import HTMLParser
 from pathlib import Path
 

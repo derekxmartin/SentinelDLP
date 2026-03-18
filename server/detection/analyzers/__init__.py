@@ -69,18 +69,18 @@ class BaseAnalyzer(ABC):
         return f"{self.__class__.__name__}(name={self.name!r}, targets={targets})"
 
 
-from server.detection.analyzers.regex_analyzer import RegexAnalyzer, RegexPattern
-from server.detection.analyzers.keyword_analyzer import (
+from server.detection.analyzers.regex_analyzer import RegexAnalyzer, RegexPattern  # noqa: E402
+from server.detection.analyzers.keyword_analyzer import (  # noqa: E402
     CaseMode,
     KeywordAnalyzer,
     KeywordDictionaryConfig,
     ProximityRule,
 )
-from server.detection.analyzers.data_identifier_analyzer import (
+from server.detection.analyzers.data_identifier_analyzer import (  # noqa: E402
     DataIdentifierAnalyzer,
     DataIdentifierConfig,
 )
-from server.detection.analyzers.file_type_analyzer import (
+from server.detection.analyzers.file_type_analyzer import (  # noqa: E402
     FileCategory,
     FileTypeAnalyzer,
     FileTypeRule,

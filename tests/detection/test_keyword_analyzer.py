@@ -5,7 +5,6 @@ proximity matching, component targeting, 50-keyword dictionary, and
 adversarial edge cases.
 """
 
-import pytest
 
 from server.detection.models import ComponentType, ParsedMessage
 from server.detection.analyzers.keyword_analyzer import (

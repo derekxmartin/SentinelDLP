@@ -6,13 +6,10 @@ HTML stripping, error handling, and edge cases.
 """
 
 import io
-import struct
-import zipfile
 from email.message import EmailMessage
 
-import pytest
 
-from server.detection.models import ComponentType, ParsedMessage
+from server.detection.models import ComponentType
 from server.detection.file_inspector import FileInspector
 
 
@@ -27,7 +24,6 @@ def _make_pdf_with_text(*pages: str) -> bytes:
     Uses a minimal but valid PDF structure.
     """
     # Use reportlab-free approach: build minimal PDF by hand
-    objects = []
     obj_num = 1
 
     # Catalog
