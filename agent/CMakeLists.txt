@@ -184,7 +184,12 @@ if(gRPC_FOUND AND Protobuf_FOUND)
             COMMENT "Generating C++ protobuf/gRPC stubs"
         )
 
-        # Add generated sources to agent
+        # Add generated sources to agent (suppress warnings on generated code)
+        set_source_files_properties(
+            "${PROTO_OUT_DIR}/sentineldlp.pb.cc"
+            "${PROTO_OUT_DIR}/sentineldlp.grpc.pb.cc"
+            PROPERTIES COMPILE_FLAGS "/W0"
+        )
         target_sources(sentinel-dlp-agent PRIVATE
             "${PROTO_OUT_DIR}/sentineldlp.pb.cc"
             "${PROTO_OUT_DIR}/sentineldlp.grpc.pb.cc"

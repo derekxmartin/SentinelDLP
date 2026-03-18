@@ -6,7 +6,7 @@ namespace sentinel::dlp {
 constexpr const char* kVersion = "0.1.0";
 constexpr const char* kServiceName = "SentinelDLPAgent";
 
-int Run(int argc, char* argv[]) {
+int Run([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::cout << kServiceName << " v" << kVersion << std::endl;
 
     // TODO: Initialize components:
