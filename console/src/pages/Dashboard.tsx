@@ -3,6 +3,7 @@
  */
 
 import { ShieldAlert, FileText, Monitor, Activity } from 'lucide-react';
+import useTitle from '../hooks/useTitle';
 
 function StatCard({
   icon: Icon,
@@ -29,6 +30,7 @@ function StatCard({
 }
 
 export default function Dashboard() {
+  useTitle('Dashboard');
   return (
     <div>
       <h1 className="text-xl font-semibold text-slate-50 mb-6">Dashboard</h1>

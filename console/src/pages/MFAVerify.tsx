@@ -6,11 +6,14 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { KeyRound } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
+import useTitle from '../hooks/useTitle';
 
 export default function MFAVerify() {
   const navigate = useNavigate();
   const verifyMfa = useAuthStore((s) => s.verifyMfa);
   const mfaChallengeToken = useAuthStore((s) => s.mfaChallengeToken);
+
+  useTitle('MFA Verification');
 
   const [code, setCode] = useState('');
   const [error, setError] = useState('');

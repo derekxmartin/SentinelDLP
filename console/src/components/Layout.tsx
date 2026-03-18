@@ -77,12 +77,12 @@ export default function Layout() {
       {/* Sidebar */}
       <aside className="w-60 bg-[var(--color-surface-sidebar)] border-r border-slate-800 flex flex-col">
         {/* Logo */}
-        <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-800">
+        <NavLink to="/" className="flex items-center gap-3 px-5 py-5 border-b border-slate-800 hover:bg-slate-800/50 transition-colors">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--color-accent)]">
             <Shield className="w-4 h-4 text-white" />
           </div>
           <span className="text-lg font-semibold text-slate-50">SentinelDLP</span>
-        </div>
+        </NavLink>
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">

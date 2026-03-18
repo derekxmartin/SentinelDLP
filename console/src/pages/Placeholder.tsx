@@ -3,8 +3,10 @@
  */
 
 import { Construction } from 'lucide-react';
+import useTitle from '../hooks/useTitle';
 
 export default function Placeholder({ title, task }: { title: string; task: string }) {
+  useTitle(title);
   return (
     <div>
       <h1 className="text-xl font-semibold text-slate-50 mb-6">{title}</h1>

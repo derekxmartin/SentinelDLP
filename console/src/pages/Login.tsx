@@ -1,16 +1,34 @@
 /**
  * Login page with username/password form.
  * On MFA-enabled accounts, redirects to MFA verification.
+ *
+ * NOTE: Uses inline styles due to Tailwind v4 dev mode issue (see #22).
  */
 
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
+import useTitle from '../hooks/useTitle';
+
+const inputStyle: React.CSSProperties = {
+  display: 'block',
+  width: '100%',
+  borderRadius: '0.375rem',
+  backgroundColor: 'rgba(255,255,255,0.05)',
+  padding: '0.5rem 0.75rem',
+  fontSize: '0.875rem',
+  color: 'white',
+  outline: '1px solid rgba(255,255,255,0.1)',
+  outlineOffset: '-1px',
+  border: 'none',
+};
 
 export default function Login() {
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
+
+  useTitle('Sign In');
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -37,22 +55,68 @@ export default function Login() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[var(--color-accent)] mb-4">
-            <Shield className="w-7 h-7 text-white" />
-          </div>
-          <h1 className="text-2xl font-semibold text-slate-50">SentinelDLP</h1>
-          <p className="text-sm text-slate-400 mt-1">Data Loss Prevention Console</p>
-        </div>
+  function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
+    e.target.style.outline = '2px solid #6366f1';
+    e.target.style.outlineOffset = '-2px';
+  }
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+  function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
+    e.target.style.outline = '1px solid rgba(255,255,255,0.1)';
+    e.target.style.outlineOffset = '-1px';
+  }
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        backgroundColor: 'var(--color-surface-page)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '3rem 1.5rem',
+      }}
+    >
+      {/* Header */}
+      <div style={{ width: '100%', maxWidth: '24rem', textAlign: 'center' }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '2.5rem',
+            height: '2.5rem',
+            borderRadius: '0.5rem',
+            backgroundColor: 'var(--color-accent)',
+          }}
+        >
+          <Shield style={{ width: '1.25rem', height: '1.25rem', color: 'white' }} />
+        </div>
+        <h2
+          style={{
+            marginTop: '2.5rem',
+            fontSize: '1.5rem',
+            lineHeight: '2rem',
+            fontWeight: 700,
+            letterSpacing: '-0.025em',
+            color: 'white',
+          }}
+        >
+          Sign in to SentinelDLP
+        </h2>
+      </div>
+
+      {/* Form */}
+      <div style={{ marginTop: '2.5rem', width: '100%', maxWidth: '24rem' }}>
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+        >
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-slate-300 mb-1">
+            <label
+              htmlFor="username"
+              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#f3f4f6', marginBottom: '0.5rem' }}
+            >
               Username
             </label>
             <input
@@ -62,13 +126,18 @@ export default function Login() {
               onChange={(e) => setUsername(e.target.value)}
               required
               autoFocus
-              className="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-card)] border border-slate-600 text-slate-50 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent"
-              placeholder="Enter username"
+              autoComplete="username"
+              style={inputStyle}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-1">
+            <label
+              htmlFor="password"
+              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#f3f4f6', marginBottom: '0.5rem' }}
+            >
               Password
             </label>
             <input
@@ -77,25 +146,48 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 rounded-lg bg-[var(--color-surface-card)] border border-slate-600 text-slate-50 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent"
-              placeholder="Enter password"
+              autoComplete="current-password"
+              style={inputStyle}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
           </div>
 
           {error && (
-            <div className="text-sm text-red-400 bg-red-950/50 border border-red-900 rounded-lg px-3 py-2">
-              {error}
-            </div>
+            <p style={{ fontSize: '0.875rem', color: '#f87171' }}>{error}</p>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-lg bg-[var(--color-accent)] text-white font-medium hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            style={{
+              display: 'flex',
+              width: '100%',
+              justifyContent: 'center',
+              borderRadius: '0.375rem',
+              backgroundColor: '#6366f1',
+              padding: '0.5rem 0.75rem',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              color: 'white',
+              border: 'none',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.5 : 1,
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) (e.target as HTMLButtonElement).style.backgroundColor = '#818cf8';
+            }}
+            onMouseLeave={(e) => {
+              (e.target as HTMLButtonElement).style.backgroundColor = '#6366f1';
+            }}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
+
+        <p style={{ marginTop: '2.5rem', textAlign: 'center', fontSize: '0.875rem', color: '#9ca3af' }}>
+          Sentinel Security Suite &middot; v0.1.0
+        </p>
       </div>
     </div>
   );
