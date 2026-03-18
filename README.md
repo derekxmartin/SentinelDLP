@@ -1,4 +1,8 @@
-# SentinelDLP
+<p align="center">
+  <img src="docs/assets/logo.png" alt="SentinelDLP" width="200">
+</p>
+
+<h1 align="center">SentinelDLP</h1>
 
 A proof-of-concept Data Loss Prevention (DLP) platform that detects, monitors, and prevents sensitive data from leaving an organization through endpoints, network channels, and data at rest.
 
