@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "sentinel-dlp-agent",
+  "version": "0.1.0",
+  "description": "SentinelDLP Endpoint Agent",
+  "dependencies": [
+    {
+      "name": "grpc",
+      "features": ["codegen"]
+    },
+    "protobuf",
+    "hyperscan",
+    "sqlite3",
+    "curl",
+    "yaml-cpp",
+    "gtest",
+    "spdlog"
+  ],
+  "builtin-baseline": "2024.12.16",
+  "overrides": []
+}
