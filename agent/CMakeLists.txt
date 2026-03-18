@@ -104,6 +104,7 @@ add_executable(sentinel-dlp-agent
     src/main.cpp
     src/config.cpp
     src/agent_service.cpp
+    src/grpc_client.cpp
 )
 
 target_include_directories(sentinel-dlp-agent PRIVATE
