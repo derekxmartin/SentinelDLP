@@ -135,6 +135,7 @@ add_executable(akeso-dlp-agent
     src/detection/file_type_detector.cpp
     src/detection/content_extractor.cpp
     src/detection/policy_evaluator.cpp
+    src/driver_comm.cpp
 )
 
 target_include_directories(akeso-dlp-agent PRIVATE
@@ -450,6 +451,24 @@ if(BUILD_TESTS)
             target_compile_definitions(test_policy_evaluator PRIVATE HAS_SPDLOG)
         endif()
         add_test(NAME PolicyEvaluatorTests COMMAND test_policy_evaluator)
+
+        # DriverComm tests
+        add_executable(test_driver_comm
+            tests/test_driver_comm.cpp
+            src/driver_comm.cpp
+        )
+        target_include_directories(test_driver_comm PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        target_link_libraries(test_driver_comm PRIVATE
+            GTest::gtest_main
+            fltlib
+        )
+        if(spdlog_FOUND)
+            target_link_libraries(test_driver_comm PRIVATE spdlog::spdlog)
+            target_compile_definitions(test_driver_comm PRIVATE HAS_SPDLOG)
+        endif()
+        add_test(NAME DriverCommTests COMMAND test_driver_comm)
 
         message(STATUS "Testing enabled (GoogleTest found)")
     else()
