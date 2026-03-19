@@ -105,6 +105,7 @@ add_executable(sentinel-dlp-agent
     src/config.cpp
     src/agent_service.cpp
     src/grpc_client.cpp
+    src/policy_cache.cpp
 )
 
 target_include_directories(sentinel-dlp-agent PRIVATE
@@ -245,6 +246,36 @@ if(BUILD_TESTS)
             target_compile_definitions(test_config PRIVATE HAS_SPDLOG)
         endif()
         add_test(NAME ConfigTests COMMAND test_config)
+
+        # PolicyCache tests
+        add_executable(test_policy_cache
+            tests/test_policy_cache.cpp
+            src/policy_cache.cpp
+        )
+        target_include_directories(test_policy_cache PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_BINARY_DIR}/proto
+        )
+        target_link_libraries(test_policy_cache PRIVATE
+            GTest::gtest_main
+            unofficial::sqlite3::sqlite3
+            protobuf::libprotobuf
+        )
+        if(spdlog_FOUND)
+            target_link_libraries(test_policy_cache PRIVATE spdlog::spdlog)
+            target_compile_definitions(test_policy_cache PRIVATE HAS_SPDLOG)
+        endif()
+        # Suppress protobuf generated code warnings
+        target_compile_options(test_policy_cache PRIVATE /wd4267)
+        # Depend on proto generation
+        target_sources(test_policy_cache PRIVATE
+            "${PROTO_OUT_DIR}/sentineldlp.pb.cc"
+        )
+        set_source_files_properties(
+            "${PROTO_OUT_DIR}/sentineldlp.pb.cc"
+            PROPERTIES COMPILE_FLAGS "/W0"
+        )
+        add_test(NAME PolicyCacheTests COMMAND test_policy_cache)
 
         message(STATUS "Testing enabled (GoogleTest found)")
     else()
