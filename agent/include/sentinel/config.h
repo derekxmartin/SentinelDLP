@@ -57,8 +57,8 @@ struct PolicyCacheConfig {
 };
 
 struct IncidentQueueConfig {
-    std::string path            = "C:\\SentinelDLP\\queue\\incidents.mmap";
-    int         max_entries     = 1000;
+    std::string path            = "C:\\SentinelDLP\\queue\\incidents.db";
+    int         max_entries     = 10000;
 };
 
 struct RecoveryConfig {
