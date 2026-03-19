@@ -96,6 +96,9 @@ find_package(CURL CONFIG QUIET)
 # yaml-cpp
 find_package(yaml-cpp CONFIG QUIET)
 
+# zlib (compression, used by content extractor)
+find_package(ZLIB QUIET)
+
 # spdlog (structured logging)
 find_package(spdlog CONFIG QUIET)
 
@@ -113,6 +116,7 @@ message(STATUS "  SQLite3:    ${unofficial-sqlite3_FOUND}")
 message(STATUS "  CURL:       ${CURL_FOUND}")
 message(STATUS "  yaml-cpp:   ${yaml-cpp_FOUND}")
 message(STATUS "  spdlog:     ${spdlog_FOUND}")
+message(STATUS "  ZLIB:       ${ZLIB_FOUND}")
 message(STATUS "-------------------------")
 
 # ---------------------------------------------------------------------------
@@ -129,6 +133,8 @@ add_executable(akeso-dlp-agent
     src/detection/keyword_analyzer.cpp
     src/detection/validators.cpp
     src/detection/file_type_detector.cpp
+    src/detection/content_extractor.cpp
+    src/detection/policy_evaluator.cpp
 )
 
 target_include_directories(akeso-dlp-agent PRIVATE
@@ -170,6 +176,11 @@ endif()
 if(CURL_FOUND)
     target_link_libraries(akeso-dlp-agent PRIVATE CURL::libcurl)
     target_compile_definitions(akeso-dlp-agent PRIVATE HAS_CURL)
+endif()
+
+if(ZLIB_FOUND)
+    target_link_libraries(akeso-dlp-agent PRIVATE ZLIB::ZLIB)
+    target_compile_definitions(akeso-dlp-agent PRIVATE HAS_ZLIB)
 endif()
 
 # Windows-specific libraries
@@ -403,6 +414,42 @@ if(BUILD_TESTS)
             target_compile_definitions(test_file_type_detector PRIVATE HAS_SPDLOG)
         endif()
         add_test(NAME FileTypeDetectorTests COMMAND test_file_type_detector)
+
+        # ContentExtractor tests
+        add_executable(test_content_extractor
+            tests/test_content_extractor.cpp
+            src/detection/content_extractor.cpp
+            src/detection/file_type_detector.cpp
+        )
+        target_include_directories(test_content_extractor PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        target_link_libraries(test_content_extractor PRIVATE
+            GTest::gtest_main
+            ZLIB::ZLIB
+        )
+        if(spdlog_FOUND)
+            target_link_libraries(test_content_extractor PRIVATE spdlog::spdlog)
+            target_compile_definitions(test_content_extractor PRIVATE HAS_SPDLOG)
+        endif()
+        add_test(NAME ContentExtractorTests COMMAND test_content_extractor)
+
+        # PolicyEvaluator tests
+        add_executable(test_policy_evaluator
+            tests/test_policy_evaluator.cpp
+            src/detection/policy_evaluator.cpp
+        )
+        target_include_directories(test_policy_evaluator PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        target_link_libraries(test_policy_evaluator PRIVATE
+            GTest::gtest_main
+        )
+        if(spdlog_FOUND)
+            target_link_libraries(test_policy_evaluator PRIVATE spdlog::spdlog)
+            target_compile_definitions(test_policy_evaluator PRIVATE HAS_SPDLOG)
+        endif()
+        add_test(NAME PolicyEvaluatorTests COMMAND test_policy_evaluator)
 
         message(STATUS "Testing enabled (GoogleTest found)")
     else()
