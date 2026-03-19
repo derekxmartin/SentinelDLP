@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Blocked - AkesoDLP</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            color: #333;
+        }
+        .container {
+            text-align: center;
+            max-width: 520px;
+            padding: 2.5rem;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+        .shield {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 1.5rem;
+            background: #fee2e2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #dc2626;
+            margin-bottom: 0.75rem;
+        }
+        .description {
+            line-height: 1.7;
+            color: #555;
+            margin-bottom: 1.5rem;
+        }
+        .details {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            text-align: left;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+        .details strong {
+            color: #374151;
+        }
+        .help {
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: #9ca3af;
+            line-height: 1.6;
+        }
+        .brand {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #f3f4f6;
+            font-size: 0.75rem;
+            color: #d1d5db;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="shield">&#128737;</div>
+        <h1>Upload Blocked</h1>
+        <p class="description">
+            This upload has been blocked by your organization's
+            Data Loss Prevention policy. Sensitive content was
+            detected in the request.
+        </p>
+        <div class="details">
+            <strong>Action:</strong> Block<br>
+            <strong>Reason:</strong> Content matched one or more DLP policies<br>
+            <strong>What to do:</strong> Remove sensitive content and try again,
+            or contact your IT administrator if you believe this is an error.
+        </div>
+        <p class="help">
+            Reference this page when contacting support.
+            Your request was not transmitted to the destination.
+        </p>
+        <div class="brand">AkesoDLP Network Monitor</div>
+    </div>
+</body>
+</html>
