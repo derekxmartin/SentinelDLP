@@ -106,6 +106,7 @@ add_executable(sentinel-dlp-agent
     src/agent_service.cpp
     src/grpc_client.cpp
     src/policy_cache.cpp
+    src/incident_queue.cpp
 )
 
 target_include_directories(sentinel-dlp-agent PRIVATE
@@ -150,6 +151,7 @@ endif()
 if(WIN32)
     target_link_libraries(sentinel-dlp-agent PRIVATE
         advapi32    # Service Control Manager
+        bcrypt      # SHA-256 hashing (CNG)
         fltlib      # Minifilter user-mode API
         ws2_32      # Winsock
     )
@@ -276,6 +278,27 @@ if(BUILD_TESTS)
             PROPERTIES COMPILE_FLAGS "/W0"
         )
         add_test(NAME PolicyCacheTests COMMAND test_policy_cache)
+
+        # IncidentQueue tests
+        add_executable(test_incident_queue
+            tests/test_incident_queue.cpp
+            src/incident_queue.cpp
+        )
+        target_include_directories(test_incident_queue PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        target_link_libraries(test_incident_queue PRIVATE
+            GTest::gtest_main
+            unofficial::sqlite3::sqlite3
+        )
+        if(spdlog_FOUND)
+            target_link_libraries(test_incident_queue PRIVATE spdlog::spdlog)
+            target_compile_definitions(test_incident_queue PRIVATE HAS_SPDLOG)
+        endif()
+        if(WIN32)
+            target_link_libraries(test_incident_queue PRIVATE bcrypt)
+        endif()
+        add_test(NAME IncidentQueueTests COMMAND test_incident_queue)
 
         message(STATUS "Testing enabled (GoogleTest found)")
     else()

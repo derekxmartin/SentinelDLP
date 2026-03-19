@@ -28,7 +28,7 @@ TEST(ConfigTest, DefaultValues) {
     EXPECT_FALSE(config.monitoring.print_monitor);
     EXPECT_EQ(config.heartbeat.interval_seconds, 60);
     EXPECT_EQ(config.heartbeat.backoff_max_seconds, 300);
-    EXPECT_EQ(config.incident_queue.max_entries, 1000);
+    EXPECT_EQ(config.incident_queue.max_entries, 10000);
     EXPECT_EQ(config.logging.level, "info");
     EXPECT_EQ(config.logging.max_files, 5);
 }
