@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="SentinelDLP" width="200">
+  <img src="docs/assets/logo.png" alt="AkesoDLP" width="200">
 </p>
 
 <h1 align="center">AkesoDLP</h1>
 
 A proof-of-concept Data Loss Prevention (DLP) platform that detects, monitors, and prevents sensitive data from leaving an organization through endpoints, network channels, and data at rest.
 
-Shares kernel driver infrastructure with SentinelEDR.
+Shares kernel driver infrastructure with AkesoEDR.
 
 ---
 
@@ -38,13 +38,13 @@ Organizations generate and handle sensitive data constantly. Without DLP, that d
 
 ### Why Build One?
 
-Understanding how DLP works at the implementation level — minifilter drivers, content inspection pipelines, policy evaluation engines, two-tier detection — reveals how enterprise data protection actually operates. SentinelDLP exists for exactly this purpose: a fully transparent, source-available DLP platform that security practitioners can study, modify, and experiment with.
+Understanding how DLP works at the implementation level — minifilter drivers, content inspection pipelines, policy evaluation engines, two-tier detection — reveals how enterprise data protection actually operates. AkesoDLP exists for exactly this purpose: a fully transparent, source-available DLP platform that security practitioners can study, modify, and experiment with.
 
 ---
 
 ## What It Does
 
-SentinelDLP inspects content across endpoints, network channels, and data at rest using a multi-technology detection engine and an enterprise-grade policy evaluation model.
+AkesoDLP inspects content across endpoints, network channels, and data at rest using a multi-technology detection engine and an enterprise-grade policy evaluation model.
 
 **Highlights:**
 
@@ -61,8 +61,8 @@ SentinelDLP inspects content across endpoints, network channels, and data at res
 - **File content extraction** — PDF, Office (docx/xlsx/pptx), ZIP/TAR/7z archives with recursive extraction (max depth 3)
 - **6 built-in policy templates** — PCI-DSS, HIPAA, GDPR, SOX, Source Code Leakage, Confidential Documents
 - **React management console** with dark mode, policy editor, incident triage, agent management, and reporting
-- **SentinelSIEM integration** — emits structured DLP events for cross-product correlation with EDR, AV, and NDR telemetry
-- **Shared kernel driver infrastructure** with SentinelEDR — same minifilter framework, communication ports, service model, and build system
+- **AkesoSIEM integration** — emits structured DLP events for cross-product correlation with EDR, AV, and NDR telemetry
+- **Shared kernel driver infrastructure** with AkesoEDR — same minifilter framework, communication ports, service model, and build system
 
 ---
 
@@ -72,7 +72,7 @@ SentinelDLP inspects content across endpoints, network channels, and data at res
 ┌─────────────────────────────────────────────────────────────────┐
 │                         KERNEL MODE                             │
 │                                                                 │
-│  sentinel-dlp-driver.sys (minifilter)                           │
+│  akeso-dlp-driver.sys (minifilter)                           │
 │  ├── IRP_MJ_WRITE pre-op callback                               │
 │  │   → check volume type (removable? network share?)            │
 │  │   → send file path + first 4KB to user-mode via filter port  │
@@ -80,11 +80,11 @@ SentinelDLP inspects content across endpoints, network channels, and data at res
 │  │   → BLOCK: FLT_PREOP_COMPLETE + STATUS_ACCESS_DENIED         │
 │  │   → ALLOW: FLT_PREOP_SUCCESS_WITH_CALLBACK                   │
 │  ├── IRP_MJ_CREATE post-op (Endpoint Discover file tracking)    │
-│  └── FltCommunicationPort ("\\SentinelDLPPort")                 │
+│  └── FltCommunicationPort ("\\AkesoDLPPort")                 │
 ├──────────────────────────── boundary ───────────────────────────┤
 │                          USER MODE                              │
 │                                                                 │
-│  sentinel-dlp-agent.exe (Windows service)                       │
+│  akeso-dlp-agent.exe (Windows service)                       │
 │  ├── DriverComm       → FilterConnectCommunicationPort          │
 │  ├── ContentInspector  → text extraction (PDF, Office, archives)│
 │  ├── DetectionEngine   → Hyperscan regex, Aho-Corasick keywords │
@@ -106,13 +106,13 @@ SentinelDLP inspects content across endpoints, network channels, and data at res
 ┌─────────────────────────────────────────────────────────────────┐
 │                     SERVER STACK (Docker)                        │
 │                                                                 │
-│  sentinel-dlp-server (Python/FastAPI)                           │
+│  akeso-dlp-server (Python/FastAPI)                           │
 │  ├── REST API          → policies, incidents, agents, detect    │
 │  ├── Auth              → JWT + TOTP MFA + role-based access     │
 │  ├── gRPC Service      → agent registration, heartbeat, TTD    │
-│  └── SIEM Emitter      → HTTP POST to SentinelSIEM             │
+│  └── SIEM Emitter      → HTTP POST to AkesoSIEM             │
 │                                                                 │
-│  sentinel-dlp-detect (Python)                                   │
+│  akeso-dlp-detect (Python)                                   │
 │  ├── RegexAnalyzer     → google-re2 (safe, no backtracking)    │
 │  ├── KeywordAnalyzer   → pyahocorasick                         │
 │  ├── DataIdentifier    → validators (Luhn, MOD-97, ABA, etc)   │
@@ -120,11 +120,11 @@ SentinelDLP inspects content across endpoints, network channels, and data at res
 │  ├── FingerprintAnalyzer → simhash rolling hash                │
 │  └── PolicyEvaluator   → compound rule evaluation logic        │
 │                                                                 │
-│  sentinel-dlp-network (Python)                                  │
+│  akeso-dlp-network (Python)                                  │
 │  ├── HTTP Proxy        → mitmproxy (inspect uploads, block)    │
 │  └── SMTP Relay        → aiosmtpd (inspect email, block/modify)│
 │                                                                 │
-│  sentinel-dlp-console (React)                                   │
+│  akeso-dlp-console (React)                                   │
 │  ├── Dashboard, Incidents, Policies, Agents, Discover, Reports │
 │  └── Dark mode, shadcn/ui, Recharts, shared SIEM design system │
 │                                                                 │
@@ -138,12 +138,12 @@ SentinelDLP inspects content across endpoints, network channels, and data at res
 
 | Component | Language | Description |
 |-----------|----------|-------------|
-| **sentinel-dlp-driver** | C (WDK) | Windows minifilter driver. IRP_MJ_WRITE pre/post callbacks on monitored volumes. Filter communication port to user-mode agent. Shares architectural patterns with SentinelEDR's driver. |
-| **sentinel-dlp-agent** | C++17 (MSVC) | Endpoint agent Windows service. Hyperscan SIMD regex, Aho-Corasick keywords, data identifier validators. Policy cache, incident queue, clipboard/browser monitors, gRPC client. |
-| **sentinel-dlp-server** | Python/FastAPI | Management server. REST API, policy CRUD, incident management, user/role administration, gRPC service for agent communication, SIEM event emission. |
-| **sentinel-dlp-detect** | Python | Server-side detection engine. Pluggable analyzers (regex, keyword, data identifier, file type, fingerprint). Policy evaluation with compound AND/OR/exception logic. |
-| **sentinel-dlp-network** | Python | Network monitor. HTTP proxy (mitmproxy) and SMTP relay (aiosmtpd) with inline prevent capability (block, modify, redirect). |
-| **sentinel-dlp-console** | React/TypeScript | Web dashboard. Policy editor, incident triage, agent management, Endpoint Discover, reporting, user risk scoring. Dark mode with SentinelSIEM shared design system. |
+| **akeso-dlp-driver** | C (WDK) | Windows minifilter driver. IRP_MJ_WRITE pre/post callbacks on monitored volumes. Filter communication port to user-mode agent. Shares architectural patterns with AkesoEDR's driver. |
+| **akeso-dlp-agent** | C++17 (MSVC) | Endpoint agent Windows service. Hyperscan SIMD regex, Aho-Corasick keywords, data identifier validators. Policy cache, incident queue, clipboard/browser monitors, gRPC client. |
+| **akeso-dlp-server** | Python/FastAPI | Management server. REST API, policy CRUD, incident management, user/role administration, gRPC service for agent communication, SIEM event emission. |
+| **akeso-dlp-detect** | Python | Server-side detection engine. Pluggable analyzers (regex, keyword, data identifier, file type, fingerprint). Policy evaluation with compound AND/OR/exception logic. |
+| **akeso-dlp-network** | Python | Network monitor. HTTP proxy (mitmproxy) and SMTP relay (aiosmtpd) with inline prevent capability (block, modify, redirect). |
+| **akeso-dlp-console** | React/TypeScript | Web dashboard. Policy editor, incident triage, agent management, Endpoint Discover, reporting, user risk scoring. Dark mode with AkesoSIEM shared design system. |
 
 ---
 
@@ -199,21 +199,21 @@ SentinelDLP inspects content across endpoints, network channels, and data at res
 
 ---
 
-## Sentinel Portfolio Integration
+## Akeso Portfolio Integration
 
-SentinelDLP fills the data protection role in the Sentinel portfolio. Events emitted to SentinelSIEM enable cross-product correlation:
+AkesoDLP fills the data protection role in the Akeso portfolio. Events emitted to AkesoSIEM enable cross-product correlation:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                    SentinelSIEM (Go + ES)                    │
+│                    AkesoSIEM (Go + ES)                    │
 │          Central correlator — Sigma rules — alerting         │
 │                                                              │
-│   Ingests: sentinel_edr | sentinel_av | sentinel_dlp |       │
-│            sentinel_ndr | windows | syslog                   │
+│   Ingests: akeso_edr | akeso_av | akeso_dlp |       │
+│            akeso_ndr | windows | syslog                   │
 └──────┬───────────┬───────────┬───────────┬───────────────────┘
        │           │           │           │
 ┌──────┴──┐ ┌─────┴──┐ ┌────┴───┐ ┌────┴────┐
-│Sentinel │ │Sentinel│ │Sentinel│ │Sentinel │
+│Akeso    │ │Akeso   │ │Akeso   │ │Akeso    │
 │EDR      │ │AV      │ │DLP     │ │NDR      │
 │Endpoint │ │Malware │ │Content │ │Network  │
 │behavior │ │detect  │ │inspect │ │metadata │
@@ -364,4 +364,4 @@ This is an educational proof-of-concept built for learning and portfolio purpose
 
 ## Acknowledgments
 
-- *Evading EDR* by Matt Hand (No Starch Press, 2023) — shared kernel driver infrastructure patterns with SentinelEDR
+- *Evading EDR* by Matt Hand (No Starch Press, 2023) — shared kernel driver infrastructure patterns with AkesoEDR

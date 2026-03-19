@@ -1,6 +1,6 @@
 /*
  * grpc_client.cpp
- * SentinelDLP Agent - gRPC Client implementation
+ * AkesoDLP Agent - gRPC Client implementation
  *
  * Manages connection to server with:
  *   - mTLS or insecure channel
@@ -9,7 +9,7 @@
  *   - Register, GetPolicies, ReportIncident, DetectContent RPCs
  */
 
-#include "sentinel/grpc_client.h"
+#include "akeso/grpc_client.h"
 
 #include <algorithm>
 #include <chrono>
@@ -30,7 +30,7 @@
 #define LOG_DEBUG(fmt, ...)   (void)0
 #endif
 
-namespace sentinel::dlp {
+namespace akeso::dlp {
 
 /* ================================================================== */
 /*  Helper: read file to string                                        */
@@ -115,7 +115,7 @@ bool GrpcClient::Connect() {
 
     {
         std::lock_guard<std::mutex> lock(stub_mutex_);
-        stub_ = sentineldlp::SentinelDLPService::NewStub(channel_);
+        stub_ = akesodlp::AkesoDLPService::NewStub(channel_);
     }
 
     conn_state_ = ConnectionState::Connected;
@@ -193,7 +193,7 @@ bool GrpcClient::Register(
     std::lock_guard<std::mutex> lock(stub_mutex_);
     if (!stub_) return false;
 
-    sentineldlp::RegisterRequest request;
+    akesodlp::RegisterRequest request;
     request.set_hostname(hostname);
     request.set_os_version(os_version);
     request.set_agent_version(agent_version);
@@ -206,7 +206,7 @@ bool GrpcClient::Register(
     caps->set_browser_monitor(true);
     caps->set_discover(false);
 
-    sentineldlp::RegisterResponse response;
+    akesodlp::RegisterResponse response;
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(10));
 
@@ -243,12 +243,12 @@ bool GrpcClient::Register(
 
 bool GrpcClient::PullPolicies(
     int32_t current_version,
-    sentineldlp::GetPoliciesResponse* response
+    akesodlp::GetPoliciesResponse* response
 ) {
     std::lock_guard<std::mutex> lock(stub_mutex_);
     if (!stub_ || agent_id_.empty()) return false;
 
-    sentineldlp::GetPoliciesRequest request;
+    akesodlp::GetPoliciesRequest request;
     request.set_agent_id(agent_id_);
     request.set_current_version(current_version);
 
@@ -278,17 +278,17 @@ bool GrpcClient::PullPolicies(
 /* ================================================================== */
 
 bool GrpcClient::ReportIncident(
-    const sentineldlp::IncidentReport& incident,
+    const akesodlp::IncidentReport& incident,
     std::string* incident_id
 ) {
     std::lock_guard<std::mutex> lock(stub_mutex_);
     if (!stub_ || agent_id_.empty()) return false;
 
-    sentineldlp::ReportIncidentRequest request;
+    akesodlp::ReportIncidentRequest request;
     request.set_agent_id(agent_id_);
     *request.mutable_incident() = incident;
 
-    sentineldlp::ReportIncidentResponse response;
+    akesodlp::ReportIncidentResponse response;
     grpc::ClientContext context;
     context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(10));
 
@@ -312,8 +312,8 @@ bool GrpcClient::ReportIncident(
 /* ================================================================== */
 
 bool GrpcClient::DetectContent(
-    const sentineldlp::DetectContentRequest& request,
-    sentineldlp::DetectContentResponse* response
+    const akesodlp::DetectContentRequest& request,
+    akesodlp::DetectContentResponse* response
 ) {
     std::lock_guard<std::mutex> lock(stub_mutex_);
     if (!stub_) return false;
@@ -337,11 +337,11 @@ bool GrpcClient::DetectContent(
             /* Apply fallback verdict */
             response->set_request_id(request.request_id());
             if (detection_config_.ttd_fallback == "block") {
-                response->set_verdict(sentineldlp::TTD_BLOCK);
+                response->set_verdict(akesodlp::TTD_BLOCK);
             } else if (detection_config_.ttd_fallback == "allow") {
-                response->set_verdict(sentineldlp::TTD_ALLOW);
+                response->set_verdict(akesodlp::TTD_ALLOW);
             } else {
-                response->set_verdict(sentineldlp::TTD_LOG);
+                response->set_verdict(akesodlp::TTD_LOG);
             }
             response->set_message("TTD timeout — fallback applied");
             return true;  /* Fallback is a valid result */
@@ -407,7 +407,7 @@ void GrpcClient::HeartbeatThread() {
             std::lock_guard<std::mutex> lock(stub_mutex_);
             if (!stub_ || agent_id_.empty()) continue;
 
-            sentineldlp::HeartbeatRequest request;
+            akesodlp::HeartbeatRequest request;
             request.set_agent_id(agent_id_);
             request.set_policy_version(policy_version_.load());
 
@@ -420,7 +420,7 @@ void GrpcClient::HeartbeatThread() {
             agent_status->set_uptime_seconds(
                 std::chrono::duration_cast<std::chrono::seconds>(elapsed).count());
 
-            sentineldlp::HeartbeatResponse response;
+            akesodlp::HeartbeatResponse response;
             grpc::ClientContext context;
             context.set_deadline(
                 std::chrono::system_clock::now() + std::chrono::seconds(10));
@@ -439,7 +439,7 @@ void GrpcClient::HeartbeatThread() {
             if (response.policy_update_available()) {
                 LOG_INFO("GrpcClient: Policy update available (v{})",
                          response.latest_policy_version());
-                sentineldlp::GetPoliciesResponse policy_resp;
+                akesodlp::GetPoliciesResponse policy_resp;
                 PullPolicies(policy_version_.load(), &policy_resp);
             }
 
@@ -481,4 +481,4 @@ void GrpcClient::ResetBackoff() {
     }
 }
 
-}  // namespace sentinel::dlp
+}  // namespace akeso::dlp

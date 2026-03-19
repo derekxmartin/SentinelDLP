@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     )
 
     # --- Database ---
-    database_url: str = "postgresql+asyncpg://sentinel:sentinel@localhost:5432/sentinel_dlp"
+    database_url: str = "postgresql+asyncpg://akeso:akeso@localhost:5432/akeso_dlp"
 
     # --- Redis ---
     redis_url: str = "redis://localhost:6379/0"
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     siem_enabled: bool = False
     siem_endpoint: str = "http://localhost:9200/api/v1/ingest"
     siem_api_key: str = ""
-    siem_source_type: str = "sentinel_dlp"
+    siem_source_type: str = "akeso_dlp"
     siem_batch_size: int = 100
     siem_flush_interval_seconds: int = 10
 

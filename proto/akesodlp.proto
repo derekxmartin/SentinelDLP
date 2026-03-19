@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package sentineldlp;
+package akesodlp;
 
-option go_package = "sentineldlp/proto";
+option go_package = "akesodlp/proto";
 
 import "google/protobuf/timestamp.proto";
 
@@ -10,7 +10,7 @@ import "google/protobuf/timestamp.proto";
 // Service
 // =============================================================================
 
-service SentinelDLPService {
+service AkesoDLPService {
   // Agent registration — called once on startup
   rpc Register(RegisterRequest) returns (RegisterResponse);
 

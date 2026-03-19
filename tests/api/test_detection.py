@@ -85,8 +85,8 @@ async def setup_db():
         admin_user = User(
             id=uuid.uuid4(),
             username="admin",
-            email="admin@sentinel.local",
-            password_hash=auth_service.hash_password("SentinelDLP2026!"),
+            email="admin@akeso.local",
+            password_hash=auth_service.hash_password("AkesoDLP2026!"),
             full_name="Admin User",
             is_active=True,
             mfa_enabled=False,
@@ -95,7 +95,7 @@ async def setup_db():
         remediator_user = User(
             id=uuid.uuid4(),
             username="remediator",
-            email="remediator@sentinel.local",
+            email="remediator@akeso.local",
             password_hash=auth_service.hash_password("RemediatorPass!"),
             full_name="Remediator User",
             is_active=True,
@@ -123,7 +123,7 @@ async def client():
 async def admin_token(client: AsyncClient) -> str:
     resp = await client.post(
         "/api/auth/login",
-        json={"username": "admin", "password": "SentinelDLP2026!"},
+        json={"username": "admin", "password": "AkesoDLP2026!"},
     )
     return resp.json()["access_token"]
 

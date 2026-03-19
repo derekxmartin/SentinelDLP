@@ -4,7 +4,7 @@
 
 import { useEffect } from 'react';
 
-const SUFFIX = 'SentinelDLP';
+const SUFFIX = 'AkesoDLP';
 
 export default function useTitle(page: string) {
   useEffect(() => {

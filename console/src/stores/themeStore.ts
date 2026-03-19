@@ -26,7 +26,7 @@ function applyTheme(resolved: 'dark' | 'light') {
   document.documentElement.classList.toggle('light', resolved === 'light');
 }
 
-const stored = (localStorage.getItem('sentinel-theme') as ThemeMode) || 'dark';
+const stored = (localStorage.getItem('akeso-theme') as ThemeMode) || 'dark';
 const initialResolved = resolveTheme(stored);
 applyTheme(initialResolved);
 
@@ -35,7 +35,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
   resolved: initialResolved,
 
   setMode: (mode) => {
-    localStorage.setItem('sentinel-theme', mode);
+    localStorage.setItem('akeso-theme', mode);
     const resolved = resolveTheme(mode);
     applyTheme(resolved);
     set({ mode, resolved });

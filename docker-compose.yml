@@ -2,15 +2,15 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: sentinel
-      POSTGRES_PASSWORD: sentinel
-      POSTGRES_DB: sentinel_dlp
+      POSTGRES_USER: akeso
+      POSTGRES_PASSWORD: akeso
+      POSTGRES_DB: akeso_dlp
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sentinel -d sentinel_dlp"]
+      test: ["CMD-SHELL", "pg_isready -U akeso -d akeso_dlp"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -36,7 +36,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DLP_DATABASE_URL: postgresql+asyncpg://sentinel:sentinel@postgres:5432/sentinel_dlp
+      DLP_DATABASE_URL: postgresql+asyncpg://akeso:akeso@postgres:5432/akeso_dlp
       DLP_REDIS_URL: redis://redis:6379/0
       DLP_DEBUG: "true"
     depends_on:

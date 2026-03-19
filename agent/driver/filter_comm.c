@@ -1,19 +1,19 @@
 /*
  * filter_comm.c
- * SentinelDLP Minifilter Driver - Communication Port Handlers
+ * AkesoDLP Minifilter Driver - Communication Port Handlers
  *
  * Handles user-mode connection, disconnection, and message processing
- * over the filter communication port (\SentinelDLPPort).
+ * over the filter communication port (\AkesoDLPPort).
  */
 
-#include "sentinel_dlp_filter.h"
+#include "akeso_dlp_filter.h"
 
 /* ================================================================== */
 /*  Port Connect callback                                              */
 /* ================================================================== */
 
 NTSTATUS
-SentinelPortConnect(
+AkesoPortConnect(
     _In_ PFLT_PORT ClientPort,
     _In_opt_ PVOID ServerPortCookie,
     _In_reads_bytes_opt_(SizeOfContext) PVOID ConnectionContext,
@@ -29,10 +29,10 @@ SentinelPortConnect(
      * Only allow one connection at a time.
      * The DLP agent service is the sole consumer.
      */
-    if (InterlockedIncrement(&gFilterData.ConnectionCount) > SENTINEL_DLP_MAX_CONNECTIONS) {
+    if (InterlockedIncrement(&gFilterData.ConnectionCount) > AKESO_DLP_MAX_CONNECTIONS) {
         InterlockedDecrement(&gFilterData.ConnectionCount);
         KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL,
-            "SentinelDLP: Connection rejected (max connections reached)\n"));
+            "AkesoDLP: Connection rejected (max connections reached)\n"));
         return STATUS_CONNECTION_REFUSED;
     }
 
@@ -41,7 +41,7 @@ SentinelPortConnect(
     *ConnectionCookie = NULL;
 
     KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "SentinelDLP: User-mode client connected (PID: %lu)\n",
+        "AkesoDLP: User-mode client connected (PID: %lu)\n",
         (ULONG)(ULONG_PTR)PsGetCurrentProcessId()));
 
     return STATUS_SUCCESS;
@@ -52,14 +52,14 @@ SentinelPortConnect(
 /* ================================================================== */
 
 VOID
-SentinelPortDisconnect(
+AkesoPortDisconnect(
     _In_opt_ PVOID ConnectionCookie
 )
 {
     UNREFERENCED_PARAMETER(ConnectionCookie);
 
     KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "SentinelDLP: User-mode client disconnected\n"));
+        "AkesoDLP: User-mode client disconnected\n"));
 
     /*
      * Close the client port handle. This is required to properly
@@ -77,7 +77,7 @@ SentinelPortDisconnect(
 /* ================================================================== */
 
 NTSTATUS
-SentinelPortMessageNotify(
+AkesoPortMessageNotify(
     _In_opt_ PVOID PortCookie,
     _In_reads_bytes_opt_(InputBufferLength) PVOID InputBuffer,
     _In_ ULONG InputBufferLength,
@@ -86,7 +86,7 @@ SentinelPortMessageNotify(
     _Out_ PULONG ReturnOutputBufferLength
 )
 {
-    SENTINEL_MSG_TYPE msgType;
+    AKESO_MSG_TYPE msgType;
 
     UNREFERENCED_PARAMETER(PortCookie);
     UNREFERENCED_PARAMETER(OutputBuffer);
@@ -98,21 +98,21 @@ SentinelPortMessageNotify(
      * Validate input buffer.
      * User-mode sends configuration commands via this channel.
      */
-    if (InputBuffer == NULL || InputBufferLength < sizeof(SENTINEL_MSG_TYPE)) {
+    if (InputBuffer == NULL || InputBufferLength < sizeof(AKESO_MSG_TYPE)) {
         return STATUS_INVALID_PARAMETER;
     }
 
     __try {
-        msgType = *(SENTINEL_MSG_TYPE *)InputBuffer;
+        msgType = *(AKESO_MSG_TYPE *)InputBuffer;
     }
     __except (EXCEPTION_EXECUTE_HANDLER) {
         return STATUS_INVALID_USER_BUFFER;
     }
 
     switch (msgType) {
-    case SentinelMsgConfigUpdate:
+    case AkesoMsgConfigUpdate:
         KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-            "SentinelDLP: Config update received from user-mode\n"));
+            "AkesoDLP: Config update received from user-mode\n"));
         /*
          * Future: parse config payload to update monitoring settings,
          * volume filters, PID exclusions, etc.
@@ -121,7 +121,7 @@ SentinelPortMessageNotify(
 
     default:
         KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL,
-            "SentinelDLP: Unknown message type %d from user-mode\n",
+            "AkesoDLP: Unknown message type %d from user-mode\n",
             msgType));
         return STATUS_INVALID_PARAMETER;
     }

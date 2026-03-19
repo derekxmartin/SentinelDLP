@@ -1,5 +1,5 @@
 /**
- * SentinelDLP Console — root application component.
+ * AkesoDLP Console — root application component.
  *
  * Routes:
  *   /login  — Login page (public)

@@ -381,7 +381,7 @@ class ArchiveInspector:
         import shutil
         from pathlib import Path
 
-        tmpdir = tempfile.mkdtemp(prefix="sentineldlp_7z_")
+        tmpdir = tempfile.mkdtemp(prefix="akesodlp_7z_")
         try:
             with py7zr.SevenZipFile(io.BytesIO(content), mode="r") as zf:
                 zf.extractall(path=tmpdir)

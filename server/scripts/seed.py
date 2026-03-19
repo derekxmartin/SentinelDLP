@@ -1,9 +1,9 @@
 """
-Seed script for SentinelDLP.
+Seed script for AkesoDLP.
 
 Creates:
   - 3 roles (Admin, Analyst, Remediator)
-  - 1 admin user (admin / SentinelDLP2026!)
+  - 1 admin user (admin / AkesoDLP2026!)
   - 10 built-in data identifiers
   - 6 policy templates (PCI-DSS, HIPAA, GDPR, SOX, Source Code, Confidential)
 
@@ -265,7 +265,7 @@ POLICY_TEMPLATES = [
 
 
 async def seed():
-    print("SentinelDLP Seed Script")
+    print("AkesoDLP Seed Script")
     print("=" * 50)
 
     async with async_session() as session:
@@ -283,8 +283,8 @@ async def seed():
         print("\nCreating admin user...")
         admin = User(
             username="admin",
-            email="admin@sentinel.local",
-            password_hash=bcrypt.hashpw(b"SentinelDLP2026!", bcrypt.gensalt(rounds=12)).decode(),
+            email="admin@akeso.local",
+            password_hash=bcrypt.hashpw(b"AkesoDLP2026!", bcrypt.gensalt(rounds=12)).decode(),
             full_name="System Administrator",
             is_active=True,
             mfa_enabled=False,
@@ -292,7 +292,7 @@ async def seed():
         )
         session.add(admin)
         await session.flush()
-        print(f"  + admin (password: SentinelDLP2026!)")
+        print(f"  + admin (password: AkesoDLP2026!)")
 
         # --- Data Identifiers ---
         print("\nCreating data identifiers...")
@@ -380,7 +380,7 @@ async def seed():
 
     print("\n" + "=" * 50)
     print("Seed complete.")
-    print("  Login: admin / SentinelDLP2026!")
+    print("  Login: admin / AkesoDLP2026!")
     print("  Roles: Admin, Analyst, Remediator")
     print(f"  Data Identifiers: {len(DATA_IDENTIFIERS)}")
     print(f"  Policy Templates: {len(POLICY_TEMPLATES)}")

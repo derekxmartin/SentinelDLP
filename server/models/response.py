@@ -32,7 +32,7 @@ class ResponseAction(Base, UUIDMixin, TimestampMixin):
 
     action_type: Mapped[ActionType] = mapped_column(Enum(ActionType), nullable=False)
     # Action-specific config:
-    #   block: {"recovery_path": "C:\\SentinelDLP\\Recovery"}
+    #   block: {"recovery_path": "C:\\AkesoDLP\\Recovery"}
     #   notify: {"message": "...", "notification_type": "toast|balloon"}
     #   user_cancel: {"timeout_seconds": 120, "message": "..."}
     #   quarantine: {"quarantine_path": "..."}

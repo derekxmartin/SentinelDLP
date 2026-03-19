@@ -1,6 +1,6 @@
 #pragma once
 // ──────────────────────────────────────────────────────────────────
-//  SentinelDLP Agent — IncidentQueue
+//  AkesoDLP Agent — IncidentQueue
 //  Persistent, file-backed queue for reliable incident delivery.
 //  Uses SQLite for durability across agent restarts. Supports:
 //    • Enqueue with SHA-256 dedup (by policy+file+user+match_count)
@@ -16,12 +16,12 @@
 #include <string>
 #include <vector>
 
-#include "sentinel/agent_service.h"
+#include "akeso/agent_service.h"
 
 // Forward-declare sqlite3
 struct sqlite3;
 
-namespace sentinel::dlp {
+namespace akeso::dlp {
 
 // ── Queue entry ─────────────────────────────────────────────────
 struct QueuedIncident {
@@ -123,4 +123,4 @@ private:
     mutable QueueStats stats_;
 };
 
-}  // namespace sentinel::dlp
+}  // namespace akeso::dlp

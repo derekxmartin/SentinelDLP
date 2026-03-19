@@ -1,19 +1,19 @@
 /*
- * sentinel_dlp_filter.c
- * SentinelDLP Minifilter Driver - Core Implementation
+ * akeso_dlp_filter.c
+ * AkesoDLP Minifilter Driver - Core Implementation
  *
  * Registers with Filter Manager, intercepts IRP_MJ_WRITE (pre-op)
  * and IRP_MJ_CREATE (post-op) on removable and network volumes.
  * Communicates with user-mode DLP agent via filter communication port.
  */
 
-#include "sentinel_dlp_filter.h"
+#include "akeso_dlp_filter.h"
 
 /* ------------------------------------------------------------------ */
 /*  Globals                                                            */
 /* ------------------------------------------------------------------ */
 
-SENTINEL_FILTER_DATA gFilterData = { 0 };
+AKESO_FILTER_DATA gFilterData = { 0 };
 
 /* ------------------------------------------------------------------ */
 /*  Context definitions                                                */
@@ -24,8 +24,8 @@ static const FLT_CONTEXT_REGISTRATION ContextRegistration[] = {
         FLT_INSTANCE_CONTEXT,
         0,
         NULL,           /* CleanupCallback */
-        sizeof(SENTINEL_INSTANCE_CONTEXT),
-        SENTINEL_DLP_POOL_TAG,
+        sizeof(AKESO_INSTANCE_CONTEXT),
+        AKESO_DLP_POOL_TAG,
         NULL,           /* Allocate */
         NULL,           /* Free    */
         NULL            /* Reserved */
@@ -41,14 +41,14 @@ static const FLT_OPERATION_REGISTRATION OperationCallbacks[] = {
     {
         IRP_MJ_WRITE,
         0,
-        SentinelPreWrite,       /* PreOperation  */
+        AkesoPreWrite,       /* PreOperation  */
         NULL                    /* PostOperation */
     },
     {
         IRP_MJ_CREATE,
         0,
         NULL,                   /* PreOperation  */
-        SentinelPostCreate      /* PostOperation */
+        AkesoPostCreate      /* PostOperation */
     },
     { IRP_MJ_OPERATION_END }
 };
@@ -63,11 +63,11 @@ static const FLT_REGISTRATION FilterRegistration = {
     0,                              /* Flags            */
     ContextRegistration,            /* ContextRegistration */
     OperationCallbacks,             /* OperationRegistration */
-    SentinelFilterUnload,           /* FilterUnloadCallback */
-    SentinelInstanceSetup,          /* InstanceSetupCallback */
+    AkesoFilterUnload,           /* FilterUnloadCallback */
+    AkesoInstanceSetup,          /* InstanceSetupCallback */
     NULL,                           /* InstanceQueryTeardown */
-    SentinelInstanceTeardownStart,  /* InstanceTeardownStart */
-    SentinelInstanceTeardownComplete, /* InstanceTeardownComplete */
+    AkesoInstanceTeardownStart,  /* InstanceTeardownStart */
+    AkesoInstanceTeardownComplete, /* InstanceTeardownComplete */
     NULL,                           /* GenerateFileName */
     NULL,                           /* NormalizeNameComponent */
     NULL,                           /* NormalizeContextCleanup */
@@ -94,7 +94,7 @@ DriverEntry(
     UNREFERENCED_PARAMETER(RegistryPath);
 
     KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "SentinelDLP: DriverEntry - loading minifilter\n"));
+        "AkesoDLP: DriverEntry - loading minifilter\n"));
 
     /*
      * Step 1: Register the minifilter with Filter Manager.
@@ -107,7 +107,7 @@ DriverEntry(
 
     if (!NT_SUCCESS(status)) {
         KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-            "SentinelDLP: FltRegisterFilter failed: 0x%08X\n", status));
+            "AkesoDLP: FltRegisterFilter failed: 0x%08X\n", status));
         return status;
     }
 
@@ -124,12 +124,12 @@ DriverEntry(
 
     if (!NT_SUCCESS(status)) {
         KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-            "SentinelDLP: FltBuildDefaultSecurityDescriptor failed: 0x%08X\n",
+            "AkesoDLP: FltBuildDefaultSecurityDescriptor failed: 0x%08X\n",
             status));
         goto cleanup_filter;
     }
 
-    RtlInitUnicodeString(&portName, SENTINEL_DLP_PORT_NAME);
+    RtlInitUnicodeString(&portName, AKESO_DLP_PORT_NAME);
 
     InitializeObjectAttributes(
         &oa,
@@ -144,17 +144,17 @@ DriverEntry(
         &gFilterData.ServerPort,
         &oa,
         NULL,                       /* ServerPortCookie */
-        SentinelPortConnect,
-        SentinelPortDisconnect,
-        SentinelPortMessageNotify,
-        SENTINEL_DLP_MAX_CONNECTIONS
+        AkesoPortConnect,
+        AkesoPortDisconnect,
+        AkesoPortMessageNotify,
+        AKESO_DLP_MAX_CONNECTIONS
     );
 
     FltFreeSecurityDescriptor(sd);
 
     if (!NT_SUCCESS(status)) {
         KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-            "SentinelDLP: FltCreateCommunicationPort failed: 0x%08X\n",
+            "AkesoDLP: FltCreateCommunicationPort failed: 0x%08X\n",
             status));
         goto cleanup_filter;
     }
@@ -166,13 +166,13 @@ DriverEntry(
 
     if (!NT_SUCCESS(status)) {
         KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-            "SentinelDLP: FltStartFiltering failed: 0x%08X\n", status));
+            "AkesoDLP: FltStartFiltering failed: 0x%08X\n", status));
         goto cleanup_port;
     }
 
     KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "SentinelDLP: Minifilter loaded successfully (altitude %ws)\n",
-        SENTINEL_DLP_ALTITUDE));
+        "AkesoDLP: Minifilter loaded successfully (altitude %ws)\n",
+        AKESO_DLP_ALTITUDE));
 
     return STATUS_SUCCESS;
 
@@ -192,14 +192,14 @@ cleanup_filter:
 /* ================================================================== */
 
 NTSTATUS
-SentinelFilterUnload(
+AkesoFilterUnload(
     _In_ FLT_FILTER_UNLOAD_FLAGS Flags
 )
 {
     UNREFERENCED_PARAMETER(Flags);
 
     KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "SentinelDLP: Unloading minifilter\n"));
+        "AkesoDLP: Unloading minifilter\n"));
 
     /* Close the communication port first (stops new connections) */
     if (gFilterData.ServerPort != NULL) {
@@ -214,7 +214,7 @@ SentinelFilterUnload(
     }
 
     KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "SentinelDLP: Minifilter unloaded cleanly\n"));
+        "AkesoDLP: Minifilter unloaded cleanly\n"));
 
     return STATUS_SUCCESS;
 }
@@ -224,7 +224,7 @@ SentinelFilterUnload(
 /* ================================================================== */
 
 NTSTATUS
-SentinelInstanceSetup(
+AkesoInstanceSetup(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_SETUP_FLAGS Flags,
     _In_ DEVICE_TYPE VolumeDeviceType,
@@ -232,8 +232,8 @@ SentinelInstanceSetup(
 )
 {
     NTSTATUS status;
-    PSENTINEL_INSTANCE_CONTEXT instanceContext = NULL;
-    SENTINEL_VOLUME_TYPE volumeType;
+    PAKESO_INSTANCE_CONTEXT instanceContext = NULL;
+    AKESO_VOLUME_TYPE volumeType;
 
     UNREFERENCED_PARAMETER(Flags);
 
@@ -255,26 +255,26 @@ SentinelInstanceSetup(
     }
 
     /* Classify the volume type */
-    volumeType = SentinelClassifyVolume(FltObjects, VolumeDeviceType);
+    volumeType = AkesoClassifyVolume(FltObjects, VolumeDeviceType);
 
     /* Allocate and set instance context */
     status = FltAllocateContext(
         FltObjects->Filter,
         FLT_INSTANCE_CONTEXT,
-        sizeof(SENTINEL_INSTANCE_CONTEXT),
+        sizeof(AKESO_INSTANCE_CONTEXT),
         NonPagedPoolNx,
         (PFLT_CONTEXT *)&instanceContext
     );
 
     if (!NT_SUCCESS(status)) {
         KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL,
-            "SentinelDLP: Failed to allocate instance context: 0x%08X\n",
+            "AkesoDLP: Failed to allocate instance context: 0x%08X\n",
             status));
         /* Attach anyway but without context — we'll skip monitoring */
         return STATUS_SUCCESS;
     }
 
-    RtlZeroMemory(instanceContext, sizeof(SENTINEL_INSTANCE_CONTEXT));
+    RtlZeroMemory(instanceContext, sizeof(AKESO_INSTANCE_CONTEXT));
     instanceContext->VolumeType = volumeType;
 
     /*
@@ -282,8 +282,8 @@ SentinelInstanceSetup(
      * Fixed volumes are attached to but not actively monitored.
      */
     instanceContext->MonitorEnabled =
-        (volumeType == SentinelVolumeRemovable ||
-         volumeType == SentinelVolumeNetwork);
+        (volumeType == AkesoVolumeRemovable ||
+         volumeType == AkesoVolumeNetwork);
 
     /* Store volume name for logging */
     instanceContext->VolumeName.Buffer = instanceContext->VolumeNameBuffer;
@@ -302,11 +302,11 @@ SentinelInstanceSetup(
 
     if (!NT_SUCCESS(status) && status != STATUS_FLT_CONTEXT_ALREADY_DEFINED) {
         KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL,
-            "SentinelDLP: FltSetInstanceContext failed: 0x%08X\n", status));
+            "AkesoDLP: FltSetInstanceContext failed: 0x%08X\n", status));
     }
 
     KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "SentinelDLP: Attached to volume (type=%d, monitor=%s)\n",
+        "AkesoDLP: Attached to volume (type=%d, monitor=%s)\n",
         volumeType,
         instanceContext->MonitorEnabled ? "YES" : "NO"));
 
@@ -314,7 +314,7 @@ SentinelInstanceSetup(
 }
 
 VOID
-SentinelInstanceTeardownStart(
+AkesoInstanceTeardownStart(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_TEARDOWN_FLAGS Reason
 )
@@ -323,11 +323,11 @@ SentinelInstanceTeardownStart(
     UNREFERENCED_PARAMETER(Reason);
 
     KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "SentinelDLP: Instance teardown start\n"));
+        "AkesoDLP: Instance teardown start\n"));
 }
 
 VOID
-SentinelInstanceTeardownComplete(
+AkesoInstanceTeardownComplete(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_TEARDOWN_FLAGS Reason
 )
@@ -336,15 +336,15 @@ SentinelInstanceTeardownComplete(
     UNREFERENCED_PARAMETER(Reason);
 
     KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "SentinelDLP: Instance teardown complete\n"));
+        "AkesoDLP: Instance teardown complete\n"));
 }
 
 /* ================================================================== */
 /*  Volume classification                                              */
 /* ================================================================== */
 
-SENTINEL_VOLUME_TYPE
-SentinelClassifyVolume(
+AKESO_VOLUME_TYPE
+AkesoClassifyVolume(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ DEVICE_TYPE VolumeDeviceType
 )
@@ -357,7 +357,7 @@ SentinelClassifyVolume(
     /* Network filesystems */
     if (VolumeDeviceType == FILE_DEVICE_NETWORK_FILE_SYSTEM ||
         VolumeDeviceType == FILE_DEVICE_NETWORK) {
-        return SentinelVolumeNetwork;
+        return AkesoVolumeNetwork;
     }
 
     /* Try to get the disk device to check characteristics */
@@ -367,17 +367,17 @@ SentinelClassifyVolume(
         ObDereferenceObject(deviceObject);
 
         if (characteristics & FILE_REMOVABLE_MEDIA) {
-            return SentinelVolumeRemovable;
+            return AkesoVolumeRemovable;
         }
     }
 
     /* Default: fixed volume */
     if (VolumeDeviceType == FILE_DEVICE_DISK ||
         VolumeDeviceType == FILE_DEVICE_DISK_FILE_SYSTEM) {
-        return SentinelVolumeFixed;
+        return AkesoVolumeFixed;
     }
 
-    return SentinelVolumeUnknown;
+    return AkesoVolumeUnknown;
 }
 
 /* ================================================================== */
@@ -385,15 +385,15 @@ SentinelClassifyVolume(
 /* ================================================================== */
 
 FLT_PREOP_CALLBACK_STATUS
-SentinelPreWrite(
+AkesoPreWrite(
     _Inout_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _Flt_CompletionContext_Outptr_ PVOID *CompletionContext
 )
 {
     NTSTATUS status;
-    PSENTINEL_INSTANCE_CONTEXT instanceContext = NULL;
-    SENTINEL_MSG_TYPE verdict = SentinelMsgVerdictAllow;
+    PAKESO_INSTANCE_CONTEXT instanceContext = NULL;
+    AKESO_MSG_TYPE verdict = AkesoMsgVerdictAllow;
 
     *CompletionContext = NULL;
 
@@ -428,10 +428,10 @@ SentinelPreWrite(
     /*
      * Send notification to user-mode and get verdict.
      */
-    status = SentinelSendNotification(
+    status = AkesoSendNotification(
         FltObjects,
         Data,
-        SentinelMsgFileWrite,
+        AkesoMsgFileWrite,
         instanceContext,
         &verdict
     );
@@ -441,15 +441,15 @@ SentinelPreWrite(
     if (!NT_SUCCESS(status)) {
         /* Communication failed — allow to prevent system hangs */
         KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL,
-            "SentinelDLP: Notification failed (0x%08X), allowing write\n",
+            "AkesoDLP: Notification failed (0x%08X), allowing write\n",
             status));
         return FLT_PREOP_SUCCESS_NO_CALLBACK;
     }
 
     /* Apply verdict */
-    if (verdict == SentinelMsgVerdictBlock) {
+    if (verdict == AkesoMsgVerdictBlock) {
         KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-            "SentinelDLP: BLOCKED write by PID %lu\n",
+            "AkesoDLP: BLOCKED write by PID %lu\n",
             (ULONG)(ULONG_PTR)PsGetCurrentProcessId()));
 
         Data->IoStatus.Status = STATUS_ACCESS_DENIED;
@@ -457,7 +457,7 @@ SentinelPreWrite(
         return FLT_PREOP_COMPLETE;
     }
 
-    /* SentinelMsgVerdictAllow or SentinelMsgVerdictScanFull (future) */
+    /* AkesoMsgVerdictAllow or AkesoMsgVerdictScanFull (future) */
     return FLT_PREOP_SUCCESS_NO_CALLBACK;
 }
 
@@ -466,7 +466,7 @@ SentinelPreWrite(
 /* ================================================================== */
 
 FLT_POSTOP_CALLBACK_STATUS
-SentinelPostCreate(
+AkesoPostCreate(
     _Inout_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_opt_ PVOID CompletionContext,
@@ -474,8 +474,8 @@ SentinelPostCreate(
 )
 {
     NTSTATUS status;
-    PSENTINEL_INSTANCE_CONTEXT instanceContext = NULL;
-    SENTINEL_MSG_TYPE verdict = SentinelMsgVerdictAllow;
+    PAKESO_INSTANCE_CONTEXT instanceContext = NULL;
+    AKESO_MSG_TYPE verdict = AkesoMsgVerdictAllow;
 
     UNREFERENCED_PARAMETER(CompletionContext);
 
@@ -519,10 +519,10 @@ SentinelPostCreate(
      * Notify user-mode of the create event (informational).
      * We don't block creates — only writes.
      */
-    status = SentinelSendNotification(
+    status = AkesoSendNotification(
         FltObjects,
         Data,
-        SentinelMsgFileCreate,
+        AkesoMsgFileCreate,
         instanceContext,
         &verdict
     );
@@ -540,22 +540,22 @@ SentinelPostCreate(
 /* ================================================================== */
 
 NTSTATUS
-SentinelSendNotification(
+AkesoSendNotification(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ PFLT_CALLBACK_DATA Data,
-    _In_ SENTINEL_MSG_TYPE MsgType,
-    _In_ PSENTINEL_INSTANCE_CONTEXT InstanceContext,
-    _Out_ SENTINEL_MSG_TYPE *Verdict
+    _In_ AKESO_MSG_TYPE MsgType,
+    _In_ PAKESO_INSTANCE_CONTEXT InstanceContext,
+    _Out_ AKESO_MSG_TYPE *Verdict
 )
 {
     NTSTATUS status;
-    PSENTINEL_NOTIFICATION notification = NULL;
-    SENTINEL_REPLY reply = { 0 };
-    ULONG replyLength = sizeof(SENTINEL_REPLY);
+    PAKESO_NOTIFICATION notification = NULL;
+    AKESO_REPLY reply = { 0 };
+    ULONG replyLength = sizeof(AKESO_REPLY);
     PFLT_FILE_NAME_INFORMATION nameInfo = NULL;
     LARGE_INTEGER timeout;
 
-    *Verdict = SentinelMsgVerdictAllow;
+    *Verdict = AkesoMsgVerdictAllow;
 
     /* Sanity: must have a client port */
     if (gFilterData.ClientPort == NULL) {
@@ -563,17 +563,17 @@ SentinelSendNotification(
     }
 
     /* Allocate notification from nonpaged pool (we're at IRQL <= APC) */
-    notification = (PSENTINEL_NOTIFICATION)ExAllocatePool2(
+    notification = (PAKESO_NOTIFICATION)ExAllocatePool2(
         POOL_FLAG_NON_PAGED,
-        sizeof(SENTINEL_NOTIFICATION),
-        SENTINEL_DLP_POOL_TAG
+        sizeof(AKESO_NOTIFICATION),
+        AKESO_DLP_POOL_TAG
     );
 
     if (notification == NULL) {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    RtlZeroMemory(notification, sizeof(SENTINEL_NOTIFICATION));
+    RtlZeroMemory(notification, sizeof(AKESO_NOTIFICATION));
 
     /* Fill in the notification */
     notification->Type = MsgType;
@@ -593,7 +593,7 @@ SentinelSendNotification(
         /* Copy file path (truncate if too long) */
         ULONG copyLen = min(
             nameInfo->Name.Length,
-            (SENTINEL_DLP_MAX_PATH - 1) * sizeof(WCHAR)
+            (AKESO_DLP_MAX_PATH - 1) * sizeof(WCHAR)
         );
         RtlCopyMemory(notification->FilePath, nameInfo->Name.Buffer, copyLen);
         notification->FilePath[copyLen / sizeof(WCHAR)] = L'\0';
@@ -605,13 +605,13 @@ SentinelSendNotification(
      * For write operations, capture the first 4KB of content
      * as a preview for quick pattern matching.
      */
-    if (MsgType == SentinelMsgFileWrite &&
+    if (MsgType == AkesoMsgFileWrite &&
         Data->Iopb->Parameters.Write.Length > 0 &&
         Data->Iopb->Parameters.Write.WriteBuffer != NULL) {
 
         ULONG previewLen = min(
             Data->Iopb->Parameters.Write.Length,
-            SENTINEL_DLP_PREVIEW_SIZE
+            AKESO_DLP_PREVIEW_SIZE
         );
 
         __try {
@@ -653,21 +653,21 @@ SentinelSendNotification(
         gFilterData.Filter,
         &gFilterData.ClientPort,
         notification,
-        sizeof(SENTINEL_NOTIFICATION),
+        sizeof(AKESO_NOTIFICATION),
         &reply,
         &replyLength,
         &timeout
     );
 
-    if (NT_SUCCESS(status) && replyLength >= sizeof(SENTINEL_REPLY)) {
+    if (NT_SUCCESS(status) && replyLength >= sizeof(AKESO_REPLY)) {
         *Verdict = reply.Verdict;
     } else if (status == STATUS_TIMEOUT) {
         KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL,
-            "SentinelDLP: Timeout waiting for user-mode reply, allowing\n"));
-        *Verdict = SentinelMsgVerdictAllow;
+            "AkesoDLP: Timeout waiting for user-mode reply, allowing\n"));
+        *Verdict = AkesoMsgVerdictAllow;
         status = STATUS_SUCCESS;  /* Don't fail the I/O on timeout */
     }
 
-    ExFreePoolWithTag(notification, SENTINEL_DLP_POOL_TAG);
+    ExFreePoolWithTag(notification, AKESO_DLP_POOL_TAG);
     return status;
 }

@@ -1,4 +1,4 @@
-"""gRPC server implementing SentinelDLPService (P2-T6).
+"""gRPC server implementing AkesoDLPService (P2-T6).
 
 Runs alongside FastAPI on port 50051. Implements:
   - Register: Agent registration → DB entry
@@ -29,8 +29,8 @@ from server.detection.analyzers.data_identifier_analyzer import (
 )
 from server.detection.file_inspector import FileInspector
 from server.detection.models import ComponentType, ParsedMessage
-from server.proto import sentineldlp_pb2 as pb2
-from server.proto import sentineldlp_pb2_grpc as pb2_grpc
+from server.proto import akesodlp_pb2 as pb2
+from server.proto import akesodlp_pb2_grpc as pb2_grpc
 from server.services import agent_service
 
 logger = logging.getLogger(__name__)
@@ -99,8 +99,8 @@ def _build_default_engine() -> DetectionEngine:
 # ---------------------------------------------------------------------------
 
 
-class SentinelDLPServicer(pb2_grpc.SentinelDLPServiceServicer):
-    """Implements all SentinelDLP gRPC RPCs."""
+class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
+    """Implements all AkesoDLP gRPC RPCs."""
 
     # --- Register ---
 
@@ -455,8 +455,8 @@ async def serve(
         The running gRPC server instance.
     """
     server = grpc.aio.server()
-    pb2_grpc.add_SentinelDLPServiceServicer_to_server(
-        SentinelDLPServicer(), server
+    pb2_grpc.add_AkesoDLPServiceServicer_to_server(
+        AkesoDLPServicer(), server
     )
 
     if server_cert and server_key and ca_cert:

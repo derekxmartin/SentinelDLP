@@ -1,6 +1,6 @@
 /*
  * agent_service.h
- * SentinelDLP Agent - Windows Service
+ * AkesoDLP Agent - Windows Service
  *
  * Manages the agent lifecycle as a Windows service registered
  * with the Service Control Manager (SCM).
@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "sentinel/config.h"
+#include "akeso/config.h"
 
 #include <atomic>
 #include <functional>
@@ -23,7 +23,7 @@
 #endif
 #include <Windows.h>
 
-namespace sentinel::dlp {
+namespace akeso::dlp {
 
 /* ------------------------------------------------------------------ */
 /*  Service state                                                      */
@@ -63,10 +63,10 @@ public:
 
 class AgentService {
 public:
-    static constexpr const wchar_t* kServiceName = L"SentinelDLPAgent";
-    static constexpr const wchar_t* kDisplayName = L"SentinelDLP Agent";
+    static constexpr const wchar_t* kServiceName = L"AkesoDLPAgent";
+    static constexpr const wchar_t* kDisplayName = L"AkesoDLP Agent";
     static constexpr const wchar_t* kDescription =
-        L"SentinelDLP Data Loss Prevention endpoint agent";
+        L"AkesoDLP Data Loss Prevention endpoint agent";
 
     AgentService();
     ~AgentService();
@@ -151,4 +151,4 @@ private:
     static AgentService*        instance_;
 };
 
-}  // namespace sentinel::dlp
+}  // namespace akeso::dlp

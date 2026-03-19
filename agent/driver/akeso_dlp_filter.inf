@@ -1,5 +1,5 @@
 ;;;
-;;; SentinelDLP Minifilter Driver
+;;; AkesoDLP Minifilter Driver
 ;;; Content Screener - Altitude 320100
 ;;;
 
@@ -9,12 +9,12 @@ Class       = "ContentScreener"
 ClassGuid   = {3e3f0674-c83c-4558-bb26-9820e1eba5c5}
 Provider    = %ProviderString%
 DriverVer   = 03/18/2026,1.0.0.0
-CatalogFile = sentinel_dlp_filter.cat
+CatalogFile = akeso_dlp_filter.cat
 PnpLockdown = 1
 
 [DestinationDirs]
 DefaultDestDir          = 13
-SentinelDLPFilter.DriverFiles = 13
+AkesoDLPFilter.DriverFiles = 13
 
 ;;; ===================================================================
 ;;; Default install sections
@@ -22,10 +22,10 @@ SentinelDLPFilter.DriverFiles = 13
 
 [DefaultInstall.NTAMD64]
 OptionDesc  = %ServiceDescription%
-CopyFiles   = SentinelDLPFilter.DriverFiles
+CopyFiles   = AkesoDLPFilter.DriverFiles
 
 [DefaultInstall.NTAMD64.Services]
-AddService  = %ServiceName%,,SentinelDLPFilter.Service
+AddService  = %ServiceName%,,AkesoDLPFilter.Service
 
 ;;; ===================================================================
 ;;; Default uninstall sections
@@ -33,7 +33,7 @@ AddService  = %ServiceName%,,SentinelDLPFilter.Service
 
 [DefaultUninstall.NTAMD64]
 LegacyUninstall = 1
-DelFiles        = SentinelDLPFilter.DriverFiles
+DelFiles        = AkesoDLPFilter.DriverFiles
 
 [DefaultUninstall.NTAMD64.Services]
 DelService = %ServiceName%,0x200
@@ -42,22 +42,22 @@ DelService = %ServiceName%,0x200
 ;;; Service configuration
 ;;; ===================================================================
 
-[SentinelDLPFilter.Service]
+[AkesoDLPFilter.Service]
 DisplayName    = %ServiceName%
 Description    = %ServiceDescription%
-ServiceBinary  = %13%\sentinel_dlp_filter.sys
+ServiceBinary  = %13%\akeso_dlp_filter.sys
 Dependencies   = "FltMgr"
 ServiceType    = 2                ; SERVICE_FILE_SYSTEM_DRIVER
 StartType      = 3                ; SERVICE_DEMAND_START
 ErrorControl   = 1                ; SERVICE_ERROR_NORMAL
 LoadOrderGroup = "FSFilter Content Screener"
-AddReg         = SentinelDLPFilter.AddRegistry
+AddReg         = AkesoDLPFilter.AddRegistry
 
 ;;; ===================================================================
 ;;; Filter Manager registration
 ;;; ===================================================================
 
-[SentinelDLPFilter.AddRegistry]
+[AkesoDLPFilter.AddRegistry]
 HKR,"Instances","DefaultInstance",0x00000000,%DefaultInstance%
 HKR,"Instances\"%Instance1.Name%,"Altitude",0x00000000,%Instance1.Altitude%
 HKR,"Instances\"%Instance1.Name%,"Flags",0x00010001,%Instance1.Flags%
@@ -66,15 +66,15 @@ HKR,"Instances\"%Instance1.Name%,"Flags",0x00010001,%Instance1.Flags%
 ;;; File copy
 ;;; ===================================================================
 
-[SentinelDLPFilter.DriverFiles]
-sentinel_dlp_filter.sys
+[AkesoDLPFilter.DriverFiles]
+akeso_dlp_filter.sys
 
 ;;; ===================================================================
 ;;; Source disk information
 ;;; ===================================================================
 
 [SourceDisksFiles]
-sentinel_dlp_filter.sys = 1,,
+akeso_dlp_filter.sys = 1,,
 
 [SourceDisksNames]
 1 = %DiskId1%,,,
@@ -84,11 +84,11 @@ sentinel_dlp_filter.sys = 1,,
 ;;; ===================================================================
 
 [Strings]
-ProviderString      = "Sentinel Security"
-ServiceName         = "SentinelDLPFilter"
-ServiceDescription  = "SentinelDLP Minifilter - File I/O content screening"
-DefaultInstance     = "SentinelDLP Instance"
-Instance1.Name      = "SentinelDLP Instance"
+ProviderString      = "Akeso Security"
+ServiceName         = "AkesoDLPFilter"
+ServiceDescription  = "AkesoDLP Minifilter - File I/O content screening"
+DefaultInstance     = "AkesoDLP Instance"
+Instance1.Name      = "AkesoDLP Instance"
 Instance1.Altitude  = "320100"
 Instance1.Flags     = 0x0              ; Automatic attachment
-DiskId1             = "SentinelDLP Installation Disk"
+DiskId1             = "AkesoDLP Installation Disk"

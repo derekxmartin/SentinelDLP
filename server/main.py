@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="SentinelDLP",
+    title="AkesoDLP",
     description="Data Loss Prevention Server",
     version="0.1.0",
     lifespan=lifespan,
@@ -57,4 +57,4 @@ app.include_router(users_router)
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "service": "sentinel-dlp-server"}
+    return {"status": "ok", "service": "akeso-dlp-server"}

@@ -1,6 +1,6 @@
 /*
  * policy_cache.h
- * SentinelDLP Agent - Policy Cache
+ * AkesoDLP Agent - Policy Cache
  *
  * SQLite-backed persistent cache for policy definitions.
  * Enables offline enforcement when the server is unreachable.
@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include "sentinel/agent_service.h"
-#include "sentinel/config.h"
+#include "akeso/agent_service.h"
+#include "akeso/config.h"
 
 #include <cstdint>
 #include <mutex>
@@ -26,10 +26,10 @@ struct sqlite3;
 
 #pragma warning(push)
 #pragma warning(disable: 4267)
-#include "sentineldlp.pb.h"
+#include "akesodlp.pb.h"
 #pragma warning(pop)
 
-namespace sentinel::dlp {
+namespace akeso::dlp {
 
 /* ------------------------------------------------------------------ */
 /*  PolicyCache                                                        */
@@ -65,7 +65,7 @@ public:
      * Load all cached policies into the provided vector.
      * Returns true if policies were loaded successfully.
      */
-    bool LoadPolicies(std::vector<sentineldlp::PolicyDefinition>& policies);
+    bool LoadPolicies(std::vector<akesodlp::PolicyDefinition>& policies);
 
     /*
      * Store a complete policy set from the server.
@@ -81,7 +81,7 @@ public:
      */
     bool StorePolicies(
         int32_t version,
-        const google::protobuf::RepeatedPtrField<sentineldlp::PolicyDefinition>& policies
+        const google::protobuf::RepeatedPtrField<akesodlp::PolicyDefinition>& policies
     );
 
     /*
@@ -89,7 +89,7 @@ public:
      */
     bool StorePolicies(
         int32_t version,
-        const std::vector<sentineldlp::PolicyDefinition>& policies
+        const std::vector<akesodlp::PolicyDefinition>& policies
     );
 
     /*
@@ -129,4 +129,4 @@ private:
     mutable std::recursive_mutex  db_mutex_;
 };
 
-}  // namespace sentinel::dlp
+}  // namespace akeso::dlp

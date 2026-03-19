@@ -8,9 +8,9 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
         CACHE STRING "vcpkg toolchain file")
 endif()
 
-project(SentinelDLPAgent
+project(AkesoDLPAgent
     VERSION 0.1.0
-    DESCRIPTION "SentinelDLP Endpoint Agent"
+    DESCRIPTION "AkesoDLP Endpoint Agent"
     LANGUAGES CXX C
 )
 
@@ -100,7 +100,7 @@ message(STATUS "-------------------------")
 # ---------------------------------------------------------------------------
 # Agent executable
 # ---------------------------------------------------------------------------
-add_executable(sentinel-dlp-agent
+add_executable(akeso-dlp-agent
     src/main.cpp
     src/config.cpp
     src/agent_service.cpp
@@ -109,47 +109,47 @@ add_executable(sentinel-dlp-agent
     src/incident_queue.cpp
 )
 
-target_include_directories(sentinel-dlp-agent PRIVATE
+target_include_directories(akeso-dlp-agent PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 # Link available dependencies
 if(spdlog_FOUND)
-    target_link_libraries(sentinel-dlp-agent PRIVATE spdlog::spdlog)
-    target_compile_definitions(sentinel-dlp-agent PRIVATE HAS_SPDLOG)
+    target_link_libraries(akeso-dlp-agent PRIVATE spdlog::spdlog)
+    target_compile_definitions(akeso-dlp-agent PRIVATE HAS_SPDLOG)
 endif()
 
 if(yaml-cpp_FOUND)
-    target_link_libraries(sentinel-dlp-agent PRIVATE yaml-cpp::yaml-cpp)
-    target_compile_definitions(sentinel-dlp-agent PRIVATE HAS_YAML_CPP)
+    target_link_libraries(akeso-dlp-agent PRIVATE yaml-cpp::yaml-cpp)
+    target_compile_definitions(akeso-dlp-agent PRIVATE HAS_YAML_CPP)
 endif()
 
 if(gRPC_FOUND)
-    target_link_libraries(sentinel-dlp-agent PRIVATE
+    target_link_libraries(akeso-dlp-agent PRIVATE
         gRPC::grpc++
         protobuf::libprotobuf
     )
-    target_compile_definitions(sentinel-dlp-agent PRIVATE HAS_GRPC)
+    target_compile_definitions(akeso-dlp-agent PRIVATE HAS_GRPC)
 endif()
 
 if(unofficial-hyperscan_FOUND)
-    target_link_libraries(sentinel-dlp-agent PRIVATE unofficial::hyperscan::hyperscan)
-    target_compile_definitions(sentinel-dlp-agent PRIVATE HAS_HYPERSCAN)
+    target_link_libraries(akeso-dlp-agent PRIVATE unofficial::hyperscan::hyperscan)
+    target_compile_definitions(akeso-dlp-agent PRIVATE HAS_HYPERSCAN)
 endif()
 
 if(unofficial-sqlite3_FOUND)
-    target_link_libraries(sentinel-dlp-agent PRIVATE unofficial::sqlite3::sqlite3)
-    target_compile_definitions(sentinel-dlp-agent PRIVATE HAS_SQLITE3)
+    target_link_libraries(akeso-dlp-agent PRIVATE unofficial::sqlite3::sqlite3)
+    target_compile_definitions(akeso-dlp-agent PRIVATE HAS_SQLITE3)
 endif()
 
 if(CURL_FOUND)
-    target_link_libraries(sentinel-dlp-agent PRIVATE CURL::libcurl)
-    target_compile_definitions(sentinel-dlp-agent PRIVATE HAS_CURL)
+    target_link_libraries(akeso-dlp-agent PRIVATE CURL::libcurl)
+    target_compile_definitions(akeso-dlp-agent PRIVATE HAS_CURL)
 endif()
 
 # Windows-specific libraries
 if(WIN32)
-    target_link_libraries(sentinel-dlp-agent PRIVATE
+    target_link_libraries(akeso-dlp-agent PRIVATE
         advapi32    # Service Control Manager
         bcrypt      # SHA-256 hashing (CNG)
         fltlib      # Minifilter user-mode API
@@ -162,7 +162,7 @@ endif()
 # ---------------------------------------------------------------------------
 if(gRPC_FOUND AND Protobuf_FOUND)
     set(PROTO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../proto")
-    set(PROTO_FILES "${PROTO_DIR}/sentineldlp.proto")
+    set(PROTO_FILES "${PROTO_DIR}/akesodlp.proto")
     set(PROTO_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/proto")
 
     file(MAKE_DIRECTORY ${PROTO_OUT_DIR})
@@ -175,10 +175,10 @@ if(gRPC_FOUND AND Protobuf_FOUND)
         # Generate protobuf sources
         add_custom_command(
             OUTPUT
-                "${PROTO_OUT_DIR}/sentineldlp.pb.h"
-                "${PROTO_OUT_DIR}/sentineldlp.pb.cc"
-                "${PROTO_OUT_DIR}/sentineldlp.grpc.pb.h"
-                "${PROTO_OUT_DIR}/sentineldlp.grpc.pb.cc"
+                "${PROTO_OUT_DIR}/akesodlp.pb.h"
+                "${PROTO_OUT_DIR}/akesodlp.pb.cc"
+                "${PROTO_OUT_DIR}/akesodlp.grpc.pb.h"
+                "${PROTO_OUT_DIR}/akesodlp.grpc.pb.cc"
             COMMAND ${_PROTOC}
                 --proto_path=${PROTO_DIR}
                 --proto_path=${Protobuf_INCLUDE_DIR}
@@ -192,15 +192,15 @@ if(gRPC_FOUND AND Protobuf_FOUND)
 
         # Add generated sources to agent (suppress warnings on generated code)
         set_source_files_properties(
-            "${PROTO_OUT_DIR}/sentineldlp.pb.cc"
-            "${PROTO_OUT_DIR}/sentineldlp.grpc.pb.cc"
+            "${PROTO_OUT_DIR}/akesodlp.pb.cc"
+            "${PROTO_OUT_DIR}/akesodlp.grpc.pb.cc"
             PROPERTIES COMPILE_FLAGS "/W0"
         )
-        target_sources(sentinel-dlp-agent PRIVATE
-            "${PROTO_OUT_DIR}/sentineldlp.pb.cc"
-            "${PROTO_OUT_DIR}/sentineldlp.grpc.pb.cc"
+        target_sources(akeso-dlp-agent PRIVATE
+            "${PROTO_OUT_DIR}/akesodlp.pb.cc"
+            "${PROTO_OUT_DIR}/akesodlp.grpc.pb.cc"
         )
-        target_include_directories(sentinel-dlp-agent PRIVATE ${PROTO_OUT_DIR})
+        target_include_directories(akeso-dlp-agent PRIVATE ${PROTO_OUT_DIR})
 
         message(STATUS "Protobuf/gRPC code generation configured")
     else()
@@ -271,10 +271,10 @@ if(BUILD_TESTS)
         target_compile_options(test_policy_cache PRIVATE /wd4267)
         # Depend on proto generation
         target_sources(test_policy_cache PRIVATE
-            "${PROTO_OUT_DIR}/sentineldlp.pb.cc"
+            "${PROTO_OUT_DIR}/akesodlp.pb.cc"
         )
         set_source_files_properties(
-            "${PROTO_OUT_DIR}/sentineldlp.pb.cc"
+            "${PROTO_OUT_DIR}/akesodlp.pb.cc"
             PROPERTIES COMPILE_FLAGS "/W0"
         )
         add_test(NAME PolicyCacheTests COMMAND test_policy_cache)
@@ -309,12 +309,12 @@ endif()
 # ---------------------------------------------------------------------------
 # Install
 # ---------------------------------------------------------------------------
-install(TARGETS sentinel-dlp-agent
+install(TARGETS akeso-dlp-agent
     RUNTIME DESTINATION bin
 )
 
 install(FILES config/config.yaml.example
-    DESTINATION etc/sentinel-dlp
+    DESTINATION etc/akeso-dlp
     RENAME config.yaml
 )
 
@@ -322,7 +322,7 @@ install(FILES config/config.yaml.example
 # Summary
 # ---------------------------------------------------------------------------
 message(STATUS "")
-message(STATUS "=== SentinelDLP Agent Build Configuration ===")
+message(STATUS "=== AkesoDLP Agent Build Configuration ===")
 message(STATUS "  Version:     ${PROJECT_VERSION}")
 message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "  Build Type:  ${CMAKE_BUILD_TYPE}")

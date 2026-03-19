@@ -1,6 +1,6 @@
 /*
- * sentinel_dlp_filter.h
- * SentinelDLP Minifilter Driver - Header
+ * akeso_dlp_filter.h
+ * AkesoDLP Minifilter Driver - Header
  *
  * Kernel-mode minifilter that intercepts file I/O on removable and
  * network volumes, forwarding events to the user-mode DLP agent
@@ -20,47 +20,47 @@
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-#define SENTINEL_DLP_FILTER_NAME    L"SentinelDLPFilter"
-#define SENTINEL_DLP_PORT_NAME      L"\\SentinelDLPPort"
-#define SENTINEL_DLP_ALTITUDE       L"320100"
-#define SENTINEL_DLP_POOL_TAG       'plDS'   /* SDlp */
+#define AKESO_DLP_FILTER_NAME    L"AkesoDLPFilter"
+#define AKESO_DLP_PORT_NAME      L"\\AkesoDLPPort"
+#define AKESO_DLP_ALTITUDE       L"320100"
+#define AKESO_DLP_POOL_TAG       'plDS'   /* SDlp */
 
 /*
  * Maximum number of concurrent user-mode connections.
  * Only the DLP agent service should connect.
  */
-#define SENTINEL_DLP_MAX_CONNECTIONS    1
+#define AKESO_DLP_MAX_CONNECTIONS    1
 
 /* Maximum file path length we track */
-#define SENTINEL_DLP_MAX_PATH           1024
+#define AKESO_DLP_MAX_PATH           1024
 
 /* Size of the content preview sent to user-mode (first 4KB) */
-#define SENTINEL_DLP_PREVIEW_SIZE       4096
+#define AKESO_DLP_PREVIEW_SIZE       4096
 
 /* ------------------------------------------------------------------ */
 /*  Message types (driver <-> user-mode)                               */
 /* ------------------------------------------------------------------ */
 
-typedef enum _SENTINEL_MSG_TYPE {
-    SentinelMsgFileWrite = 1,       /* Driver -> UM: file write detected */
-    SentinelMsgFileCreate,          /* Driver -> UM: file create/open    */
-    SentinelMsgVerdictAllow,        /* UM -> Driver: allow the operation */
-    SentinelMsgVerdictBlock,        /* UM -> Driver: block the operation */
-    SentinelMsgVerdictScanFull,     /* UM -> Driver: pend, scan full     */
-    SentinelMsgScanResult,          /* UM -> Driver: scan complete       */
-    SentinelMsgConfigUpdate,        /* UM -> Driver: config change       */
-} SENTINEL_MSG_TYPE;
+typedef enum _AKESO_MSG_TYPE {
+    AkesoMsgFileWrite = 1,       /* Driver -> UM: file write detected */
+    AkesoMsgFileCreate,          /* Driver -> UM: file create/open    */
+    AkesoMsgVerdictAllow,        /* UM -> Driver: allow the operation */
+    AkesoMsgVerdictBlock,        /* UM -> Driver: block the operation */
+    AkesoMsgVerdictScanFull,     /* UM -> Driver: pend, scan full     */
+    AkesoMsgScanResult,          /* UM -> Driver: scan complete       */
+    AkesoMsgConfigUpdate,        /* UM -> Driver: config change       */
+} AKESO_MSG_TYPE;
 
 /* ------------------------------------------------------------------ */
 /*  Volume type classification                                         */
 /* ------------------------------------------------------------------ */
 
-typedef enum _SENTINEL_VOLUME_TYPE {
-    SentinelVolumeFixed = 0,
-    SentinelVolumeRemovable,
-    SentinelVolumeNetwork,
-    SentinelVolumeUnknown,
-} SENTINEL_VOLUME_TYPE;
+typedef enum _AKESO_VOLUME_TYPE {
+    AkesoVolumeFixed = 0,
+    AkesoVolumeRemovable,
+    AkesoVolumeNetwork,
+    AkesoVolumeUnknown,
+} AKESO_VOLUME_TYPE;
 
 /* ------------------------------------------------------------------ */
 /*  Messages exchanged over the communication port                     */
@@ -71,49 +71,49 @@ typedef enum _SENTINEL_VOLUME_TYPE {
  * is intercepted on a monitored volume.
  */
 #pragma pack(push, 1)
-typedef struct _SENTINEL_NOTIFICATION {
-    SENTINEL_MSG_TYPE   Type;
+typedef struct _AKESO_NOTIFICATION {
+    AKESO_MSG_TYPE   Type;
     ULONG               ProcessId;
-    SENTINEL_VOLUME_TYPE VolumeType;
+    AKESO_VOLUME_TYPE VolumeType;
     LARGE_INTEGER       FileSize;
     ULONG               ContentLength;  /* Actual bytes in Content[] */
-    WCHAR               FilePath[SENTINEL_DLP_MAX_PATH];
-    UCHAR               Content[SENTINEL_DLP_PREVIEW_SIZE];
-} SENTINEL_NOTIFICATION, *PSENTINEL_NOTIFICATION;
+    WCHAR               FilePath[AKESO_DLP_MAX_PATH];
+    UCHAR               Content[AKESO_DLP_PREVIEW_SIZE];
+} AKESO_NOTIFICATION, *PAKESO_NOTIFICATION;
 
 /*
  * Reply from user-mode back to the driver.
  */
-typedef struct _SENTINEL_REPLY {
-    SENTINEL_MSG_TYPE   Verdict;
+typedef struct _AKESO_REPLY {
+    AKESO_MSG_TYPE   Verdict;
     ULONG               Reserved;
-} SENTINEL_REPLY, *PSENTINEL_REPLY;
+} AKESO_REPLY, *PAKESO_REPLY;
 #pragma pack(pop)
 
 /* ------------------------------------------------------------------ */
 /*  Per-instance context (attached to each volume instance)            */
 /* ------------------------------------------------------------------ */
 
-typedef struct _SENTINEL_INSTANCE_CONTEXT {
-    SENTINEL_VOLUME_TYPE    VolumeType;
+typedef struct _AKESO_INSTANCE_CONTEXT {
+    AKESO_VOLUME_TYPE    VolumeType;
     BOOLEAN                 MonitorEnabled;
     UNICODE_STRING          VolumeName;
     WCHAR                   VolumeNameBuffer[64];
-} SENTINEL_INSTANCE_CONTEXT, *PSENTINEL_INSTANCE_CONTEXT;
+} AKESO_INSTANCE_CONTEXT, *PAKESO_INSTANCE_CONTEXT;
 
 /* ------------------------------------------------------------------ */
 /*  Global filter data                                                 */
 /* ------------------------------------------------------------------ */
 
-typedef struct _SENTINEL_FILTER_DATA {
+typedef struct _AKESO_FILTER_DATA {
     PFLT_FILTER     Filter;
     PFLT_PORT       ServerPort;
     PFLT_PORT       ClientPort;
     BOOLEAN         ClientConnected;
     LONG            ConnectionCount;
-} SENTINEL_FILTER_DATA, *PSENTINEL_FILTER_DATA;
+} AKESO_FILTER_DATA, *PAKESO_FILTER_DATA;
 
-extern SENTINEL_FILTER_DATA gFilterData;
+extern AKESO_FILTER_DATA gFilterData;
 
 /* ------------------------------------------------------------------ */
 /*  Function prototypes - filter registration                          */
@@ -126,13 +126,13 @@ NTSTATUS DriverEntry(
 );
 
 NTSTATUS
-SentinelFilterUnload(
+AkesoFilterUnload(
     _In_ FLT_FILTER_UNLOAD_FLAGS Flags
 );
 
 /* Instance setup/teardown */
 NTSTATUS
-SentinelInstanceSetup(
+AkesoInstanceSetup(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_SETUP_FLAGS Flags,
     _In_ DEVICE_TYPE VolumeDeviceType,
@@ -140,13 +140,13 @@ SentinelInstanceSetup(
 );
 
 VOID
-SentinelInstanceTeardownStart(
+AkesoInstanceTeardownStart(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_TEARDOWN_FLAGS Reason
 );
 
 VOID
-SentinelInstanceTeardownComplete(
+AkesoInstanceTeardownComplete(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_TEARDOWN_FLAGS Reason
 );
@@ -156,14 +156,14 @@ SentinelInstanceTeardownComplete(
 /* ------------------------------------------------------------------ */
 
 FLT_PREOP_CALLBACK_STATUS
-SentinelPreWrite(
+AkesoPreWrite(
     _Inout_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _Flt_CompletionContext_Outptr_ PVOID *CompletionContext
 );
 
 FLT_POSTOP_CALLBACK_STATUS
-SentinelPostCreate(
+AkesoPostCreate(
     _Inout_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_opt_ PVOID CompletionContext,
@@ -175,7 +175,7 @@ SentinelPostCreate(
 /* ------------------------------------------------------------------ */
 
 NTSTATUS
-SentinelPortConnect(
+AkesoPortConnect(
     _In_ PFLT_PORT ClientPort,
     _In_opt_ PVOID ServerPortCookie,
     _In_reads_bytes_opt_(SizeOfContext) PVOID ConnectionContext,
@@ -184,12 +184,12 @@ SentinelPortConnect(
 );
 
 VOID
-SentinelPortDisconnect(
+AkesoPortDisconnect(
     _In_opt_ PVOID ConnectionCookie
 );
 
 NTSTATUS
-SentinelPortMessageNotify(
+AkesoPortMessageNotify(
     _In_opt_ PVOID PortCookie,
     _In_reads_bytes_opt_(InputBufferLength) PVOID InputBuffer,
     _In_ ULONG InputBufferLength,
@@ -202,17 +202,17 @@ SentinelPortMessageNotify(
 /*  Function prototypes - helpers                                      */
 /* ------------------------------------------------------------------ */
 
-SENTINEL_VOLUME_TYPE
-SentinelClassifyVolume(
+AKESO_VOLUME_TYPE
+AkesoClassifyVolume(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ DEVICE_TYPE VolumeDeviceType
 );
 
 NTSTATUS
-SentinelSendNotification(
+AkesoSendNotification(
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ PFLT_CALLBACK_DATA Data,
-    _In_ SENTINEL_MSG_TYPE MsgType,
-    _In_ PSENTINEL_INSTANCE_CONTEXT InstanceContext,
-    _Out_ SENTINEL_MSG_TYPE *Verdict
+    _In_ AKESO_MSG_TYPE MsgType,
+    _In_ PAKESO_INSTANCE_CONTEXT InstanceContext,
+    _Out_ AKESO_MSG_TYPE *Verdict
 );

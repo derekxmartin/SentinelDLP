@@ -36,8 +36,8 @@ from server.models.policy import (
     RuleCondition,
     Severity,
 )
-from server.proto import sentineldlp_pb2 as pb2
-from server.proto import sentineldlp_pb2_grpc as pb2_grpc
+from server.proto import akesodlp_pb2 as pb2
+from server.proto import akesodlp_pb2_grpc as pb2_grpc
 
 # ---------------------------------------------------------------------------
 # SQLite ↔ PostgreSQL type compilation
@@ -152,11 +152,11 @@ async def setup_db(monkeypatch):
 @pytest_asyncio.fixture
 async def grpc_channel():
     """Start an in-process gRPC server and return a channel to it."""
-    from server.grpc_server import SentinelDLPServicer
+    from server.grpc_server import AkesoDLPServicer
 
     server = grpc.aio.server()
-    pb2_grpc.add_SentinelDLPServiceServicer_to_server(
-        SentinelDLPServicer(), server
+    pb2_grpc.add_AkesoDLPServiceServicer_to_server(
+        AkesoDLPServicer(), server
     )
     port = server.add_insecure_port("[::]:0")  # Random available port
     await server.start()
@@ -171,7 +171,7 @@ async def grpc_channel():
 @pytest_asyncio.fixture
 async def stub(grpc_channel):
     """Return a gRPC stub connected to the test server."""
-    return pb2_grpc.SentinelDLPServiceStub(grpc_channel)
+    return pb2_grpc.AkesoDLPServiceStub(grpc_channel)
 
 
 # ===========================================================================

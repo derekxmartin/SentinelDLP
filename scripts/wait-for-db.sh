@@ -12,7 +12,7 @@ echo "Waiting for PostgreSQL at ${HOST}:${PORT}..."
 
 attempt=0
 while [ $attempt -lt $MAX_ATTEMPTS ]; do
-    if pg_isready -h "$HOST" -p "$PORT" -U sentinel > /dev/null 2>&1; then
+    if pg_isready -h "$HOST" -p "$PORT" -U akeso > /dev/null 2>&1; then
         echo "PostgreSQL is ready."
         exit 0
     fi
