@@ -1,9 +1,9 @@
-# SentinelDLP Server Configuration
+# AkesoDLP Server Configuration
 # Copy to .env or set environment variables with DLP_ prefix.
 # Example: DLP_DATABASE_URL=postgresql+asyncpg://...
 
 # --- Database ---
-# DLP_DATABASE_URL=postgresql+asyncpg://sentinel:sentinel@localhost:5432/sentinel_dlp
+# DLP_DATABASE_URL=postgresql+asyncpg://akeso:akeso@localhost:5432/akeso_dlp
 
 # --- Redis ---
 # DLP_REDIS_URL=redis://localhost:6379/0
@@ -20,7 +20,7 @@
 # DLP_SIEM_ENABLED=true
 # DLP_SIEM_ENDPOINT=http://siem-host:9200/api/v1/ingest
 # DLP_SIEM_API_KEY=your-api-key
-# DLP_SIEM_SOURCE_TYPE=sentinel_dlp
+# DLP_SIEM_SOURCE_TYPE=akeso_dlp
 # DLP_SIEM_BATCH_SIZE=100
 # DLP_SIEM_FLUSH_INTERVAL_SECONDS=10
 

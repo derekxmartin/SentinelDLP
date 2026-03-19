@@ -1,16 +1,16 @@
 /*
  * grpc_client.h
- * SentinelDLP Agent - gRPC Client
+ * AkesoDLP Agent - gRPC Client
  *
- * Manages the gRPC connection to the SentinelDLP server.
+ * Manages the gRPC connection to the AkesoDLP server.
  * Implements: Register, Heartbeat, GetPolicies, ReportIncident, DetectContent.
  * Features: mTLS, exponential backoff, async heartbeat thread.
  */
 
 #pragma once
 
-#include "sentinel/agent_service.h"
-#include "sentinel/config.h"
+#include "akeso/agent_service.h"
+#include "akeso/config.h"
 
 #include <atomic>
 #include <chrono>
@@ -23,10 +23,10 @@
 #pragma warning(push)
 #pragma warning(disable: 4267)  /* size_t to int in protobuf generated code */
 #include <grpcpp/grpcpp.h>
-#include "sentineldlp.grpc.pb.h"
+#include "akesodlp.grpc.pb.h"
 #pragma warning(pop)
 
-namespace sentinel::dlp {
+namespace akeso::dlp {
 
 /* ------------------------------------------------------------------ */
 /*  Connection state                                                   */
@@ -43,8 +43,8 @@ enum class ConnectionState {
 /*  Callbacks for policy updates and commands                          */
 /* ------------------------------------------------------------------ */
 
-using PolicyCallback = std::function<void(const sentineldlp::GetPoliciesResponse&)>;
-using CommandCallback = std::function<void(const sentineldlp::AgentCommand&)>;
+using PolicyCallback = std::function<void(const akesodlp::GetPoliciesResponse&)>;
+using CommandCallback = std::function<void(const akesodlp::AgentCommand&)>;
 
 /* ------------------------------------------------------------------ */
 /*  GrpcClient                                                         */
@@ -69,15 +69,15 @@ public:
 
     /* Policy sync */
     bool PullPolicies(int32_t current_version,
-                      sentineldlp::GetPoliciesResponse* response);
+                      akesodlp::GetPoliciesResponse* response);
 
     /* Incident reporting */
-    bool ReportIncident(const sentineldlp::IncidentReport& incident,
+    bool ReportIncident(const akesodlp::IncidentReport& incident,
                         std::string* incident_id);
 
     /* Two-Tier Detection */
-    bool DetectContent(const sentineldlp::DetectContentRequest& request,
-                       sentineldlp::DetectContentResponse* response);
+    bool DetectContent(const akesodlp::DetectContentRequest& request,
+                       akesodlp::DetectContentResponse* response);
 
     /* State */
     ConnectionState GetConnectionState() const { return conn_state_.load(); }
@@ -110,7 +110,7 @@ private:
 
     /* gRPC */
     std::shared_ptr<grpc::Channel>                          channel_;
-    std::unique_ptr<sentineldlp::SentinelDLPService::Stub>  stub_;
+    std::unique_ptr<akesodlp::AkesoDLPService::Stub>  stub_;
     std::mutex                                              stub_mutex_;
 
     /* State */
@@ -136,4 +136,4 @@ private:
     std::chrono::steady_clock::time_point start_time_;
 };
 
-}  // namespace sentinel::dlp
+}  // namespace akeso::dlp

@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# SentinelDLP Minifilter Driver
+# AkesoDLP Minifilter Driver
 # ---------------------------------------------------------------------------
 # This builds the kernel-mode minifilter driver (.sys) using WDK.
 #
@@ -14,21 +14,21 @@
 
 cmake_minimum_required(VERSION 3.20)
 
-set(DRIVER_NAME sentinel_dlp_filter)
+set(DRIVER_NAME akeso_dlp_filter)
 
 # Source files
 set(DRIVER_SOURCES
-    sentinel_dlp_filter.c
+    akeso_dlp_filter.c
     filter_comm.c
 )
 
 set(DRIVER_HEADERS
-    sentinel_dlp_filter.h
+    akeso_dlp_filter.h
 )
 
 # INF file
 set(DRIVER_INF
-    sentinel_dlp_filter.inf
+    akeso_dlp_filter.inf
 )
 
 # ---------------------------------------------------------------------------
@@ -42,7 +42,7 @@ if(COMMAND wdk_add_driver)
     )
 
     target_compile_definitions(${DRIVER_NAME} PRIVATE
-        SENTINEL_DLP_DRIVER
+        AKESO_DLP_DRIVER
         POOL_NX_OPTIN=1
     )
 

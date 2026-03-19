@@ -1,9 +1,9 @@
 /*
  * config.cpp
- * SentinelDLP Agent - Configuration loader implementation
+ * AkesoDLP Agent - Configuration loader implementation
  */
 
-#include "sentinel/config.h"
+#include "akeso/config.h"
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -19,7 +19,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-namespace sentinel::dlp {
+namespace akeso::dlp {
 
 /* ------------------------------------------------------------------ */
 /*  Helper: safely read a YAML node with a default value               */
@@ -203,7 +203,7 @@ std::filesystem::path ConfigLoader::FindConfigFile(
 
     /* 3. Standard install location */
     {
-        std::filesystem::path p("C:\\SentinelDLP\\config.yaml");
+        std::filesystem::path p("C:\\AkesoDLP\\config.yaml");
         if (std::filesystem::exists(p)) return p;
     }
 
@@ -211,7 +211,7 @@ std::filesystem::path ConfigLoader::FindConfigFile(
     {
         const char* pd = std::getenv("PROGRAMDATA");
         if (pd) {
-            auto p = std::filesystem::path(pd) / "SentinelDLP" / "config.yaml";
+            auto p = std::filesystem::path(pd) / "AkesoDLP" / "config.yaml";
             if (std::filesystem::exists(p)) return p;
         }
     }
@@ -219,4 +219,4 @@ std::filesystem::path ConfigLoader::FindConfigFile(
     return {};  /* Not found */
 }
 
-}  // namespace sentinel::dlp
+}  // namespace akeso::dlp

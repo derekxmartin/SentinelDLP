@@ -1,14 +1,14 @@
 /*
  * test_policy_cache.cpp
- * SentinelDLP Agent - PolicyCache tests
+ * AkesoDLP Agent - PolicyCache tests
  */
 
 #include <filesystem>
 #include <gtest/gtest.h>
 
-#include "sentinel/policy_cache.h"
+#include "akeso/policy_cache.h"
 
-using namespace sentinel::dlp;
+using namespace akeso::dlp;
 
 /* ------------------------------------------------------------------ */
 /*  Test fixture: creates a temp DB for each test                      */
@@ -18,7 +18,7 @@ class PolicyCacheTest : public ::testing::Test {
 protected:
     void SetUp() override {
         db_path_ = (std::filesystem::temp_directory_path() /
-                     ("sentinel_test_cache_" + std::to_string(counter_++) + ".db"))
+                     ("akeso_test_cache_" + std::to_string(counter_++) + ".db"))
                     .string();
 
         AgentConfig config;
@@ -33,12 +33,12 @@ protected:
     }
 
     /* Helper: create a test policy */
-    sentineldlp::PolicyDefinition MakePolicy(
+    akesodlp::PolicyDefinition MakePolicy(
         const std::string& id,
         const std::string& name,
-        sentineldlp::Severity severity = sentineldlp::SEVERITY_HIGH
+        akesodlp::Severity severity = akesodlp::SEVERITY_HIGH
     ) {
-        sentineldlp::PolicyDefinition p;
+        akesodlp::PolicyDefinition p;
         p.set_policy_id(id);
         p.set_name(name);
         p.set_severity(severity);
@@ -84,7 +84,7 @@ TEST_F(PolicyCacheTest, EmptyCacheHasNoPolicies) {
 TEST_F(PolicyCacheTest, StoreSinglePolicy) {
     ASSERT_TRUE(cache_->Start());
 
-    std::vector<sentineldlp::PolicyDefinition> policies = {
+    std::vector<akesodlp::PolicyDefinition> policies = {
         MakePolicy("p1", "PCI-DSS")
     };
 
@@ -98,10 +98,10 @@ TEST_F(PolicyCacheTest, StoreSinglePolicy) {
 TEST_F(PolicyCacheTest, StoreMultiplePolicies) {
     ASSERT_TRUE(cache_->Start());
 
-    std::vector<sentineldlp::PolicyDefinition> policies = {
-        MakePolicy("p1", "PCI-DSS", sentineldlp::SEVERITY_HIGH),
-        MakePolicy("p2", "HIPAA", sentineldlp::SEVERITY_HIGH),
-        MakePolicy("p3", "GDPR", sentineldlp::SEVERITY_MEDIUM),
+    std::vector<akesodlp::PolicyDefinition> policies = {
+        MakePolicy("p1", "PCI-DSS", akesodlp::SEVERITY_HIGH),
+        MakePolicy("p2", "HIPAA", akesodlp::SEVERITY_HIGH),
+        MakePolicy("p3", "GDPR", akesodlp::SEVERITY_MEDIUM),
     };
 
     ASSERT_TRUE(cache_->StorePolicies(5, policies));
@@ -113,20 +113,20 @@ TEST_F(PolicyCacheTest, StoreMultiplePolicies) {
 TEST_F(PolicyCacheTest, LoadPoliciesDeserializesCorrectly) {
     ASSERT_TRUE(cache_->Start());
 
-    auto original = MakePolicy("p1", "PCI-DSS", sentineldlp::SEVERITY_HIGH);
+    auto original = MakePolicy("p1", "PCI-DSS", akesodlp::SEVERITY_HIGH);
     original.set_description("Payment Card Industry");
     original.set_ttd_fallback("block");
 
-    std::vector<sentineldlp::PolicyDefinition> to_store = { original };
+    std::vector<akesodlp::PolicyDefinition> to_store = { original };
     ASSERT_TRUE(cache_->StorePolicies(1, to_store));
 
-    std::vector<sentineldlp::PolicyDefinition> loaded;
+    std::vector<akesodlp::PolicyDefinition> loaded;
     ASSERT_TRUE(cache_->LoadPolicies(loaded));
 
     ASSERT_EQ(loaded.size(), 1);
     EXPECT_EQ(loaded[0].policy_id(), "p1");
     EXPECT_EQ(loaded[0].name(), "PCI-DSS");
-    EXPECT_EQ(loaded[0].severity(), sentineldlp::SEVERITY_HIGH);
+    EXPECT_EQ(loaded[0].severity(), akesodlp::SEVERITY_HIGH);
     EXPECT_EQ(loaded[0].description(), "Payment Card Industry");
     EXPECT_EQ(loaded[0].ttd_fallback(), "block");
     EXPECT_EQ(loaded[0].status(), "active");
@@ -140,7 +140,7 @@ TEST_F(PolicyCacheTest, AtomicVersionSwap) {
     ASSERT_TRUE(cache_->Start());
 
     /* Store version 1 */
-    std::vector<sentineldlp::PolicyDefinition> v1 = {
+    std::vector<akesodlp::PolicyDefinition> v1 = {
         MakePolicy("p1", "Policy-A"),
         MakePolicy("p2", "Policy-B"),
     };
@@ -149,7 +149,7 @@ TEST_F(PolicyCacheTest, AtomicVersionSwap) {
     EXPECT_EQ(cache_->GetVersion(), 1);
 
     /* Store version 2 — completely replaces v1 */
-    std::vector<sentineldlp::PolicyDefinition> v2 = {
+    std::vector<akesodlp::PolicyDefinition> v2 = {
         MakePolicy("p3", "Policy-C"),
         MakePolicy("p4", "Policy-D"),
         MakePolicy("p5", "Policy-E"),
@@ -159,7 +159,7 @@ TEST_F(PolicyCacheTest, AtomicVersionSwap) {
     EXPECT_EQ(cache_->GetVersion(), 2);
 
     /* Verify v1 policies are gone */
-    std::vector<sentineldlp::PolicyDefinition> loaded;
+    std::vector<akesodlp::PolicyDefinition> loaded;
     ASSERT_TRUE(cache_->LoadPolicies(loaded));
     ASSERT_EQ(loaded.size(), 3);
 
@@ -179,7 +179,7 @@ TEST_F(PolicyCacheTest, AtomicVersionSwap) {
 TEST_F(PolicyCacheTest, PersistsAcrossRestart) {
     /* Store policies */
     ASSERT_TRUE(cache_->Start());
-    std::vector<sentineldlp::PolicyDefinition> policies = {
+    std::vector<akesodlp::PolicyDefinition> policies = {
         MakePolicy("p1", "PCI-DSS"),
         MakePolicy("p2", "HIPAA"),
     };
@@ -195,7 +195,7 @@ TEST_F(PolicyCacheTest, PersistsAcrossRestart) {
     EXPECT_EQ(cache2->GetVersion(), 7);
     EXPECT_EQ(cache2->GetPolicyCount(), 2);
 
-    std::vector<sentineldlp::PolicyDefinition> loaded;
+    std::vector<akesodlp::PolicyDefinition> loaded;
     ASSERT_TRUE(cache2->LoadPolicies(loaded));
     ASSERT_EQ(loaded.size(), 2);
 
@@ -209,7 +209,7 @@ TEST_F(PolicyCacheTest, PersistsAcrossRestart) {
 TEST_F(PolicyCacheTest, ClearRemovesEverything) {
     ASSERT_TRUE(cache_->Start());
 
-    std::vector<sentineldlp::PolicyDefinition> policies = {
+    std::vector<akesodlp::PolicyDefinition> policies = {
         MakePolicy("p1", "PCI-DSS"),
     };
     ASSERT_TRUE(cache_->StorePolicies(3, policies));
@@ -234,7 +234,7 @@ TEST_F(PolicyCacheTest, LastSyncTimeUpdatedOnStore) {
     EXPECT_TRUE(cache_->GetLastSyncTime().empty());
 
     /* Store policies */
-    std::vector<sentineldlp::PolicyDefinition> policies = {
+    std::vector<akesodlp::PolicyDefinition> policies = {
         MakePolicy("p1", "Test"),
     };
     ASSERT_TRUE(cache_->StorePolicies(1, policies));
@@ -269,17 +269,17 @@ TEST_F(PolicyCacheTest, PolicyWithRulesRoundTrips) {
     /* Add severity thresholds */
     auto* thresh = policy.add_severity_thresholds();
     thresh->set_threshold(3);
-    thresh->set_severity(sentineldlp::SEVERITY_MEDIUM);
+    thresh->set_severity(akesodlp::SEVERITY_MEDIUM);
 
     auto* thresh2 = policy.add_severity_thresholds();
     thresh2->set_threshold(10);
-    thresh2->set_severity(sentineldlp::SEVERITY_HIGH);
+    thresh2->set_severity(akesodlp::SEVERITY_HIGH);
 
-    std::vector<sentineldlp::PolicyDefinition> to_store = { policy };
+    std::vector<akesodlp::PolicyDefinition> to_store = { policy };
     ASSERT_TRUE(cache_->StorePolicies(1, to_store));
 
     /* Load and verify */
-    std::vector<sentineldlp::PolicyDefinition> loaded;
+    std::vector<akesodlp::PolicyDefinition> loaded;
     ASSERT_TRUE(cache_->LoadPolicies(loaded));
     ASSERT_EQ(loaded.size(), 1);
 
@@ -291,7 +291,7 @@ TEST_F(PolicyCacheTest, PolicyWithRulesRoundTrips) {
 
     EXPECT_EQ(p.severity_thresholds_size(), 2);
     EXPECT_EQ(p.severity_thresholds(0).threshold(), 3);
-    EXPECT_EQ(p.severity_thresholds(1).severity(), sentineldlp::SEVERITY_HIGH);
+    EXPECT_EQ(p.severity_thresholds(1).severity(), akesodlp::SEVERITY_HIGH);
 }
 
 /* ------------------------------------------------------------------ */
@@ -302,14 +302,14 @@ TEST_F(PolicyCacheTest, StoreEmptyPolicySet) {
     ASSERT_TRUE(cache_->Start());
 
     /* First store some policies */
-    std::vector<sentineldlp::PolicyDefinition> policies = {
+    std::vector<akesodlp::PolicyDefinition> policies = {
         MakePolicy("p1", "Test"),
     };
     ASSERT_TRUE(cache_->StorePolicies(1, policies));
     EXPECT_EQ(cache_->GetPolicyCount(), 1);
 
     /* Store empty set — removes all */
-    std::vector<sentineldlp::PolicyDefinition> empty;
+    std::vector<akesodlp::PolicyDefinition> empty;
     ASSERT_TRUE(cache_->StorePolicies(2, empty));
     EXPECT_EQ(cache_->GetPolicyCount(), 0);
     EXPECT_EQ(cache_->GetVersion(), 2);
@@ -325,7 +325,7 @@ TEST_F(PolicyCacheTest, OperationsFailWhenNotStarted) {
     EXPECT_EQ(cache_->GetPolicyCount(), 0);
     EXPECT_FALSE(cache_->HasPolicies());
 
-    std::vector<sentineldlp::PolicyDefinition> policies;
+    std::vector<akesodlp::PolicyDefinition> policies;
     EXPECT_FALSE(cache_->LoadPolicies(policies));
     EXPECT_FALSE(cache_->StorePolicies(1, policies));
     EXPECT_FALSE(cache_->Clear());

@@ -102,7 +102,7 @@ export default function Login() {
             color: 'white',
           }}
         >
-          Sign in to SentinelDLP
+          Sign in to AkesoDLP
         </h2>
       </div>
 
@@ -186,7 +186,7 @@ export default function Login() {
         </form>
 
         <p style={{ marginTop: '2.5rem', textAlign: 'center', fontSize: '0.875rem', color: '#9ca3af' }}>
-          Sentinel Security Suite &middot; v0.1.0
+          Akeso Security Suite &middot; v0.1.0
         </p>
       </div>
     </div>

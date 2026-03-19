@@ -93,8 +93,8 @@ async def setup_db():
         admin_user = User(
             id=uuid.uuid4(),
             username="admin",
-            email="admin@sentinel.local",
-            password_hash=auth_service.hash_password("SentinelDLP2026!"),
+            email="admin@akeso.local",
+            password_hash=auth_service.hash_password("AkesoDLP2026!"),
             full_name="Admin User",
             is_active=True,
             mfa_enabled=False,
@@ -103,7 +103,7 @@ async def setup_db():
         analyst_user = User(
             id=uuid.uuid4(),
             username="analyst",
-            email="analyst@sentinel.local",
+            email="analyst@akeso.local",
             password_hash=auth_service.hash_password("AnalystPass123!"),
             full_name="Analyst User",
             is_active=True,
@@ -135,7 +135,7 @@ async def admin_token(client: AsyncClient) -> str:
     """Get admin access token."""
     resp = await client.post(
         "/api/auth/login",
-        json={"username": "admin", "password": "SentinelDLP2026!"},
+        json={"username": "admin", "password": "AkesoDLP2026!"},
     )
     return resp.json()["access_token"]
 
@@ -166,7 +166,7 @@ class TestLogin:
         """Valid credentials → JWT access token."""
         resp = await client.post(
             "/api/auth/login",
-            json={"username": "admin", "password": "SentinelDLP2026!"},
+            json={"username": "admin", "password": "AkesoDLP2026!"},
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -197,7 +197,7 @@ class TestLogin:
         """Returned JWT can be decoded and contains expected claims."""
         resp = await client.post(
             "/api/auth/login",
-            json={"username": "admin", "password": "SentinelDLP2026!"},
+            json={"username": "admin", "password": "AkesoDLP2026!"},
         )
         token = resp.json()["access_token"]
         payload = auth_service.decode_token(token)
@@ -232,7 +232,7 @@ class TestMFA:
         # Login → MFA challenge
         resp = await client.post(
             "/api/auth/login",
-            json={"username": "admin", "password": "SentinelDLP2026!"},
+            json={"username": "admin", "password": "AkesoDLP2026!"},
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -273,7 +273,7 @@ class TestMFA:
 
         resp = await client.post(
             "/api/auth/login",
-            json={"username": "admin", "password": "SentinelDLP2026!"},
+            json={"username": "admin", "password": "AkesoDLP2026!"},
         )
         challenge = resp.json()["mfa_challenge_token"]
 
@@ -326,7 +326,7 @@ class TestMFA:
         # Disable
         resp3 = await client.post(
             "/api/auth/mfa/disable",
-            json={"password": "SentinelDLP2026!"},
+            json={"password": "AkesoDLP2026!"},
             headers=auth_header(admin_token),
         )
         assert resp3.status_code == 200
@@ -370,7 +370,7 @@ class TestTokenRefresh:
         """Login → use refresh cookie → get new access token."""
         resp = await client.post(
             "/api/auth/login",
-            json={"username": "admin", "password": "SentinelDLP2026!"},
+            json={"username": "admin", "password": "AkesoDLP2026!"},
         )
         assert resp.status_code == 200
         refresh_cookie = resp.cookies.get("refresh_token")
@@ -406,7 +406,7 @@ class TestLogout:
         """Logout revokes refresh token."""
         resp = await client.post(
             "/api/auth/login",
-            json={"username": "admin", "password": "SentinelDLP2026!"},
+            json={"username": "admin", "password": "AkesoDLP2026!"},
         )
         refresh_cookie = resp.cookies.get("refresh_token")
         client.cookies.set("refresh_token", refresh_cookie)
@@ -437,7 +437,7 @@ class TestMe:
         assert resp.status_code == 200
         data = resp.json()
         assert data["username"] == "admin"
-        assert data["email"] == "admin@sentinel.local"
+        assert data["email"] == "admin@akeso.local"
         assert data["role"]["name"] == "Admin"
 
     @pytest.mark.asyncio
@@ -516,7 +516,7 @@ class TestRateLimiting:
         # Successful login
         resp = await client.post(
             "/api/auth/login",
-            json={"username": "admin", "password": "SentinelDLP2026!"},
+            json={"username": "admin", "password": "AkesoDLP2026!"},
         )
         assert resp.status_code == 200
 
@@ -541,7 +541,7 @@ class TestPasswordChange:
         resp = await client.post(
             "/api/auth/password",
             json={
-                "current_password": "SentinelDLP2026!",
+                "current_password": "AkesoDLP2026!",
                 "new_password": "NewPassword123!",
             },
             headers=auth_header(admin_token),
@@ -551,7 +551,7 @@ class TestPasswordChange:
         # Old password should fail
         resp2 = await client.post(
             "/api/auth/login",
-            json={"username": "admin", "password": "SentinelDLP2026!"},
+            json={"username": "admin", "password": "AkesoDLP2026!"},
         )
         assert resp2.status_code == 401
 

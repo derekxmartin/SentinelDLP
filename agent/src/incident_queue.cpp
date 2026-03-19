@@ -1,8 +1,8 @@
 // ──────────────────────────────────────────────────────────────────
-//  SentinelDLP Agent — IncidentQueue implementation
+//  AkesoDLP Agent — IncidentQueue implementation
 // ──────────────────────────────────────────────────────────────────
 
-#include "sentinel/incident_queue.h"
+#include "akeso/incident_queue.h"
 
 #include <algorithm>
 #include <chrono>
@@ -19,7 +19,7 @@
 #pragma comment(lib, "bcrypt.lib")
 #endif
 
-namespace sentinel::dlp {
+namespace akeso::dlp {
 
 // ── Helpers ─────────────────────────────────────────────────────
 
@@ -521,4 +521,4 @@ int64_t IncidentQueue::EvictOldest(int64_t count) {
     return evicted;
 }
 
-}  // namespace sentinel::dlp
+}  // namespace akeso::dlp

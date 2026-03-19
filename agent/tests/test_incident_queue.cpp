@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────────────────────────
-//  SentinelDLP Agent — IncidentQueue tests
+//  AkesoDLP Agent — IncidentQueue tests
 // ──────────────────────────────────────────────────────────────────
 
 #include <gtest/gtest.h>
@@ -8,12 +8,12 @@
 #include <string>
 #include <vector>
 
-#include "sentinel/incident_queue.h"
+#include "akeso/incident_queue.h"
 
 namespace fs = std::filesystem;
-using sentinel::dlp::IncidentQueue;
-using sentinel::dlp::QueuedIncident;
-using sentinel::dlp::QueueStats;
+using akeso::dlp::IncidentQueue;
+using akeso::dlp::QueuedIncident;
+using akeso::dlp::QueueStats;
 
 // ── Helper ──────────────────────────────────────────────────────
 

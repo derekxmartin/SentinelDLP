@@ -1,4 +1,4 @@
-# SentinelDLP Agent Configuration
+# AkesoDLP Agent Configuration
 server:
   host: "localhost"
   port: 50051
@@ -9,7 +9,7 @@ server:
     client_key: "certs/agent-key.pem"
 
 driver:
-  port_name: "\\SentinelDLPPort"
+  port_name: "\\AkesoDLPPort"
   max_connections: 4
   message_buffer_size: 65536
 
@@ -30,18 +30,18 @@ monitoring:
   print: false  # v1 stretch goal
 
 policy_cache:
-  path: "C:\\SentinelDLP\\cache\\policies.db"
+  path: "C:\\AkesoDLP\\cache\\policies.db"
 
 incident_queue:
-  path: "C:\\SentinelDLP\\queue\\incidents.mmap"
+  path: "C:\\AkesoDLP\\queue\\incidents.mmap"
   max_entries: 1000
 
 recovery:
-  path: "C:\\SentinelDLP\\Recovery"
+  path: "C:\\AkesoDLP\\Recovery"
 
 logging:
   level: "info"
-  file: "C:\\SentinelDLP\\logs\\agent.log"
+  file: "C:\\AkesoDLP\\logs\\agent.log"
   max_size_mb: 50
   max_files: 5
 

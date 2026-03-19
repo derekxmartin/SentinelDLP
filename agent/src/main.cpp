@@ -1,23 +1,23 @@
 /*
  * main.cpp
- * SentinelDLP Agent - Entry point
+ * AkesoDLP Agent - Entry point
  *
  * Supports two modes:
  *   1. Windows Service (default): registered with SCM
  *   2. Console mode (--console): for debugging
  *
  * Usage:
- *   sentinel-dlp-agent.exe                    # Run as service
- *   sentinel-dlp-agent.exe --console          # Console mode
- *   sentinel-dlp-agent.exe --config path.yaml # Custom config
- *   sentinel-dlp-agent.exe --install          # Install service
- *   sentinel-dlp-agent.exe --uninstall        # Remove service
+ *   akeso-dlp-agent.exe                    # Run as service
+ *   akeso-dlp-agent.exe --console          # Console mode
+ *   akeso-dlp-agent.exe --config path.yaml # Custom config
+ *   akeso-dlp-agent.exe --install          # Install service
+ *   akeso-dlp-agent.exe --uninstall        # Remove service
  */
 
-#include "sentinel/agent_service.h"
-#include "sentinel/config.h"
-#include "sentinel/grpc_client.h"
-#include "sentinel/incident_queue.h"
+#include "akeso/agent_service.h"
+#include "akeso/config.h"
+#include "akeso/grpc_client.h"
+#include "akeso/incident_queue.h"
 
 #include <iostream>
 #include <string>
@@ -29,7 +29,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #endif
 
-namespace sentinel::dlp {
+namespace akeso::dlp {
 
 constexpr const char* kVersion = "0.1.0";
 
@@ -60,7 +60,7 @@ static void InitializeLogging(const LoggingConfig& cfg, bool console_mode) {
         }
     }
 
-    auto logger = std::make_shared<spdlog::logger>("sentinel", sinks.begin(), sinks.end());
+    auto logger = std::make_shared<spdlog::logger>("akeso", sinks.begin(), sinks.end());
 
     /* Set log level */
     if (cfg.level == "trace")       logger->set_level(spdlog::level::trace);
@@ -204,19 +204,19 @@ static CmdArgs ParseArgs(int argc, char* argv[]) {
     return args;
 }
 
-}  // namespace sentinel::dlp
+}  // namespace akeso::dlp
 
 /* ================================================================== */
 /*  main                                                               */
 /* ================================================================== */
 
 int main(int argc, char* argv[]) {
-    using namespace sentinel::dlp;
+    using namespace akeso::dlp;
 
     auto args = ParseArgs(argc, argv);
 
     if (args.version) {
-        std::cout << "SentinelDLPAgent v" << kVersion << std::endl;
+        std::cout << "AkesoDLPAgent v" << kVersion << std::endl;
         return 0;
     }
 
@@ -270,13 +270,13 @@ int main(int argc, char* argv[]) {
     /* Default: try to run as a Windows service */
     if (!AgentService::RunAsService()) {
         /* Not launched by SCM — show usage */
-        std::cout << "SentinelDLPAgent v" << kVersion << "\n\n"
+        std::cout << "AkesoDLPAgent v" << kVersion << "\n\n"
                   << "Usage:\n"
-                  << "  sentinel-dlp-agent --console     Run in console mode\n"
-                  << "  sentinel-dlp-agent --install     Install as Windows service\n"
-                  << "  sentinel-dlp-agent --uninstall   Remove Windows service\n"
-                  << "  sentinel-dlp-agent --version     Show version\n"
-                  << "  sentinel-dlp-agent --config FILE Specify config file\n"
+                  << "  akeso-dlp-agent --console     Run in console mode\n"
+                  << "  akeso-dlp-agent --install     Install as Windows service\n"
+                  << "  akeso-dlp-agent --uninstall   Remove Windows service\n"
+                  << "  akeso-dlp-agent --version     Show version\n"
+                  << "  akeso-dlp-agent --config FILE Specify config file\n"
                   << std::endl;
         return 1;
     }

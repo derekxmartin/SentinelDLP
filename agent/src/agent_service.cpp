@@ -1,6 +1,6 @@
 /*
  * agent_service.cpp
- * SentinelDLP Agent - Windows Service implementation
+ * AkesoDLP Agent - Windows Service implementation
  *
  * Startup sequence:
  *   1. Load config
@@ -13,7 +13,7 @@
  * Graceful shutdown reverses the order.
  */
 
-#include "sentinel/agent_service.h"
+#include "akeso/agent_service.h"
 
 #include <iostream>
 
@@ -29,7 +29,7 @@
 #define LOG_ERROR(...)   (void)0
 #endif
 
-namespace sentinel::dlp {
+namespace akeso::dlp {
 
 /* Singleton instance for SCM callbacks */
 AgentService* AgentService::instance_ = nullptr;
@@ -129,7 +129,7 @@ void WINAPI AgentService::ServiceMain(
 
     /* Report SERVICE_RUNNING */
     self->ReportServiceStatus(SERVICE_RUNNING);
-    LOG_INFO("SentinelDLP Agent service started successfully");
+    LOG_INFO("AkesoDLP Agent service started successfully");
 
     /* Block until stop event is signaled */
     WaitForSingleObject(self->stop_event_, INFINITE);
@@ -137,7 +137,7 @@ void WINAPI AgentService::ServiceMain(
     /* Shutdown */
     self->Shutdown();
     self->ReportServiceStatus(SERVICE_STOPPED);
-    LOG_INFO("SentinelDLP Agent service stopped");
+    LOG_INFO("AkesoDLP Agent service stopped");
 }
 
 /* ================================================================== */
@@ -184,7 +184,7 @@ bool AgentService::RunConsole(const AgentConfig& config) {
         return false;
     }
 
-    std::cout << "SentinelDLP Agent running in console mode. Press Ctrl+C to stop."
+    std::cout << "AkesoDLP Agent running in console mode. Press Ctrl+C to stop."
               << std::endl;
 
     /* Block until stop */
@@ -215,7 +215,7 @@ BOOL WINAPI AgentService::ConsoleCtrlHandler(DWORD ctrlType) {
 bool AgentService::Initialize(const AgentConfig& config) {
     config_ = config;
 
-    LOG_INFO("SentinelDLP Agent v{} initializing", "0.1.0");
+    LOG_INFO("AkesoDLP Agent v{} initializing", "0.1.0");
     LOG_INFO("Server: {}:{}", config_.server.host, config_.server.port);
     LOG_INFO("TLS: {}", config_.server.tls.enabled ? "enabled" : "disabled");
     LOG_INFO("TTD timeout: {}s, fallback: {}",
@@ -380,4 +380,4 @@ void AgentService::WatchdogThread() {
     LOG_INFO("Watchdog thread stopped");
 }
 
-}  // namespace sentinel::dlp
+}  // namespace akeso::dlp

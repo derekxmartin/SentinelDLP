@@ -108,12 +108,12 @@ async def setup_db():
 
         # Users
         admin_user = User(
-            id=uuid.uuid4(), username="admin", email="admin@sentinel.local",
-            password_hash=auth_service.hash_password("SentinelDLP2026!"),
+            id=uuid.uuid4(), username="admin", email="admin@akeso.local",
+            password_hash=auth_service.hash_password("AkesoDLP2026!"),
             full_name="Admin User", is_active=True, mfa_enabled=False, role_id=_admin_role_id,
         )
         analyst_user = User(
-            id=uuid.uuid4(), username="analyst", email="analyst@sentinel.local",
+            id=uuid.uuid4(), username="analyst", email="analyst@akeso.local",
             password_hash=auth_service.hash_password("AnalystPass123!"),
             full_name="Analyst User", is_active=True, mfa_enabled=False, role_id=_analyst_role_id,
         )
@@ -166,7 +166,7 @@ async def client():
 async def admin_token(client: AsyncClient) -> str:
     resp = await client.post(
         "/api/auth/login",
-        json={"username": "admin", "password": "SentinelDLP2026!"},
+        json={"username": "admin", "password": "AkesoDLP2026!"},
     )
     return resp.json()["access_token"]
 

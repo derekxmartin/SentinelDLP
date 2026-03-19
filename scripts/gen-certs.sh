@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gen-certs.sh — Generate mTLS certificates for SentinelDLP gRPC communication.
+# gen-certs.sh — Generate mTLS certificates for AkesoDLP gRPC communication.
 #
 # Creates:
 #   certs/ca.pem        — Certificate Authority
@@ -14,11 +14,11 @@ set -euo pipefail
 
 OUTDIR="${1:-certs}"
 DAYS=365
-CN_CA="SentinelDLP CA"
-CN_SERVER="sentinel-dlp-server"
-CN_CLIENT="sentinel-dlp-agent"
+CN_CA="AkesoDLP CA"
+CN_SERVER="akeso-dlp-server"
+CN_CLIENT="akeso-dlp-agent"
 
-echo "=== SentinelDLP mTLS Certificate Generator ==="
+echo "=== AkesoDLP mTLS Certificate Generator ==="
 echo "Output directory: ${OUTDIR}"
 echo ""
 
@@ -31,7 +31,7 @@ openssl req -new -x509 \
     -key "${OUTDIR}/ca-key.pem" \
     -out "${OUTDIR}/ca.pem" \
     -days "${DAYS}" \
-    -subj "/CN=${CN_CA}/O=SentinelDLP/OU=Security" \
+    -subj "/CN=${CN_CA}/O=AkesoDLP/OU=Security" \
     2>/dev/null
 
 # --- Server Certificate ---
@@ -42,7 +42,7 @@ echo "[3/5] Generating server certificate..."
 openssl req -new \
     -key "${OUTDIR}/server-key.pem" \
     -out "${OUTDIR}/server.csr" \
-    -subj "/CN=${CN_SERVER}/O=SentinelDLP/OU=Server" \
+    -subj "/CN=${CN_SERVER}/O=AkesoDLP/OU=Server" \
     2>/dev/null
 
 # Create extensions file for SAN
@@ -75,7 +75,7 @@ echo "[5/5] Generating client certificate..."
 openssl req -new \
     -key "${OUTDIR}/client-key.pem" \
     -out "${OUTDIR}/client.csr" \
-    -subj "/CN=${CN_CLIENT}/O=SentinelDLP/OU=Agent" \
+    -subj "/CN=${CN_CLIENT}/O=AkesoDLP/OU=Agent" \
     2>/dev/null
 
 openssl x509 -req \

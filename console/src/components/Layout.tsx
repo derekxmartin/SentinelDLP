@@ -81,7 +81,7 @@ export default function Layout() {
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--color-accent)]">
             <Shield className="w-4 h-4 text-white" />
           </div>
-          <span className="text-lg font-semibold text-slate-50">SentinelDLP</span>
+          <span className="text-lg font-semibold text-slate-50">AkesoDLP</span>
         </NavLink>
 
         {/* Navigation */}

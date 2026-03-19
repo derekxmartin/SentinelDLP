@@ -1,13 +1,13 @@
 /*
  * test_config.cpp
- * SentinelDLP Agent - Config loader tests
+ * AkesoDLP Agent - Config loader tests
  */
 
 #include <fstream>
 #include <gtest/gtest.h>
-#include "sentinel/config.h"
+#include "akeso/config.h"
 
-using namespace sentinel::dlp;
+using namespace akeso::dlp;
 
 /* ------------------------------------------------------------------ */
 /*  Default values                                                     */
@@ -248,7 +248,7 @@ TEST(ConfigTest, Load_FileNotFound) {
 
 TEST(ConfigTest, Load_FromTempFile) {
     /* Write a temp YAML file */
-    auto temp = std::filesystem::temp_directory_path() / "sentinel_test_config.yaml";
+    auto temp = std::filesystem::temp_directory_path() / "akeso_test_config.yaml";
     {
         std::ofstream f(temp);
         f << "server:\n  host: \"from-file\"\n  port: 12345\n";
@@ -270,7 +270,7 @@ TEST(ConfigTest, Load_FromTempFile) {
 /* ------------------------------------------------------------------ */
 
 TEST(ConfigTest, FindConfigFile_ExplicitPath) {
-    auto temp = std::filesystem::temp_directory_path() / "sentinel_find_test.yaml";
+    auto temp = std::filesystem::temp_directory_path() / "akeso_find_test.yaml";
     {
         std::ofstream f(temp);
         f << "server:\n  host: test\n";

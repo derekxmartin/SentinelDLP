@@ -1,6 +1,6 @@
 /*
  * config.h
- * SentinelDLP Agent - Configuration
+ * AkesoDLP Agent - Configuration
  *
  * Loads and validates agent configuration from YAML files.
  * Provides typed access to all configuration sections.
@@ -12,7 +12,7 @@
 #include <string>
 #include <filesystem>
 
-namespace sentinel::dlp {
+namespace akeso::dlp {
 
 /* ------------------------------------------------------------------ */
 /*  Configuration structures                                           */
@@ -32,7 +32,7 @@ struct ServerConfig {
 };
 
 struct DriverConfig {
-    std::string port_name       = "\\\\SentinelDLPPort";
+    std::string port_name       = "\\\\AkesoDLPPort";
     int         max_connections  = 4;
     int         message_buffer_size = 65536;
 };
@@ -53,21 +53,21 @@ struct MonitoringConfig {
 };
 
 struct PolicyCacheConfig {
-    std::string path            = "C:\\SentinelDLP\\cache\\policies.db";
+    std::string path            = "C:\\AkesoDLP\\cache\\policies.db";
 };
 
 struct IncidentQueueConfig {
-    std::string path            = "C:\\SentinelDLP\\queue\\incidents.db";
+    std::string path            = "C:\\AkesoDLP\\queue\\incidents.db";
     int         max_entries     = 10000;
 };
 
 struct RecoveryConfig {
-    std::string path            = "C:\\SentinelDLP\\Recovery";
+    std::string path            = "C:\\AkesoDLP\\Recovery";
 };
 
 struct LoggingConfig {
     std::string level           = "info";
-    std::string file            = "C:\\SentinelDLP\\logs\\agent.log";
+    std::string file            = "C:\\AkesoDLP\\logs\\agent.log";
     int         max_size_mb     = 50;
     int         max_files       = 5;
 };
@@ -124,12 +124,12 @@ public:
      * Searches in order:
      *   1. Explicit path (if provided)
      *   2. Same directory as executable
-     *   3. C:\SentinelDLP\config.yaml
-     *   4. %PROGRAMDATA%\SentinelDLP\config.yaml
+     *   3. C:\AkesoDLP\config.yaml
+     *   4. %PROGRAMDATA%\AkesoDLP\config.yaml
      */
     static std::filesystem::path FindConfigFile(
         const std::string& explicit_path = ""
     );
 };
 
-}  // namespace sentinel::dlp
+}  // namespace akeso::dlp

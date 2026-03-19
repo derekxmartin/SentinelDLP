@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from server.proto import sentineldlp_pb2 as sentineldlp__pb2
+from server.proto import akesodlp_pb2 as akesodlp__pb2
 
 GRPC_GENERATED_VERSION = '1.78.0'
 GRPC_VERSION = grpc.__version__
@@ -18,14 +18,14 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in sentineldlp_pb2_grpc.py depends on'
+        + ' but the generated code in akesodlp_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
     )
 
 
-class SentinelDLPServiceStub(object):
+class AkesoDLPServiceStub(object):
     """=============================================================================
     Service
     =============================================================================
@@ -39,38 +39,38 @@ class SentinelDLPServiceStub(object):
             channel: A grpc.Channel.
         """
         self.Register = channel.unary_unary(
-                '/sentineldlp.SentinelDLPService/Register',
-                request_serializer=sentineldlp__pb2.RegisterRequest.SerializeToString,
-                response_deserializer=sentineldlp__pb2.RegisterResponse.FromString,
+                '/akesodlp.AkesoDLPService/Register',
+                request_serializer=akesodlp__pb2.RegisterRequest.SerializeToString,
+                response_deserializer=akesodlp__pb2.RegisterResponse.FromString,
                 _registered_method=True)
         self.Heartbeat = channel.unary_unary(
-                '/sentineldlp.SentinelDLPService/Heartbeat',
-                request_serializer=sentineldlp__pb2.HeartbeatRequest.SerializeToString,
-                response_deserializer=sentineldlp__pb2.HeartbeatResponse.FromString,
+                '/akesodlp.AkesoDLPService/Heartbeat',
+                request_serializer=akesodlp__pb2.HeartbeatRequest.SerializeToString,
+                response_deserializer=akesodlp__pb2.HeartbeatResponse.FromString,
                 _registered_method=True)
         self.GetPolicies = channel.unary_unary(
-                '/sentineldlp.SentinelDLPService/GetPolicies',
-                request_serializer=sentineldlp__pb2.GetPoliciesRequest.SerializeToString,
-                response_deserializer=sentineldlp__pb2.GetPoliciesResponse.FromString,
+                '/akesodlp.AkesoDLPService/GetPolicies',
+                request_serializer=akesodlp__pb2.GetPoliciesRequest.SerializeToString,
+                response_deserializer=akesodlp__pb2.GetPoliciesResponse.FromString,
                 _registered_method=True)
         self.PolicyUpdates = channel.unary_stream(
-                '/sentineldlp.SentinelDLPService/PolicyUpdates',
-                request_serializer=sentineldlp__pb2.PolicyUpdatesRequest.SerializeToString,
-                response_deserializer=sentineldlp__pb2.PolicyUpdate.FromString,
+                '/akesodlp.AkesoDLPService/PolicyUpdates',
+                request_serializer=akesodlp__pb2.PolicyUpdatesRequest.SerializeToString,
+                response_deserializer=akesodlp__pb2.PolicyUpdate.FromString,
                 _registered_method=True)
         self.ReportIncident = channel.unary_unary(
-                '/sentineldlp.SentinelDLPService/ReportIncident',
-                request_serializer=sentineldlp__pb2.ReportIncidentRequest.SerializeToString,
-                response_deserializer=sentineldlp__pb2.ReportIncidentResponse.FromString,
+                '/akesodlp.AkesoDLPService/ReportIncident',
+                request_serializer=akesodlp__pb2.ReportIncidentRequest.SerializeToString,
+                response_deserializer=akesodlp__pb2.ReportIncidentResponse.FromString,
                 _registered_method=True)
         self.DetectContent = channel.unary_unary(
-                '/sentineldlp.SentinelDLPService/DetectContent',
-                request_serializer=sentineldlp__pb2.DetectContentRequest.SerializeToString,
-                response_deserializer=sentineldlp__pb2.DetectContentResponse.FromString,
+                '/akesodlp.AkesoDLPService/DetectContent',
+                request_serializer=akesodlp__pb2.DetectContentRequest.SerializeToString,
+                response_deserializer=akesodlp__pb2.DetectContentResponse.FromString,
                 _registered_method=True)
 
 
-class SentinelDLPServiceServicer(object):
+class AkesoDLPServiceServicer(object):
     """=============================================================================
     Service
     =============================================================================
@@ -120,47 +120,47 @@ class SentinelDLPServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_SentinelDLPServiceServicer_to_server(servicer, server):
+def add_AkesoDLPServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Register': grpc.unary_unary_rpc_method_handler(
                     servicer.Register,
-                    request_deserializer=sentineldlp__pb2.RegisterRequest.FromString,
-                    response_serializer=sentineldlp__pb2.RegisterResponse.SerializeToString,
+                    request_deserializer=akesodlp__pb2.RegisterRequest.FromString,
+                    response_serializer=akesodlp__pb2.RegisterResponse.SerializeToString,
             ),
             'Heartbeat': grpc.unary_unary_rpc_method_handler(
                     servicer.Heartbeat,
-                    request_deserializer=sentineldlp__pb2.HeartbeatRequest.FromString,
-                    response_serializer=sentineldlp__pb2.HeartbeatResponse.SerializeToString,
+                    request_deserializer=akesodlp__pb2.HeartbeatRequest.FromString,
+                    response_serializer=akesodlp__pb2.HeartbeatResponse.SerializeToString,
             ),
             'GetPolicies': grpc.unary_unary_rpc_method_handler(
                     servicer.GetPolicies,
-                    request_deserializer=sentineldlp__pb2.GetPoliciesRequest.FromString,
-                    response_serializer=sentineldlp__pb2.GetPoliciesResponse.SerializeToString,
+                    request_deserializer=akesodlp__pb2.GetPoliciesRequest.FromString,
+                    response_serializer=akesodlp__pb2.GetPoliciesResponse.SerializeToString,
             ),
             'PolicyUpdates': grpc.unary_stream_rpc_method_handler(
                     servicer.PolicyUpdates,
-                    request_deserializer=sentineldlp__pb2.PolicyUpdatesRequest.FromString,
-                    response_serializer=sentineldlp__pb2.PolicyUpdate.SerializeToString,
+                    request_deserializer=akesodlp__pb2.PolicyUpdatesRequest.FromString,
+                    response_serializer=akesodlp__pb2.PolicyUpdate.SerializeToString,
             ),
             'ReportIncident': grpc.unary_unary_rpc_method_handler(
                     servicer.ReportIncident,
-                    request_deserializer=sentineldlp__pb2.ReportIncidentRequest.FromString,
-                    response_serializer=sentineldlp__pb2.ReportIncidentResponse.SerializeToString,
+                    request_deserializer=akesodlp__pb2.ReportIncidentRequest.FromString,
+                    response_serializer=akesodlp__pb2.ReportIncidentResponse.SerializeToString,
             ),
             'DetectContent': grpc.unary_unary_rpc_method_handler(
                     servicer.DetectContent,
-                    request_deserializer=sentineldlp__pb2.DetectContentRequest.FromString,
-                    response_serializer=sentineldlp__pb2.DetectContentResponse.SerializeToString,
+                    request_deserializer=akesodlp__pb2.DetectContentRequest.FromString,
+                    response_serializer=akesodlp__pb2.DetectContentResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'sentineldlp.SentinelDLPService', rpc_method_handlers)
+            'akesodlp.AkesoDLPService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('sentineldlp.SentinelDLPService', rpc_method_handlers)
+    server.add_registered_method_handlers('akesodlp.AkesoDLPService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class SentinelDLPService(object):
+class AkesoDLPService(object):
     """=============================================================================
     Service
     =============================================================================
@@ -181,9 +181,9 @@ class SentinelDLPService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/sentineldlp.SentinelDLPService/Register',
-            sentineldlp__pb2.RegisterRequest.SerializeToString,
-            sentineldlp__pb2.RegisterResponse.FromString,
+            '/akesodlp.AkesoDLPService/Register',
+            akesodlp__pb2.RegisterRequest.SerializeToString,
+            akesodlp__pb2.RegisterResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -208,9 +208,9 @@ class SentinelDLPService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/sentineldlp.SentinelDLPService/Heartbeat',
-            sentineldlp__pb2.HeartbeatRequest.SerializeToString,
-            sentineldlp__pb2.HeartbeatResponse.FromString,
+            '/akesodlp.AkesoDLPService/Heartbeat',
+            akesodlp__pb2.HeartbeatRequest.SerializeToString,
+            akesodlp__pb2.HeartbeatResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -235,9 +235,9 @@ class SentinelDLPService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/sentineldlp.SentinelDLPService/GetPolicies',
-            sentineldlp__pb2.GetPoliciesRequest.SerializeToString,
-            sentineldlp__pb2.GetPoliciesResponse.FromString,
+            '/akesodlp.AkesoDLPService/GetPolicies',
+            akesodlp__pb2.GetPoliciesRequest.SerializeToString,
+            akesodlp__pb2.GetPoliciesResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -262,9 +262,9 @@ class SentinelDLPService(object):
         return grpc.experimental.unary_stream(
             request,
             target,
-            '/sentineldlp.SentinelDLPService/PolicyUpdates',
-            sentineldlp__pb2.PolicyUpdatesRequest.SerializeToString,
-            sentineldlp__pb2.PolicyUpdate.FromString,
+            '/akesodlp.AkesoDLPService/PolicyUpdates',
+            akesodlp__pb2.PolicyUpdatesRequest.SerializeToString,
+            akesodlp__pb2.PolicyUpdate.FromString,
             options,
             channel_credentials,
             insecure,
@@ -289,9 +289,9 @@ class SentinelDLPService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/sentineldlp.SentinelDLPService/ReportIncident',
-            sentineldlp__pb2.ReportIncidentRequest.SerializeToString,
-            sentineldlp__pb2.ReportIncidentResponse.FromString,
+            '/akesodlp.AkesoDLPService/ReportIncident',
+            akesodlp__pb2.ReportIncidentRequest.SerializeToString,
+            akesodlp__pb2.ReportIncidentResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -316,9 +316,9 @@ class SentinelDLPService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/sentineldlp.SentinelDLPService/DetectContent',
-            sentineldlp__pb2.DetectContentRequest.SerializeToString,
-            sentineldlp__pb2.DetectContentResponse.FromString,
+            '/akesodlp.AkesoDLPService/DetectContent',
+            akesodlp__pb2.DetectContentRequest.SerializeToString,
+            akesodlp__pb2.DetectContentResponse.FromString,
             options,
             channel_credentials,
             insecure,

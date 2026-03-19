@@ -1,12 +1,12 @@
 /*
  * policy_cache.cpp
- * SentinelDLP Agent - Policy Cache implementation
+ * AkesoDLP Agent - Policy Cache implementation
  *
  * Uses SQLite3 for persistent storage of serialized policy protobuf
  * definitions. Supports atomic version swap via transactions.
  */
 
-#include "sentinel/policy_cache.h"
+#include "akeso/policy_cache.h"
 
 #include <chrono>
 #include <ctime>
@@ -28,7 +28,7 @@
 #define LOG_ERROR(...)   (void)0
 #endif
 
-namespace sentinel::dlp {
+namespace akeso::dlp {
 
 /* ================================================================== */
 /*  Constructor / Destructor                                           */
@@ -226,7 +226,7 @@ int PolicyCache::GetPolicyCount() const {
 }
 
 bool PolicyCache::LoadPolicies(
-    std::vector<sentineldlp::PolicyDefinition>& policies
+    std::vector<akesodlp::PolicyDefinition>& policies
 ) {
     std::lock_guard<std::recursive_mutex> lock(db_mutex_);
     if (!db_) return false;
@@ -246,7 +246,7 @@ bool PolicyCache::LoadPolicies(
         int blob_size = sqlite3_column_bytes(stmt, 1);
 
         if (blob && blob_size > 0) {
-            sentineldlp::PolicyDefinition policy;
+            akesodlp::PolicyDefinition policy;
             if (policy.ParseFromArray(blob, blob_size)) {
                 policies.push_back(std::move(policy));
             } else {
@@ -265,7 +265,7 @@ bool PolicyCache::LoadPolicies(
 
 bool PolicyCache::StorePolicies(
     int32_t version,
-    const google::protobuf::RepeatedPtrField<sentineldlp::PolicyDefinition>& policies
+    const google::protobuf::RepeatedPtrField<akesodlp::PolicyDefinition>& policies
 ) {
     std::lock_guard<std::recursive_mutex> lock(db_mutex_);
     if (!db_) return false;
@@ -348,10 +348,10 @@ bool PolicyCache::StorePolicies(
 
 bool PolicyCache::StorePolicies(
     int32_t version,
-    const std::vector<sentineldlp::PolicyDefinition>& policies
+    const std::vector<akesodlp::PolicyDefinition>& policies
 ) {
     /* Convert vector to RepeatedPtrField */
-    google::protobuf::RepeatedPtrField<sentineldlp::PolicyDefinition> repeated;
+    google::protobuf::RepeatedPtrField<akesodlp::PolicyDefinition> repeated;
     for (const auto& p : policies) {
         *repeated.Add() = p;
     }
@@ -382,4 +382,4 @@ bool PolicyCache::Clear() {
     return true;
 }
 
-}  // namespace sentinel::dlp
+}  // namespace akeso::dlp
