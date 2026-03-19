@@ -127,6 +127,8 @@ add_executable(akeso-dlp-agent
     src/incident_queue.cpp
     src/detection/hs_regex_analyzer.cpp
     src/detection/keyword_analyzer.cpp
+    src/detection/validators.cpp
+    src/detection/file_type_detector.cpp
 )
 
 target_include_directories(akeso-dlp-agent PRIVATE
@@ -367,6 +369,40 @@ if(BUILD_TESTS)
             target_compile_definitions(test_keyword_analyzer PRIVATE HAS_SPDLOG)
         endif()
         add_test(NAME KeywordAnalyzerTests COMMAND test_keyword_analyzer)
+
+        # Validators tests
+        add_executable(test_validators
+            tests/test_validators.cpp
+            src/detection/validators.cpp
+        )
+        target_include_directories(test_validators PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        target_link_libraries(test_validators PRIVATE
+            GTest::gtest_main
+        )
+        if(spdlog_FOUND)
+            target_link_libraries(test_validators PRIVATE spdlog::spdlog)
+            target_compile_definitions(test_validators PRIVATE HAS_SPDLOG)
+        endif()
+        add_test(NAME ValidatorTests COMMAND test_validators)
+
+        # FileTypeDetector tests
+        add_executable(test_file_type_detector
+            tests/test_file_type_detector.cpp
+            src/detection/file_type_detector.cpp
+        )
+        target_include_directories(test_file_type_detector PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        target_link_libraries(test_file_type_detector PRIVATE
+            GTest::gtest_main
+        )
+        if(spdlog_FOUND)
+            target_link_libraries(test_file_type_detector PRIVATE spdlog::spdlog)
+            target_compile_definitions(test_file_type_detector PRIVATE HAS_SPDLOG)
+        endif()
+        add_test(NAME FileTypeDetectorTests COMMAND test_file_type_detector)
 
         message(STATUS "Testing enabled (GoogleTest found)")
     else()
