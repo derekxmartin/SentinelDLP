@@ -16,6 +16,7 @@
 
 #include "sentinel/agent_service.h"
 #include "sentinel/config.h"
+#include "sentinel/driver_comm.h"
 #include "sentinel/grpc_client.h"
 #include "sentinel/incident_queue.h"
 
@@ -254,15 +255,13 @@ int main(int argc, char* argv[]) {
             config.incident_queue.max_entries);
         service.RegisterComponent(incident_queue);
 
+        /* Register driver communication (non-fatal if driver not loaded) */
+        auto driver_comm = std::make_shared<DriverComm>();
+        service.RegisterComponent(driver_comm);
+
         /* Register gRPC client component */
         auto grpc_client = std::make_shared<GrpcClient>(config);
         service.RegisterComponent(grpc_client);
-
-        /*
-         * TODO: Register remaining components:
-         *   service.RegisterComponent(std::make_shared<DriverComm>(config));
-         *   service.RegisterComponent(std::make_shared<PolicyCache>(config));
-         */
 
         return service.RunConsole(config) ? 0 : 1;
     }

@@ -107,6 +107,7 @@ add_executable(sentinel-dlp-agent
     src/grpc_client.cpp
     src/policy_cache.cpp
     src/incident_queue.cpp
+    src/driver_comm.cpp
 )
 
 target_include_directories(sentinel-dlp-agent PRIVATE
