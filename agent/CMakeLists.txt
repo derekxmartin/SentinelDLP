@@ -73,6 +73,19 @@ find_package(Protobuf CONFIG QUIET)
 
 # Hyperscan (Intel regex engine)
 find_package(unofficial-hyperscan CONFIG QUIET)
+if(NOT unofficial-hyperscan_FOUND)
+    # vcpkg installs Hyperscan without CMake config; find manually
+    find_path(HYPERSCAN_INCLUDE_DIR hs/hs.h)
+    find_library(HYPERSCAN_LIB hs)
+    if(HYPERSCAN_INCLUDE_DIR AND HYPERSCAN_LIB)
+        set(HYPERSCAN_FOUND TRUE)
+        add_library(hyperscan::hs UNKNOWN IMPORTED)
+        set_target_properties(hyperscan::hs PROPERTIES
+            IMPORTED_LOCATION "${HYPERSCAN_LIB}"
+            INTERFACE_INCLUDE_DIRECTORIES "${HYPERSCAN_INCLUDE_DIR}"
+        )
+    endif()
+endif()
 
 # SQLite3
 find_package(unofficial-sqlite3 CONFIG QUIET)
@@ -90,7 +103,12 @@ find_package(spdlog CONFIG QUIET)
 message(STATUS "--- Dependency Status ---")
 message(STATUS "  gRPC:       ${gRPC_FOUND}")
 message(STATUS "  Protobuf:   ${Protobuf_FOUND}")
-message(STATUS "  Hyperscan:  ${unofficial-hyperscan_FOUND}")
+if(unofficial-hyperscan_FOUND OR HYPERSCAN_FOUND)
+    set(HAS_HYPERSCAN_AVAILABLE TRUE)
+else()
+    set(HAS_HYPERSCAN_AVAILABLE FALSE)
+endif()
+message(STATUS "  Hyperscan:  ${HAS_HYPERSCAN_AVAILABLE}")
 message(STATUS "  SQLite3:    ${unofficial-sqlite3_FOUND}")
 message(STATUS "  CURL:       ${CURL_FOUND}")
 message(STATUS "  yaml-cpp:   ${yaml-cpp_FOUND}")
@@ -107,6 +125,8 @@ add_executable(akeso-dlp-agent
     src/grpc_client.cpp
     src/policy_cache.cpp
     src/incident_queue.cpp
+    src/detection/hs_regex_analyzer.cpp
+    src/detection/keyword_analyzer.cpp
 )
 
 target_include_directories(akeso-dlp-agent PRIVATE
@@ -134,6 +154,9 @@ endif()
 
 if(unofficial-hyperscan_FOUND)
     target_link_libraries(akeso-dlp-agent PRIVATE unofficial::hyperscan::hyperscan)
+    target_compile_definitions(akeso-dlp-agent PRIVATE HAS_HYPERSCAN)
+elseif(HYPERSCAN_FOUND)
+    target_link_libraries(akeso-dlp-agent PRIVATE hyperscan::hs)
     target_compile_definitions(akeso-dlp-agent PRIVATE HAS_HYPERSCAN)
 endif()
 
@@ -299,6 +322,51 @@ if(BUILD_TESTS)
             target_link_libraries(test_incident_queue PRIVATE bcrypt)
         endif()
         add_test(NAME IncidentQueueTests COMMAND test_incident_queue)
+
+        # HsRegexAnalyzer tests
+        if(unofficial-hyperscan_FOUND OR HYPERSCAN_FOUND)
+            add_executable(test_hs_regex_analyzer
+                tests/test_hs_regex_analyzer.cpp
+                src/detection/hs_regex_analyzer.cpp
+            )
+            target_include_directories(test_hs_regex_analyzer PRIVATE
+                ${CMAKE_CURRENT_SOURCE_DIR}/include
+            )
+            if(unofficial-hyperscan_FOUND)
+                target_link_libraries(test_hs_regex_analyzer PRIVATE
+                    GTest::gtest_main
+                    unofficial::hyperscan::hyperscan
+                )
+            else()
+                target_link_libraries(test_hs_regex_analyzer PRIVATE
+                    GTest::gtest_main
+                    hyperscan::hs
+                )
+            endif()
+            if(spdlog_FOUND)
+                target_link_libraries(test_hs_regex_analyzer PRIVATE spdlog::spdlog)
+                target_compile_definitions(test_hs_regex_analyzer PRIVATE HAS_SPDLOG)
+            endif()
+            target_compile_definitions(test_hs_regex_analyzer PRIVATE HAS_HYPERSCAN)
+            add_test(NAME HsRegexAnalyzerTests COMMAND test_hs_regex_analyzer)
+        endif()
+
+        # KeywordAnalyzer tests
+        add_executable(test_keyword_analyzer
+            tests/test_keyword_analyzer.cpp
+            src/detection/keyword_analyzer.cpp
+        )
+        target_include_directories(test_keyword_analyzer PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        target_link_libraries(test_keyword_analyzer PRIVATE
+            GTest::gtest_main
+        )
+        if(spdlog_FOUND)
+            target_link_libraries(test_keyword_analyzer PRIVATE spdlog::spdlog)
+            target_compile_definitions(test_keyword_analyzer PRIVATE HAS_SPDLOG)
+        endif()
+        add_test(NAME KeywordAnalyzerTests COMMAND test_keyword_analyzer)
 
         message(STATUS "Testing enabled (GoogleTest found)")
     else()
