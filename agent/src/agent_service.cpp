@@ -64,7 +64,7 @@ bool AgentService::RunAsService() {
     if (!StartServiceCtrlDispatcherW(serviceTable)) {
         DWORD err = GetLastError();
         if (err == ERROR_FAILED_SERVICE_CONTROLLER_CONNECT) {
-            /* Not running as a service — caller should use RunConsole */
+            /* Not running as a service -caller should use RunConsole */
             return false;
         }
         LOG_ERROR("StartServiceCtrlDispatcher failed: {}", err);
@@ -229,10 +229,10 @@ bool AgentService::Initialize(const AgentConfig& config) {
      */
     auto cache_path = std::filesystem::path(config_.policy_cache.path);
     if (std::filesystem::exists(cache_path)) {
-        LOG_INFO("Policy cache found — starting in ENFORCING mode");
+        LOG_INFO("Policy cache found -starting in ENFORCING mode");
         state_ = AgentState::Enforcing;
     } else {
-        LOG_WARN("No policy cache — starting in LOG-ONLY mode");
+        LOG_WARN("No policy cache -starting in LOG-ONLY mode");
         state_ = AgentState::LogOnly;
     }
 

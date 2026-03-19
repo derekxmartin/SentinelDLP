@@ -268,7 +268,7 @@ int main(int argc, char* argv[]) {
 
     /* Default: try to run as a Windows service */
     if (!AgentService::RunAsService()) {
-        /* Not launched by SCM — show usage */
+        /* Not launched by SCM -show usage */
         std::cout << "SentinelDLPAgent v" << kVersion << "\n\n"
                   << "Usage:\n"
                   << "  sentinel-dlp-agent --console     Run in console mode\n"

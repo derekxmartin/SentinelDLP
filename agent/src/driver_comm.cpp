@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────────────────────────
-//  SentinelDLP Agent — DriverComm implementation
+//  SentinelDLP Agent -DriverComm implementation
 //  User-mode minifilter communication port client.
 // ──────────────────────────────────────────────────────────────────
 
@@ -41,7 +41,7 @@ bool DriverComm::Start() {
     stop_requested_.store(false);
 
     if (!Connect()) {
-        spdlog::warn("DriverComm: Driver not available — running in log-only mode. "
+        spdlog::warn("DriverComm: Driver not available - running in log-only mode. "
                      "The minifilter driver may not be loaded.");
         return true;  // Non-fatal: agent can run without the driver
     }
@@ -220,7 +220,7 @@ ScanRequest DriverComm::ParseNotification(const SENTINEL_MESSAGE& msg) {
 
 bool DriverComm::SendConfigUpdate(const void* data, size_t size) {
     if (!connected_.load() || port_ == INVALID_HANDLE_VALUE) {
-        spdlog::warn("DriverComm: Cannot send config — not connected");
+        spdlog::warn("DriverComm: Cannot send config -not connected");
         return false;
     }
 

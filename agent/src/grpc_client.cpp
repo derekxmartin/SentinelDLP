@@ -67,7 +67,7 @@ GrpcClient::~GrpcClient() {
 bool GrpcClient::Start() {
     if (!Connect()) {
         LOG_WARN("GrpcClient: Initial connection failed, will retry in background");
-        /* Don't fail startup — heartbeat thread will keep retrying */
+        /* Don't fail startup -heartbeat thread will keep retrying */
     }
 
     /* Start heartbeat thread */
@@ -150,7 +150,7 @@ std::shared_ptr<grpc::Channel> GrpcClient::CreateChannel() {
 
 std::shared_ptr<grpc::ChannelCredentials> GrpcClient::CreateCredentials() {
     if (!server_config_.tls.enabled) {
-        LOG_WARN("GrpcClient: TLS disabled — using insecure channel");
+        LOG_WARN("GrpcClient: TLS disabled -using insecure channel");
         return grpc::InsecureChannelCredentials();
     }
 
@@ -343,7 +343,7 @@ bool GrpcClient::DetectContent(
             } else {
                 response->set_verdict(sentineldlp::TTD_LOG);
             }
-            response->set_message("TTD timeout — fallback applied");
+            response->set_message("TTD timeout -fallback applied");
             return true;  /* Fallback is a valid result */
         }
 
