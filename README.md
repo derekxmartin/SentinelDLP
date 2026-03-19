@@ -2,7 +2,7 @@
   <img src="docs/assets/logo.png" alt="SentinelDLP" width="200">
 </p>
 
-<h1 align="center">AkesolDLP</h1>
+<h1 align="center">AkesoDLP</h1>
 
 A proof-of-concept Data Loss Prevention (DLP) platform that detects, monitors, and prevents sensitive data from leaving an organization through endpoints, network channels, and data at rest.
 
