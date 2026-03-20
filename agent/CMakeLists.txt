@@ -139,6 +139,7 @@ add_executable(akeso-dlp-agent
     src/response/block_action.cpp
     src/response/notification.cpp
     src/response/user_cancel.cpp
+    src/clipboard_monitor.cpp
     src/driver_comm.cpp
 )
 
@@ -194,6 +195,8 @@ if(WIN32)
         advapi32    # Service Control Manager
         bcrypt      # SHA-256 hashing (CNG)
         fltlib      # Minifilter user-mode API
+        user32      # Window + clipboard APIs
+        shell32     # Shell_NotifyIcon
         ws2_32      # Winsock
     )
 endif()

@@ -15,6 +15,7 @@
  */
 
 #include "akeso/agent_service.h"
+#include "akeso/clipboard_monitor.h"
 #include "akeso/config.h"
 #include "akeso/detection/pipeline.h"
 #include "akeso/detection/policy_evaluator.h"
@@ -367,9 +368,15 @@ int main(int argc, char* argv[]) {
         auto driver_comm = std::make_shared<DriverComm>(config.driver);
         service.RegisterComponent(driver_comm);
 
-        /* Register detection pipeline (wires driver → detection → verdict) */
+        /* Register clipboard monitor (P4-T10) */
+        auto clipboard_monitor = std::make_shared<ClipboardMonitor>(
+            config.monitoring.clipboard);
+        service.RegisterComponent(clipboard_monitor);
+
+        /* Register detection pipeline (wires driver + clipboard → detection → verdict) */
         auto pipeline = std::make_shared<DetectionPipeline>(
-            config, driver_comm, grpc_client, incident_queue, policy_cache);
+            config, driver_comm, grpc_client, incident_queue, policy_cache,
+            clipboard_monitor);
         service.RegisterComponent(pipeline);
 
         /* Seed test policies if requested */
