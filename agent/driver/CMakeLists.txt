@@ -32,6 +32,13 @@ set(DRIVER_INF
 )
 
 # ---------------------------------------------------------------------------
+# Remove user-mode defines inherited from parent directory that conflict
+# with WDK kernel headers. NOMINMAX blocks min/max macros in ntdef.h;
+# WIN32_LEAN_AND_MEAN excludes kernel-relevant headers.
+# ---------------------------------------------------------------------------
+remove_definitions(-DNOMINMAX -DWIN32_LEAN_AND_MEAN)
+
+# ---------------------------------------------------------------------------
 # If WDK is available, try to build via wdk_add_driver
 # (provided by FindWDK.cmake in parent project)
 # ---------------------------------------------------------------------------
@@ -45,6 +52,7 @@ if(COMMAND wdk_add_driver)
         AKESO_DLP_DRIVER
         POOL_NX_OPTIN=1
     )
+
 
     # Link against FltMgr (Filter Manager)
     target_link_libraries(${DRIVER_NAME} PRIVATE

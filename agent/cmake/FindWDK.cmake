@@ -154,6 +154,8 @@ function(wdk_add_driver _target)
         /Gz                 # __stdcall calling convention
         /W4                 # Warning level 4
         /WX                 # Warnings as errors
+        /wd4324             # Suppress C4324: structure padded (WDK headers)
+        /wd4201             # Suppress C4201: nameless struct/union (WDK headers)
         /Zp8                # 8-byte struct alignment
         /d1import_no_registry
         /d2AllowCompatibleILVersions
