@@ -90,8 +90,58 @@ services:
     networks:
       - dlp-network
 
+  # --- Network Monitor Services ---
+
+  http-proxy:
+    build:
+      context: .
+      dockerfile: network/Dockerfile.http
+    ports:
+      - "8080:8080"
+      - "8081:8081"  # mitmproxy web interface
+    environment:
+      DLP_SERVER_URL: http://server:8000
+      DLP_MODE: monitor  # monitor | prevent
+      DLP_BLOCK_THRESHOLD: "1"
+      DLP_DOMAIN_ALLOWLIST: ""
+    depends_on:
+      server:
+        condition: service_healthy
+    volumes:
+      - ./network:/app/network
+      - ./server:/app/server
+      - proxy-certs:/root/.mitmproxy
+    networks:
+      - dlp-network
+
+  smtp-relay:
+    build:
+      context: .
+      dockerfile: network/Dockerfile.smtp
+    ports:
+      - "2525:2525"
+    environment:
+      DLP_SERVER_URL: http://server:8000
+      DLP_MODE: monitor  # monitor | prevent
+      DLP_UPSTREAM_HOST: mailhog
+      DLP_UPSTREAM_PORT: "1025"
+      DLP_BLOCK_THRESHOLD: "5"
+      DLP_MODIFY_THRESHOLD: "1"
+      DLP_QUARANTINE_ADDRESS: quarantine@dlp.local
+    depends_on:
+      server:
+        condition: service_healthy
+      mailhog:
+        condition: service_healthy
+    volumes:
+      - ./network:/app/network
+      - ./server:/app/server
+    networks:
+      - dlp-network
+
 volumes:
   pgdata:
+  proxy-certs:
 
 networks:
   dlp-network:

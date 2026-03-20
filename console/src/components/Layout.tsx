@@ -18,6 +18,8 @@ import {
   ScanSearch,
   BookOpen,
   Bell,
+  Globe,
+  Settings,
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
@@ -31,6 +33,7 @@ const NAV_ITEMS = [
   { to: '/detection', icon: ScanSearch, label: 'Detection' },
   { to: '/identifiers', icon: BookOpen, label: 'Identifiers' },
   { to: '/users', icon: Users, label: 'Users' },
+  { to: '/settings/network', icon: Globe, label: 'Network' },
 ];
 
 function ThemeToggle() {

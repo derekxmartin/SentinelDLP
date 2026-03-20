@@ -10,6 +10,7 @@
  *   /detection — Detection test (protected)
  *   /identifiers — Data identifiers (protected)
  *   /users  — User management (protected)
+ *   /settings/network — Network monitor settings (protected)
  */
 
 import { useEffect, useState } from 'react';
@@ -23,6 +24,7 @@ import Incidents from './pages/Incidents';
 import IncidentSnapshot from './pages/IncidentSnapshot';
 import Login from './pages/Login';
 import MFAVerify from './pages/MFAVerify';
+import NetworkSettings from './pages/NetworkSettings';
 import Placeholder from './pages/Placeholder';
 import Policies from './pages/Policies';
 import PolicyEditor from './pages/PolicyEditor';
@@ -71,6 +73,7 @@ function App() {
           <Route path="detection" element={<Placeholder title="Detection" task="a future sprint" />} />
           <Route path="identifiers" element={<Placeholder title="Data Identifiers" task="a future sprint" />} />
           <Route path="users" element={<Placeholder title="Users" task="a future sprint" />} />
+          <Route path="settings/network" element={<NetworkSettings />} />
         </Route>
       </Routes>
     </BrowserRouter>

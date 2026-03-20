@@ -1,0 +1,19 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install mitmproxy and project dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir mitmproxy>=10.0.0 && \
+    pip install --no-cache-dir -r requirements.txt
+
+COPY network/ ./network/
+COPY server/ ./server/
+
+EXPOSE 8080 8081
+
+# Start mitmproxy with DLP addon
+# Port 8080: proxy port
+# Port 8081: mitmproxy web interface
+CMD ["mitmdump", "--listen-port", "8080", "--set", "web_open_browser=false", \
+     "--web-port", "8081", "-s", "network/mitmproxy_entry.py"]
