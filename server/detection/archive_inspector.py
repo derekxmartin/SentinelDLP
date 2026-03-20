@@ -15,6 +15,9 @@ from __future__ import annotations
 import gzip
 import io
 import logging
+import ntpath
+import posixpath
+import re
 import tarfile
 import zipfile
 from dataclasses import dataclass, field
@@ -56,6 +59,40 @@ class MaxFilesError(ArchiveSafetyError):
     """Raised when total file count exceeds limit."""
 
     pass
+
+
+class PathTraversalError(ArchiveSafetyError):
+    """Raised when archive member path is suspicious."""
+
+    pass
+
+
+# Windows reserved device names
+_WINDOWS_RESERVED = re.compile(
+    r"^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)", re.IGNORECASE
+)
+
+
+def _validate_member_path(name: str) -> None:
+    """Reject archive members with dangerous paths."""
+    # Reject empty names
+    if not name or not name.strip():
+        raise PathTraversalError("Empty archive member name")
+
+    # Reject absolute paths (Unix and Windows)
+    if posixpath.isabs(name) or ntpath.isabs(name):
+        raise PathTraversalError(f"Absolute path in archive: {name!r}")
+
+    # Reject path traversal components
+    parts = name.replace("\\", "/").split("/")
+    for part in parts:
+        if part == "..":
+            raise PathTraversalError(f"Path traversal in archive: {name!r}")
+        # Check Windows reserved names (just the filename part)
+        if _WINDOWS_RESERVED.match(part):
+            raise PathTraversalError(
+                f"Reserved Windows name in archive: {name!r}"
+            )
 
 
 @dataclass
@@ -293,6 +330,12 @@ class ArchiveInspector:
                 if info.is_dir():
                     continue
 
+                try:
+                    _validate_member_path(info.filename)
+                except PathTraversalError as exc:
+                    state.errors.append(str(exc))
+                    continue
+
                 state.check_files(self.limits)
                 _check_ratio(info.compress_size, info.file_size, self.limits)
                 state.check_size(info.file_size, self.limits)
@@ -313,7 +356,18 @@ class ArchiveInspector:
     ) -> None:
         with tarfile.open(fileobj=io.BytesIO(content)) as tf:
             for member in tf.getmembers():
+                if member.issym() or member.islnk():
+                    state.errors.append(
+                        f"Skipping symlink/hardlink: {member.name}"
+                    )
+                    continue
                 if not member.isfile():
+                    continue
+
+                try:
+                    _validate_member_path(member.name)
+                except PathTraversalError as exc:
+                    state.errors.append(str(exc))
                     continue
 
                 state.check_files(self.limits)
@@ -384,6 +438,9 @@ class ArchiveInspector:
         tmpdir = tempfile.mkdtemp(prefix="akesodlp_7z_")
         try:
             with py7zr.SevenZipFile(io.BytesIO(content), mode="r") as zf:
+                # Validate all member names before extractall (all-or-nothing)
+                for member_name in zf.getnames():
+                    _validate_member_path(member_name)
                 zf.extractall(path=tmpdir)
 
             for file_path in Path(tmpdir).rglob("*"):
@@ -391,11 +448,18 @@ class ArchiveInspector:
                     continue
 
                 state.check_files(self.limits)
+
+                rel_path = file_path.relative_to(tmpdir).as_posix()
+                try:
+                    _validate_member_path(rel_path)
+                except PathTraversalError as exc:
+                    state.errors.append(str(exc))
+                    continue
+
                 data = file_path.read_bytes()
                 state.check_size(len(data), self.limits)
                 state.add(len(data))
 
-                rel_path = file_path.relative_to(tmpdir).as_posix()
                 name = file_path.name
                 entry_path = f"{path_prefix}{filename}/{rel_path}"
 
@@ -413,6 +477,12 @@ class ArchiveInspector:
         with rarfile.RarFile(io.BytesIO(content)) as rf:
             for info in rf.infolist():
                 if info.is_dir():
+                    continue
+
+                try:
+                    _validate_member_path(info.filename)
+                except PathTraversalError as exc:
+                    state.errors.append(str(exc))
                     continue
 
                 state.check_files(self.limits)

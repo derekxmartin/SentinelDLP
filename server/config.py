@@ -1,5 +1,11 @@
-from pydantic import Field
+import logging
+
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_logger = logging.getLogger(__name__)
+
+_INSECURE_JWT_SECRET = "change-me-in-production"
 
 
 class Settings(BaseSettings):
@@ -44,7 +50,7 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000"]
 
     # --- Auth ---
-    jwt_secret: str = Field(default="change-me-in-production")
+    jwt_secret: str = Field(default=_INSECURE_JWT_SECRET)
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
@@ -60,6 +66,48 @@ class Settings(BaseSettings):
     log_level: str = "info"
     log_format: str = "json"
     log_file: str = ""
+
+    @model_validator(mode="after")
+    def _warn_security_defaults(self) -> "Settings":
+        """Log warnings for insecure default values.
+
+        The validator intentionally does *not* raise so that module-level
+        ``settings = Settings()`` never breaks imports in dev or CI.
+        Use :func:`validate_production_config` at server startup to
+        enforce hard failures in production.
+        """
+        if self.jwt_secret == _INSECURE_JWT_SECRET:
+            if self.debug:
+                _logger.warning(
+                    "Using default JWT secret — acceptable for local "
+                    "development only. Set DLP_JWT_SECRET for production."
+                )
+            else:
+                _logger.critical(
+                    "SECURITY: Default JWT secret in use with debug=False. "
+                    "Set DLP_JWT_SECRET to a strong random value for "
+                    "production."
+                )
+        if "akeso:akeso@" in self.database_url and not self.debug:
+            _logger.warning(
+                "Default database credentials detected — set "
+                "DLP_DATABASE_URL with strong credentials for production."
+            )
+        return self
+
+
+def validate_production_config() -> None:
+    """Enforce production security requirements at server startup.
+
+    Raises :class:`ValueError` if critical security defaults are
+    detected in non-debug mode.
+    """
+    if settings.jwt_secret == _INSECURE_JWT_SECRET and not settings.debug:
+        raise ValueError(
+            "SECURITY: DLP_JWT_SECRET must be set to a strong random "
+            "value in production. Set DLP_DEBUG=true to bypass this "
+            "check in development."
+        )
 
 
 settings = Settings()

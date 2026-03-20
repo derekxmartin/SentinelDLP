@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from server.config import settings
+from server.config import settings, validate_production_config
 from server.api.auth import router as auth_router
 from server.api.detection import router as detection_router
 from server.api.dictionaries import router as dictionaries_router
@@ -22,7 +22,10 @@ from server.api.users import router as users_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup — launch gRPC server alongside FastAPI
+    # Startup — enforce production security requirements
+    validate_production_config()
+
+    # Launch gRPC server alongside FastAPI
     grpc_server = None
     try:
         from server.grpc_server import serve as grpc_serve
