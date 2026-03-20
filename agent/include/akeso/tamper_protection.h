@@ -10,22 +10,12 @@
 #pragma once
 
 #include "akeso/agent_service.h"
+#include "akeso/config.h"
 
 #include <atomic>
 #include <string>
 
 namespace akeso::dlp {
-
-/* ------------------------------------------------------------------ */
-/*  Configuration                                                      */
-/* ------------------------------------------------------------------ */
-
-struct TamperProtectionConfig {
-    bool        enabled             = true;
-    bool        harden_service_dacl = true;
-    bool        harden_process_dacl = true;
-    std::string uninstall_key_path  = "C:\\AkesoDLP\\config\\uninstall.key";
-};
 
 /* ------------------------------------------------------------------ */
 /*  TamperProtection component                                         */
