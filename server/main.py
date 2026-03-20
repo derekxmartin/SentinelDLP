@@ -15,18 +15,29 @@ from server.api.search import router as search_router
 from server.api.system import router as system_router
 from server.api.fingerprints import router as fingerprints_router
 from server.api.network_settings import router as network_settings_router
+from server.api.reports import router as reports_router
 from server.api.users import router as users_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup — launch gRPC server alongside FastAPI
-    from server.grpc_server import serve as grpc_serve
+    grpc_server = None
+    try:
+        from server.grpc_server import serve as grpc_serve
 
-    grpc_server = await grpc_serve(port=settings.grpc_port)
+        grpc_server = await grpc_serve(port=settings.grpc_port)
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning(
+            "gRPC server failed to start (port %s): %s — "
+            "API will run without agent gRPC. Kill the stale process to restore.",
+            settings.grpc_port, exc,
+        )
     yield
     # Shutdown
-    await grpc_server.stop(grace=5)
+    if grpc_server is not None:
+        await grpc_server.stop(grace=5)
 
 
 app = FastAPI(
@@ -53,6 +64,7 @@ app.include_router(fingerprints_router)
 app.include_router(incidents_router)
 app.include_router(network_settings_router)
 app.include_router(policies_router)
+app.include_router(reports_router)
 app.include_router(response_rules_router)
 app.include_router(search_router)
 app.include_router(system_router)

@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Clock } from 'lucide-react';
+import { ArrowLeft, Send, Clock, Zap, ChevronDown, AlertTriangle, Mail, CheckCircle } from 'lucide-react';
 import useTitle from '../hooks/useTitle';
 import api from '../api/client';
 
@@ -84,6 +84,11 @@ export default function IncidentSnapshot() {
   const [newNote, setNewNote] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [responseOpen, setResponseOpen] = useState(false);
+  const [responseAction, setResponseAction] = useState<string | null>(null);
+  const [responseParams, setResponseParams] = useState<Record<string, string>>({});
+  const [responseLoading, setResponseLoading] = useState(false);
+  const [responseMsg, setResponseMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   useTitle(incident ? `Incident — ${incident.policy_name}` : 'Incident');
 
@@ -113,6 +118,40 @@ export default function IncidentSnapshot() {
     setIncident(updated);
     const h = await api.get<HistoryEntry[]>(`/incidents/${id}/history`);
     setHistory(h);
+  }
+
+  async function handleSmartResponse() {
+    if (!id || !responseAction) return;
+    setResponseLoading(true);
+    setResponseMsg(null);
+    try {
+      const result = await api.post<{ success: boolean; action: string; detail: string | null }>(
+        `/incidents/${id}/respond`,
+        { action: responseAction, params: responseParams },
+      );
+      setResponseMsg({ ok: result.success, text: result.detail || (result.success ? 'Done' : 'Failed') });
+      // Refresh incident, notes, and history after action
+      const [inc, n, h] = await Promise.all([
+        api.get<Incident>(`/incidents/${id}`),
+        api.get<Note[]>(`/incidents/${id}/notes`),
+        api.get<HistoryEntry[]>(`/incidents/${id}/history`),
+      ]);
+      setIncident(inc);
+      setNotes(n);
+      setHistory(h);
+      // Reset form after success
+      if (result.success) {
+        setTimeout(() => {
+          setResponseAction(null);
+          setResponseParams({});
+          setResponseMsg(null);
+        }, 2000);
+      }
+    } catch {
+      setResponseMsg({ ok: false, text: 'Failed to execute action' });
+    } finally {
+      setResponseLoading(false);
+    }
   }
 
   async function handleAddNote() {
@@ -179,6 +218,109 @@ export default function IncidentSnapshot() {
               <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Matches</span>
               <p style={{ fontSize: '1.25rem', fontWeight: 600, color: SEVERITY_COLORS[incident.severity] || '#64748b' }}>{incident.match_count}</p>
             </div>
+          </div>
+
+          {/* Smart Response */}
+          <div style={cardStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <Zap style={{ width: '1rem', height: '1rem', color: '#eab308' }} />
+              <h2 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#e2e8f0' }}>Smart Response</h2>
+            </div>
+
+            {/* Action selector */}
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+              {[
+                { key: 'add_note', label: 'Add Note', icon: Send },
+                { key: 'set_status', label: 'Set Status', icon: CheckCircle },
+                { key: 'send_email', label: 'Send Email', icon: Mail },
+                { key: 'escalate', label: 'Escalate', icon: AlertTriangle },
+              ].map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => { setResponseAction(responseAction === key ? null : key); setResponseParams({}); setResponseMsg(null); }}
+                  style={{
+                    padding: '0.375rem 0.75rem', borderRadius: '0.375rem', fontSize: '0.75rem', fontWeight: 500,
+                    display: 'flex', alignItems: 'center', gap: '0.375rem', cursor: 'pointer',
+                    border: responseAction === key ? '1px solid #6366f1' : '1px solid rgba(255,255,255,0.1)',
+                    backgroundColor: responseAction === key ? 'rgba(99,102,241,0.15)' : 'transparent',
+                    color: responseAction === key ? '#a5b4fc' : '#94a3b8',
+                  }}
+                >
+                  <Icon style={{ width: '0.75rem', height: '0.75rem' }} /> {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Action params */}
+            {responseAction === 'add_note' && (
+              <input
+                type="text" placeholder="Note content..."
+                value={responseParams.content || ''}
+                onChange={(e) => setResponseParams({ content: e.target.value })}
+                style={{ width: '100%', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', backgroundColor: 'var(--color-surface-page)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.8125rem', outline: 'none', marginBottom: '0.5rem' }}
+              />
+            )}
+            {responseAction === 'set_status' && (
+              <select
+                value={responseParams.status || ''}
+                onChange={(e) => setResponseParams({ status: e.target.value })}
+                style={{ ...selectStyle, width: '100%', marginBottom: '0.5rem' }}
+              >
+                <option value="">Select status...</option>
+                <option value="new">New</option>
+                <option value="in_progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+                <option value="dismissed">Dismissed</option>
+                <option value="escalated">Escalated</option>
+              </select>
+            )}
+            {responseAction === 'send_email' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', marginBottom: '0.5rem' }}>
+                <input
+                  type="email" placeholder="Recipient email..."
+                  value={responseParams.recipient || ''}
+                  onChange={(e) => setResponseParams({ ...responseParams, recipient: e.target.value })}
+                  style={{ width: '100%', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', backgroundColor: 'var(--color-surface-page)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.8125rem', outline: 'none' }}
+                />
+                <input
+                  type="text" placeholder="Subject (optional)..."
+                  value={responseParams.subject || ''}
+                  onChange={(e) => setResponseParams({ ...responseParams, subject: e.target.value })}
+                  style={{ width: '100%', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', backgroundColor: 'var(--color-surface-page)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.8125rem', outline: 'none' }}
+                />
+              </div>
+            )}
+            {responseAction === 'escalate' && (
+              <input
+                type="text" placeholder="Escalation reason..."
+                value={responseParams.reason || ''}
+                onChange={(e) => setResponseParams({ reason: e.target.value })}
+                style={{ width: '100%', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', backgroundColor: 'var(--color-surface-page)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '0.8125rem', outline: 'none', marginBottom: '0.5rem' }}
+              />
+            )}
+
+            {/* Execute + result */}
+            {responseAction && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button
+                  onClick={handleSmartResponse}
+                  disabled={responseLoading}
+                  style={{
+                    padding: '0.375rem 1rem', borderRadius: '0.375rem', fontSize: '0.8125rem', fontWeight: 500,
+                    backgroundColor: responseAction === 'escalate' ? '#dc2626' : '#6366f1',
+                    color: 'white', border: 'none', cursor: responseLoading ? 'not-allowed' : 'pointer',
+                    opacity: responseLoading ? 0.6 : 1,
+                  }}
+                >
+                  {responseLoading ? 'Running...' : 'Execute'}
+                </button>
+                {responseMsg && (
+                  <span style={{ fontSize: '0.75rem', color: responseMsg.ok ? '#4ade80' : '#f87171' }}>
+                    {responseMsg.text}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Matched content */}
