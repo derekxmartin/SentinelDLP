@@ -391,6 +391,7 @@ AkesoPreWrite(
     /* Get instance context to check if this volume is monitored */
     status = FltGetInstanceContext(FltObjects->Instance, (PFLT_CONTEXT *)&instanceContext);
     if (!NT_SUCCESS(status) || instanceContext == NULL) {
+        AKESO_LOG("PreWrite: no instance context (status=0x%08X)\n", status);
         return FLT_PREOP_SUCCESS_NO_CALLBACK;
     }
 
@@ -398,6 +399,10 @@ AkesoPreWrite(
         FltReleaseContext(instanceContext);
         return FLT_PREOP_SUCCESS_NO_CALLBACK;
     }
+
+    AKESO_LOG("PreWrite: intercepted write (PID=%lu, paging=%d)\n",
+        (ULONG)(ULONG_PTR)PsGetCurrentProcessId(),
+        (Data->Iopb->IrpFlags & IRP_PAGING_IO) ? 1 : 0);
 
     /*
      * Skip kernel-mode originators (paging I/O, system threads).
@@ -411,6 +416,8 @@ AkesoPreWrite(
     /*
      * Send notification to user-mode and get verdict.
      */
+    AKESO_LOG("PreWrite: sending notification to user-mode...\n");
+
     status = AkesoSendNotification(
         FltObjects,
         Data,
@@ -420,6 +427,9 @@ AkesoPreWrite(
     );
 
     FltReleaseContext(instanceContext);
+
+    AKESO_LOG("PreWrite: notification result=0x%08X, verdict=%d\n",
+        status, (int)verdict);
 
     if (!NT_SUCCESS(status)) {
         /* Communication failed — allow to prevent system hangs */
