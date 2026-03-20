@@ -364,8 +364,7 @@ DetectionResult DetectionPipeline::RunDetection(
 
     /* Step 1: Detect file type */
     auto ft = file_type_detector_.Detect(
-        reinterpret_cast<const char*>(content),
-        content_len, filename);
+        content, content_len, filename);
     result.file_type = ft.type_name;
 
     /* Step 2: Extract text content */
@@ -449,7 +448,7 @@ DriverMsgType DetectionPipeline::RequestTTD(
         std::chrono::steady_clock::now().time_since_epoch().count()));
 
     /* Include content preview */
-    request.set_content(
+    request.set_file_content(
         std::string(notif.content_preview.begin(), notif.content_preview.end()));
 
     std::string filepath_utf8 = WideToUtf8(notif.file_path);
@@ -458,9 +457,8 @@ DriverMsgType DetectionPipeline::RequestTTD(
     request.set_timeout_seconds(detection_config_.ttd_timeout);
     request.set_fallback_action(detection_config_.ttd_fallback);
 
-    /* Context */
-    auto* ctx = request.mutable_context();
-    ctx->set_channel(
+    /* Context — channel is a top-level field in the proto */
+    request.set_channel(
         static_cast<akesodlp::Channel>(
             static_cast<int>(notif.volume_type)));
 
