@@ -40,6 +40,48 @@
 namespace akeso::dlp {
 
 /* ================================================================== */
+/*  NT device path → drive letter conversion                           */
+/* ================================================================== */
+
+#ifdef _WIN32
+/*
+ * ETW gives paths like \Device\HarddiskVolume2\Users\...
+ * Win32 APIs need C:\Users\... or \\?\Device\...
+ * This converts NT device paths to drive-letter paths.
+ */
+static std::wstring NtPathToDosPath(const std::wstring& nt_path)
+{
+    /* If it doesn't start with \Device\, return as-is */
+    if (nt_path.find(L"\\Device\\") != 0) {
+        return nt_path;
+    }
+
+    /* Query all drive letters and their NT device mappings */
+    wchar_t drives[512] = {};
+    if (GetLogicalDriveStringsW(511, drives) == 0) {
+        return nt_path;
+    }
+
+    wchar_t device_name[MAX_PATH] = {};
+    for (const wchar_t* drive = drives; *drive; drive += wcslen(drive) + 1) {
+        /* drive is "C:\", we need "C:" for QueryDosDevice */
+        wchar_t root[3] = { drive[0], L':', L'\0' };
+        if (QueryDosDeviceW(root, device_name, MAX_PATH) > 0) {
+            size_t dev_len = wcslen(device_name);
+            if (_wcsnicmp(nt_path.c_str(), device_name, dev_len) == 0 &&
+                (nt_path.size() == dev_len || nt_path[dev_len] == L'\\')) {
+                /* Match! Replace \Device\HarddiskVolumeN with C: */
+                return std::wstring(root) + nt_path.substr(dev_len);
+            }
+        }
+    }
+
+    /* No match found — try \\?\ prefix as fallback */
+    return L"\\\\?\\" + nt_path;
+}
+#endif
+
+/* ================================================================== */
 /*  Known browser process names                                        */
 /* ================================================================== */
 
@@ -377,7 +419,14 @@ void BrowserUploadMonitor::OnFileRead(uint32_t pid, const std::wstring& file_pat
         return;
     }
 
-    std::string utf8_path = WideToUtf8(file_path);
+    /* Convert NT device path (\Device\HarddiskVolume2\...) to drive letter (C:\...) */
+#ifdef _WIN32
+    std::wstring dos_path = NtPathToDosPath(file_path);
+#else
+    const std::wstring& dos_path = file_path;
+#endif
+
+    std::string utf8_path = WideToUtf8(dos_path);
     if (utf8_path.empty()) return;
 
     /* Dedup: skip if recently scanned */
@@ -392,16 +441,9 @@ void BrowserUploadMonitor::OnFileRead(uint32_t pid, const std::wstring& file_pat
     LOG_INFO("BrowserUploadMonitor: [UPLOAD] browser='{}' pid={} file={}",
              browser_name, pid, utf8_path);
 
-    /* Read file content for scanning */
-    auto content = ReadFileContent(utf8_path, max_scan_size_);
-    if (content.empty()) {
-        LOG_DEBUG("BrowserUploadMonitor: could not read file content: {}", utf8_path);
-        return;
-    }
-
     ++uploads_scanned_;
 
-    /* Build event and invoke callback */
+    /* Build event and invoke callback — pipeline reads file content */
     BrowserUploadEvent event;
     event.file_path = utf8_path;
     event.browser_pid = pid;
@@ -411,7 +453,7 @@ void BrowserUploadMonitor::OnFileRead(uint32_t pid, const std::wstring& file_pat
     try {
         event.file_size = static_cast<int64_t>(std::filesystem::file_size(utf8_path));
     } catch (...) {
-        event.file_size = static_cast<int64_t>(content.size());
+        event.file_size = 0;
     }
 
     {
@@ -538,11 +580,30 @@ bool BrowserUploadMonitor::IsUserFile(const std::wstring& path)
         }
     }
 
+    /* Reject known system/noise filenames */
+    static const std::wstring rejected_filenames[] = {
+        L"\\desktop.ini",
+        L"\\thumbs.db",
+        L"\\iconcache.db",
+    };
+    for (const auto& name : rejected_filenames) {
+        if (lower_path.length() >= name.length() &&
+            lower_path.compare(lower_path.length() - name.length(), name.length(), name) == 0) {
+            return false;
+        }
+    }
+
+    /* Reject paths that end with backslash (directory listings, not files) */
+    if (!lower_path.empty() && lower_path.back() == L'\\') {
+        return false;
+    }
+
     /* Reject system/binary file extensions */
     static const std::wstring rejected_extensions[] = {
         L".dll", L".exe", L".sys", L".dat", L".ldb",
         L".log", L".tmp", L".pf", L".etl", L".evtx",
         L".ico", L".cur", L".ani", L".manifest",
+        L".lnk", L".dmp", L".ini",
     };
 
     for (const auto& ext : rejected_extensions) {
