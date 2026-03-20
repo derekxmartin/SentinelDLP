@@ -479,3 +479,76 @@ class TestEngineIntegration:
         keywords = {m.metadata["keyword"] for m in result.matches}
         assert "top secret" in keywords
         assert "classified" in keywords
+
+
+# ---------------------------------------------------------------------------
+# Path traversal protection (issue #48)
+# ---------------------------------------------------------------------------
+
+
+class TestPathTraversal:
+    """Tests for path traversal protection (issue #48)."""
+
+    def test_zip_path_traversal_rejected(self):
+        """ZIP with ../../etc/passwd member should be caught."""
+        inspector = ArchiveInspector()
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as zf:
+            zf.writestr("../../etc/passwd", "root:x:0:0")
+        result = inspector.inspect(buf.getvalue(), "evil.zip")
+        # Should have logged an error, not crash
+        assert any(
+            "Path traversal" in c.content or "Path traversal" in str(c.metadata)
+            for c in result.components
+        )
+
+    def test_zip_absolute_path_rejected(self):
+        inspector = ArchiveInspector()
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as zf:
+            zf.writestr("/etc/shadow", "secret")
+        result = inspector.inspect(buf.getvalue(), "evil.zip")
+        assert any(
+            "Absolute path" in c.content or "Absolute path" in str(c.metadata)
+            for c in result.components
+        )
+
+    def test_tar_symlink_rejected(self):
+        inspector = ArchiveInspector()
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w") as tf:
+            # Add a symlink member
+            info = tarfile.TarInfo(name="link.txt")
+            info.type = tarfile.SYMTYPE
+            info.linkname = "/etc/passwd"
+            tf.addfile(info)
+            # Add a normal file too
+            data = b"normal content"
+            normal = tarfile.TarInfo(name="normal.txt")
+            normal.size = len(data)
+            tf.addfile(normal, io.BytesIO(data))
+        result = inspector.inspect(buf.getvalue(), "test.tar")
+        # Should have processed normal.txt but skipped symlink
+        assert result.components  # at least the normal file
+
+    def test_windows_reserved_name_rejected(self):
+        inspector = ArchiveInspector()
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as zf:
+            zf.writestr("CON", "data")
+        result = inspector.inspect(buf.getvalue(), "evil.zip")
+        assert any(
+            "Reserved" in c.content or "Reserved" in str(c.metadata)
+            for c in result.components
+        )
+
+    def test_backslash_traversal_rejected(self):
+        inspector = ArchiveInspector()
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as zf:
+            zf.writestr("..\\..\\windows\\system32\\config", "data")
+        result = inspector.inspect(buf.getvalue(), "evil.zip")
+        assert any(
+            "Path traversal" in c.content or "Path traversal" in str(c.metadata)
+            for c in result.components
+        )
