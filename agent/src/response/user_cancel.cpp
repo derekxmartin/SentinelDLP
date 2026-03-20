@@ -396,7 +396,7 @@ UserCancelResult UserCancelAction::ShowDialog(
 {
     ++dialogs_shown_;
 
-    LOG_INFO("UserCancelAction: showing dialog — policy='{}' severity={} file={}",
+    LOG_INFO("UserCancelAction: showing dialog - policy='{}' severity={} file={}",
              policy_name, severity, file_name);
 
     UserCancelResult result;
@@ -453,7 +453,7 @@ UserCancelResult UserCancelAction::ShowDialog(
         result.timed_out = false;
         result.user_cancelled = false;
         ++dialogs_allowed_;
-        LOG_INFO("UserCancelAction: user submitted justification — allowing. Justification: '{}'",
+        LOG_INFO("UserCancelAction: user submitted justification - allowing. Justification: '{}'",
                  result.justification);
     } else if (state.timed_out) {
         result.verdict = DriverMsgType::VerdictBlock;
@@ -461,7 +461,7 @@ UserCancelResult UserCancelAction::ShowDialog(
         result.user_cancelled = false;
         ++dialogs_timed_out_;
         ++dialogs_blocked_;
-        LOG_WARN("UserCancelAction: dialog timed out after {}s — blocking",
+        LOG_WARN("UserCancelAction: dialog timed out after {}s - blocking",
                  timeout_seconds_);
     } else {
         result.verdict = DriverMsgType::VerdictBlock;

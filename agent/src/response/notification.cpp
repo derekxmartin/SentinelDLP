@@ -157,7 +157,7 @@ void DlpNotifier::DisplayNotification(const NotificationRequest& req)
     std::string title = FormatTitle(req);
     std::string body = FormatBody(req);
 
-    LOG_INFO("DlpNotifier: [{}] {} — {}",
+    LOG_INFO("DlpNotifier: [{}] {} - {}",
              req.type == NotificationType::Block ? "BLOCK" : "NOTIFY",
              title, body);
 

@@ -135,7 +135,7 @@ void DetectionPipeline::Stop() {
 
     /* Log final stats */
     auto s = GetStats();
-    LOG_INFO("DetectionPipeline: stopped — scanned={}, allowed={}, blocked={}, "
+    LOG_INFO("DetectionPipeline: stopped - scanned={}, allowed={}, blocked={}, "
              "violations={}, ttd={}, errors={}",
              s.files_scanned, s.files_allowed, s.files_blocked,
              s.violations_detected, s.ttd_requests_sent, s.errors);
@@ -251,7 +251,7 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
 
     /* Skip if no content preview available */
     if (notif.content_preview.empty()) {
-        LOG_INFO("DetectionPipeline: [ALLOW] no content preview — pid={} file={}",
+        LOG_INFO("DetectionPipeline: [ALLOW] no content preview - pid={} file={}",
                  notif.process_id, filepath_utf8);
         std::lock_guard<std::mutex> lock(stats_mutex_);
         stats_.files_allowed++;
@@ -262,7 +262,7 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
     {
         std::lock_guard<std::mutex> lock(policy_mutex_);
         if (policies_.empty()) {
-            LOG_INFO("DetectionPipeline: [ALLOW] no policies loaded — pid={} file={}",
+            LOG_INFO("DetectionPipeline: [ALLOW] no policies loaded - pid={} file={}",
                      notif.process_id, filepath_utf8);
             std::lock_guard<std::mutex> slock(stats_mutex_);
             stats_.files_allowed++;
@@ -309,7 +309,7 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
         }
     }
 
-    LOG_INFO("DetectionPipeline: VIOLATION — policy='{}' severity={} matches={} file={}",
+    LOG_INFO("DetectionPipeline: VIOLATION - policy='{}' severity={} matches={} file={}",
              worst->policy_name, SeverityToString(worst->severity),
              worst->match_count, filepath_utf8);
 
@@ -342,13 +342,13 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
         user_cancel_justification = uc_result.justification;
 
         if (uc_result.timed_out) {
-            LOG_WARN("DetectionPipeline: [USER_CANCEL] timed out — blocking file={}",
+            LOG_WARN("DetectionPipeline: [USER_CANCEL] timed out - blocking file={}",
                      filepath_utf8);
         } else if (uc_result.user_cancelled) {
-            LOG_INFO("DetectionPipeline: [USER_CANCEL] user blocked — file={}",
+            LOG_INFO("DetectionPipeline: [USER_CANCEL] user blocked - file={}",
                      filepath_utf8);
         } else {
-            LOG_INFO("DetectionPipeline: [USER_CANCEL] user allowed — justification='{}' file={}",
+            LOG_INFO("DetectionPipeline: [USER_CANCEL] user allowed - justification='{}' file={}",
                      uc_result.justification, filepath_utf8);
         }
     } else {
