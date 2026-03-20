@@ -269,6 +269,14 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
     auto start_time = std::chrono::steady_clock::now();
     std::string filepath_utf8 = WideToUtf8(notif.file_path);
 
+    /* Skip empty paths and empty previews silently */
+    if (filepath_utf8.empty() || notif.content_preview.empty()) {
+        std::lock_guard<std::mutex> lock(stats_mutex_);
+        stats_.files_scanned++;
+        stats_.files_allowed++;
+        return DriverMsgType::VerdictAllow;
+    }
+
     LOG_INFO("DetectionPipeline: [SCAN] pid={} file={} size={} preview={}B",
              notif.process_id, filepath_utf8, notif.file_size,
              notif.content_preview.size());
@@ -277,15 +285,6 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
     {
         std::lock_guard<std::mutex> lock(stats_mutex_);
         stats_.files_scanned++;
-    }
-
-    /* Skip if no content preview available */
-    if (notif.content_preview.empty()) {
-        LOG_INFO("DetectionPipeline: [ALLOW] no content preview - pid={} file={}",
-                 notif.process_id, filepath_utf8);
-        std::lock_guard<std::mutex> lock(stats_mutex_);
-        stats_.files_allowed++;
-        return DriverMsgType::VerdictAllow;
     }
 
     /* Skip if no policies loaded */
