@@ -31,8 +31,11 @@ from server.schemas.incident import (
     IncidentNoteResponse,
     IncidentResponse,
     IncidentUpdate,
+    SmartResponseRequest,
+    SmartResponseResult,
 )
 from server.services import incident_service
+from server.services import smart_response
 
 logger = logging.getLogger(__name__)
 
@@ -212,6 +215,42 @@ async def add_note(
     )
     await db.commit()
     return note
+
+
+# ---------------------------------------------------------------------------
+# Smart Response
+# ---------------------------------------------------------------------------
+
+
+@router.post("/{incident_id}/respond", response_model=SmartResponseResult)
+async def smart_respond(
+    incident_id: uuid.UUID,
+    body: SmartResponseRequest,
+    request: Request,
+    user: CurrentUser = Depends(RequirePermission("incidents:write")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Execute a smart response action on an incident."""
+    outcome = await smart_response.execute(
+        db,
+        incident_id=incident_id,
+        actor_id=user.id,
+        action=body.action,
+        params=body.params,
+    )
+
+    if outcome.success:
+        await _audit(
+            db, user, f"incident.smart_response.{body.action}", request,
+            resource_id=str(incident_id),
+            detail=outcome.detail,
+        )
+
+    return SmartResponseResult(
+        success=outcome.success,
+        action=outcome.action,
+        detail=outcome.detail,
+    )
 
 
 # ---------------------------------------------------------------------------

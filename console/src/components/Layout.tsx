@@ -21,6 +21,8 @@ import {
   Fingerprint,
   Globe,
   Settings,
+  FileBarChart,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
@@ -34,6 +36,8 @@ const NAV_ITEMS = [
   { to: '/detection', icon: ScanSearch, label: 'Detection' },
   { to: '/identifiers', icon: BookOpen, label: 'Identifiers' },
   { to: '/users', icon: Users, label: 'Users' },
+  { to: '/reports', icon: FileBarChart, label: 'Reports' },
+  { to: '/risk', icon: AlertTriangle, label: 'User Risk' },
   { to: '/fingerprints', icon: Fingerprint, label: 'Fingerprints' },
   { to: '/settings/network', icon: Globe, label: 'Network' },
 ];
