@@ -31,8 +31,7 @@ AkesoPortConnect(
      */
     if (InterlockedIncrement(&gFilterData.ConnectionCount) > AKESO_DLP_MAX_CONNECTIONS) {
         InterlockedDecrement(&gFilterData.ConnectionCount);
-        KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL,
-            "AkesoDLP: Connection rejected (max connections reached)\n"));
+        AKESO_WARN("Connection rejected (max connections reached)\n");
         return STATUS_CONNECTION_REFUSED;
     }
 
@@ -40,9 +39,8 @@ AkesoPortConnect(
     gFilterData.ClientConnected = TRUE;
     *ConnectionCookie = NULL;
 
-    KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "AkesoDLP: User-mode client connected (PID: %lu)\n",
-        (ULONG)(ULONG_PTR)PsGetCurrentProcessId()));
+    AKESO_LOG("User-mode client connected (PID: %lu)\n",
+        (ULONG)(ULONG_PTR)PsGetCurrentProcessId());
 
     return STATUS_SUCCESS;
 }
@@ -58,8 +56,7 @@ AkesoPortDisconnect(
 {
     UNREFERENCED_PARAMETER(ConnectionCookie);
 
-    KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "AkesoDLP: User-mode client disconnected\n"));
+    AKESO_LOG("User-mode client disconnected\n");
 
     /*
      * Close the client port handle. This is required to properly
@@ -111,8 +108,7 @@ AkesoPortMessageNotify(
 
     switch (msgType) {
     case AkesoMsgConfigUpdate:
-        KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-            "AkesoDLP: Config update received from user-mode\n"));
+        AKESO_LOG("Config update received from user-mode\n");
         /*
          * Future: parse config payload to update monitoring settings,
          * volume filters, PID exclusions, etc.
@@ -120,9 +116,7 @@ AkesoPortMessageNotify(
         break;
 
     default:
-        KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL,
-            "AkesoDLP: Unknown message type %d from user-mode\n",
-            msgType));
+        AKESO_WARN("Unknown message type %d from user-mode\n", msgType);
         return STATUS_INVALID_PARAMETER;
     }
 

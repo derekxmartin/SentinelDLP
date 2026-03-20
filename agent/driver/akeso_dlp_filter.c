@@ -93,8 +93,7 @@ DriverEntry(
 
     UNREFERENCED_PARAMETER(RegistryPath);
 
-    KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "AkesoDLP: DriverEntry - loading minifilter\n"));
+    AKESO_LOG("DriverEntry - loading minifilter\n");
 
     /*
      * Step 1: Register the minifilter with Filter Manager.
@@ -106,8 +105,7 @@ DriverEntry(
     );
 
     if (!NT_SUCCESS(status)) {
-        KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-            "AkesoDLP: FltRegisterFilter failed: 0x%08X\n", status));
+        AKESO_ERR("FltRegisterFilter failed: 0x%08X\n", status);
         return status;
     }
 
@@ -123,9 +121,7 @@ DriverEntry(
     );
 
     if (!NT_SUCCESS(status)) {
-        KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-            "AkesoDLP: FltBuildDefaultSecurityDescriptor failed: 0x%08X\n",
-            status));
+        AKESO_ERR("FltBuildDefaultSecurityDescriptor failed: 0x%08X\n", status);
         goto cleanup_filter;
     }
 
@@ -153,9 +149,7 @@ DriverEntry(
     FltFreeSecurityDescriptor(sd);
 
     if (!NT_SUCCESS(status)) {
-        KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-            "AkesoDLP: FltCreateCommunicationPort failed: 0x%08X\n",
-            status));
+        AKESO_ERR("FltCreateCommunicationPort failed: 0x%08X\n", status);
         goto cleanup_filter;
     }
 
@@ -165,14 +159,12 @@ DriverEntry(
     status = FltStartFiltering(gFilterData.Filter);
 
     if (!NT_SUCCESS(status)) {
-        KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-            "AkesoDLP: FltStartFiltering failed: 0x%08X\n", status));
+        AKESO_ERR("FltStartFiltering failed: 0x%08X\n", status);
         goto cleanup_port;
     }
 
-    KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "AkesoDLP: Minifilter loaded successfully (altitude %ws)\n",
-        AKESO_DLP_ALTITUDE));
+    AKESO_LOG("Minifilter loaded successfully (altitude %ws)\n",
+        AKESO_DLP_ALTITUDE);
 
     return STATUS_SUCCESS;
 
@@ -198,8 +190,7 @@ AkesoFilterUnload(
 {
     UNREFERENCED_PARAMETER(Flags);
 
-    KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "AkesoDLP: Unloading minifilter\n"));
+    AKESO_LOG("Unloading minifilter\n");
 
     /* Close the communication port first (stops new connections) */
     if (gFilterData.ServerPort != NULL) {
@@ -213,8 +204,7 @@ AkesoFilterUnload(
         gFilterData.Filter = NULL;
     }
 
-    KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "AkesoDLP: Minifilter unloaded cleanly\n"));
+    AKESO_LOG("Minifilter unloaded cleanly\n");
 
     return STATUS_SUCCESS;
 }
@@ -267,9 +257,7 @@ AkesoInstanceSetup(
     );
 
     if (!NT_SUCCESS(status)) {
-        KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL,
-            "AkesoDLP: Failed to allocate instance context: 0x%08X\n",
-            status));
+        AKESO_WARN("Failed to allocate instance context: 0x%08X\n", status);
         /* Attach anyway but without context — we'll skip monitoring */
         return STATUS_SUCCESS;
     }
@@ -301,14 +289,12 @@ AkesoInstanceSetup(
     FltReleaseContext(instanceContext);
 
     if (!NT_SUCCESS(status) && status != STATUS_FLT_CONTEXT_ALREADY_DEFINED) {
-        KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL,
-            "AkesoDLP: FltSetInstanceContext failed: 0x%08X\n", status));
+        AKESO_WARN("FltSetInstanceContext failed: 0x%08X\n", status);
     }
 
-    KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "AkesoDLP: Attached to volume (type=%d, monitor=%s)\n",
+    AKESO_LOG("Attached to volume (type=%d, monitor=%s)\n",
         volumeType,
-        instanceContext->MonitorEnabled ? "YES" : "NO"));
+        instanceContext->MonitorEnabled ? "YES" : "NO");
 
     return STATUS_SUCCESS;
 }
@@ -322,8 +308,7 @@ AkesoInstanceTeardownStart(
     UNREFERENCED_PARAMETER(FltObjects);
     UNREFERENCED_PARAMETER(Reason);
 
-    KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "AkesoDLP: Instance teardown start\n"));
+    AKESO_LOG("Instance teardown start\n");
 }
 
 VOID
@@ -335,8 +320,7 @@ AkesoInstanceTeardownComplete(
     UNREFERENCED_PARAMETER(FltObjects);
     UNREFERENCED_PARAMETER(Reason);
 
-    KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-        "AkesoDLP: Instance teardown complete\n"));
+    AKESO_LOG("Instance teardown complete\n");
 }
 
 /* ================================================================== */
@@ -440,17 +424,14 @@ AkesoPreWrite(
 
     if (!NT_SUCCESS(status)) {
         /* Communication failed — allow to prevent system hangs */
-        KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL,
-            "AkesoDLP: Notification failed (0x%08X), allowing write\n",
-            status));
+        AKESO_WARN("Notification failed (0x%08X), allowing write\n", status);
         return FLT_PREOP_SUCCESS_NO_CALLBACK;
     }
 
     /* Apply verdict */
     if (verdict == AkesoMsgVerdictBlock) {
-        KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL,
-            "AkesoDLP: BLOCKED write by PID %lu\n",
-            (ULONG)(ULONG_PTR)PsGetCurrentProcessId()));
+        AKESO_LOG("BLOCKED write by PID %lu\n",
+            (ULONG)(ULONG_PTR)PsGetCurrentProcessId());
 
         Data->IoStatus.Status = STATUS_ACCESS_DENIED;
         Data->IoStatus.Information = 0;
@@ -662,8 +643,7 @@ AkesoSendNotification(
     if (NT_SUCCESS(status) && replyLength >= sizeof(AKESO_REPLY)) {
         *Verdict = reply.Verdict;
     } else if (status == STATUS_TIMEOUT) {
-        KdPrintEx((DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL,
-            "AkesoDLP: Timeout waiting for user-mode reply, allowing\n"));
+        AKESO_WARN("Timeout waiting for user-mode reply, allowing\n");
         *Verdict = AkesoMsgVerdictAllow;
         status = STATUS_SUCCESS;  /* Don't fail the I/O on timeout */
     }
