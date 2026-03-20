@@ -18,6 +18,7 @@ import {
   ScanSearch,
   BookOpen,
   Bell,
+  Fingerprint,
   Globe,
   Settings,
 } from 'lucide-react';
@@ -33,6 +34,7 @@ const NAV_ITEMS = [
   { to: '/detection', icon: ScanSearch, label: 'Detection' },
   { to: '/identifiers', icon: BookOpen, label: 'Identifiers' },
   { to: '/users', icon: Users, label: 'Users' },
+  { to: '/fingerprints', icon: Fingerprint, label: 'Fingerprints' },
   { to: '/settings/network', icon: Globe, label: 'Network' },
 ];
 

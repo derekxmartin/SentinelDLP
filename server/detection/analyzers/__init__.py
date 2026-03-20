@@ -86,6 +86,11 @@ from server.detection.analyzers.file_type_analyzer import (  # noqa: E402
     FileTypeRule,
     detect_file_type,
 )
+from server.detection.analyzers.fingerprint_analyzer import (  # noqa: E402
+    FingerprintAnalyzer,
+    FingerprintIndex,
+    FingerprintRecord,
+)
 
 __all__ = [
     "BaseAnalyzer",
@@ -95,6 +100,9 @@ __all__ = [
     "FileCategory",
     "FileTypeAnalyzer",
     "FileTypeRule",
+    "FingerprintAnalyzer",
+    "FingerprintIndex",
+    "FingerprintRecord",
     "KeywordAnalyzer",
     "KeywordDictionaryConfig",
     "ProximityRule",

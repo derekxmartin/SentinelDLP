@@ -13,6 +13,7 @@ from server.api.policies import router as policies_router
 from server.api.response_rules import router as response_rules_router
 from server.api.search import router as search_router
 from server.api.system import router as system_router
+from server.api.fingerprints import router as fingerprints_router
 from server.api.network_settings import router as network_settings_router
 from server.api.users import router as users_router
 
@@ -48,6 +49,7 @@ app.include_router(auth_router)
 app.include_router(detection_router)
 app.include_router(dictionaries_router)
 app.include_router(identifiers_router)
+app.include_router(fingerprints_router)
 app.include_router(incidents_router)
 app.include_router(network_settings_router)
 app.include_router(policies_router)
