@@ -53,6 +53,8 @@ static const UNICODE_STRING SkippedExtensions[] = {
     RTL_CONSTANT_STRING(L"aodl"),
     RTL_CONSTANT_STRING(L"lock"),
     RTL_CONSTANT_STRING(L"dat"),
+    RTL_CONSTANT_STRING(L"jtx"),
+    RTL_CONSTANT_STRING(L"edb"),
 };
 #define SKIPPED_EXT_COUNT (sizeof(SkippedExtensions) / sizeof(SkippedExtensions[0]))
 
@@ -79,6 +81,7 @@ static const UNICODE_STRING SkippedPaths[] = {
     RTL_CONSTANT_STRING(L"\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\"),
     RTL_CONSTANT_STRING(L"\\AppData\\Local\\Microsoft\\OneDrive\\"),
     RTL_CONSTANT_STRING(L"\\AppData\\Local\\Temp\\"),
+    RTL_CONSTANT_STRING(L"\\ProgramData\\Microsoft\\Search\\"),
     RTL_CONSTANT_STRING(L"\\AkesoDLP\\logs\\"),
     RTL_CONSTANT_STRING(L"\\AkesoDLP\\queue\\"),
     RTL_CONSTANT_STRING(L"\\AkesoDLP\\cache\\"),
