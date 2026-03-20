@@ -50,6 +50,8 @@ struct MonitoringConfig {
     bool clipboard              = true;
     bool browser_upload         = true;
     bool print_monitor          = false;
+    int64_t max_scan_size       = 52428800;  /* 50 MB */
+    int  browser_upload_cooldown_seconds = 30;
 };
 
 struct PolicyCacheConfig {

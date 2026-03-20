@@ -78,6 +78,8 @@ static void ParseMonitoring(const YAML::Node& node, MonitoringConfig& cfg) {
     cfg.clipboard       = ReadOr<bool>(node, "clipboard", cfg.clipboard);
     cfg.browser_upload  = ReadOr<bool>(node, "browser_upload", cfg.browser_upload);
     cfg.print_monitor   = ReadOr<bool>(node, "print", cfg.print_monitor);
+    cfg.max_scan_size   = ReadOr<int64_t>(node, "max_scan_size", cfg.max_scan_size);
+    cfg.browser_upload_cooldown_seconds = ReadOr<int>(node, "browser_upload_cooldown", cfg.browser_upload_cooldown_seconds);
 }
 
 static void ParsePolicyCache(const YAML::Node& node, PolicyCacheConfig& cfg) {

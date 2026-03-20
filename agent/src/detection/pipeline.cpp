@@ -50,7 +50,8 @@ DetectionPipeline::DetectionPipeline(
     std::shared_ptr<GrpcClient> grpc_client,
     std::shared_ptr<IncidentQueue> incident_queue,
     std::shared_ptr<PolicyCache> policy_cache,
-    std::shared_ptr<ClipboardMonitor> clipboard_monitor)
+    std::shared_ptr<ClipboardMonitor> clipboard_monitor,
+    std::shared_ptr<BrowserUploadMonitor> browser_monitor)
     : detection_config_(config.detection)
     , monitoring_config_(config.monitoring)
     , driver_comm_(std::move(driver_comm))
@@ -58,6 +59,7 @@ DetectionPipeline::DetectionPipeline(
     , incident_queue_(std::move(incident_queue))
     , policy_cache_(std::move(policy_cache))
     , clipboard_monitor_(std::move(clipboard_monitor))
+    , browser_monitor_(std::move(browser_monitor))
     , content_extractor_(ExtractionOptions{
           static_cast<size_t>(config.detection.max_scan_size),
           2,        /* max_zip_depth on agent */
@@ -122,6 +124,16 @@ bool DetectionPipeline::Start() {
         LOG_INFO("DetectionPipeline: clipboard callback registered with ClipboardMonitor");
     }
 
+    /* Register browser upload callback (P4-T11) */
+    if (browser_monitor_) {
+        browser_monitor_->SetUploadCallback(
+            [this](const BrowserUploadEvent& event) {
+                OnBrowserUpload(event);
+            }
+        );
+        LOG_INFO("DetectionPipeline: upload callback registered with BrowserUploadMonitor");
+    }
+
     running_ = true;
     LOG_INFO("DetectionPipeline: started");
     return true;
@@ -134,6 +146,9 @@ void DetectionPipeline::Stop() {
     running_ = false;
 
     /* Clear callbacks */
+    if (browser_monitor_) {
+        browser_monitor_->SetUploadCallback(nullptr);
+    }
     if (clipboard_monitor_) {
         clipboard_monitor_->SetContentCallback(nullptr);
     }
@@ -254,6 +269,14 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
     auto start_time = std::chrono::steady_clock::now();
     std::string filepath_utf8 = WideToUtf8(notif.file_path);
 
+    /* Skip empty paths and empty previews silently */
+    if (filepath_utf8.empty() || notif.content_preview.empty()) {
+        std::lock_guard<std::mutex> lock(stats_mutex_);
+        stats_.files_scanned++;
+        stats_.files_allowed++;
+        return DriverMsgType::VerdictAllow;
+    }
+
     LOG_INFO("DetectionPipeline: [SCAN] pid={} file={} size={} preview={}B",
              notif.process_id, filepath_utf8, notif.file_size,
              notif.content_preview.size());
@@ -262,15 +285,6 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
     {
         std::lock_guard<std::mutex> lock(stats_mutex_);
         stats_.files_scanned++;
-    }
-
-    /* Skip if no content preview available */
-    if (notif.content_preview.empty()) {
-        LOG_INFO("DetectionPipeline: [ALLOW] no content preview - pid={} file={}",
-                 notif.process_id, filepath_utf8);
-        std::lock_guard<std::mutex> lock(stats_mutex_);
-        stats_.files_allowed++;
-        return DriverMsgType::VerdictAllow;
     }
 
     /* Skip if no policies loaded */
@@ -852,6 +866,200 @@ void DetectionPipeline::QueueClipboardIncident(
     } else {
         LOG_WARN("DetectionPipeline: failed to queue clipboard incident");
     }
+}
+
+/* ================================================================== */
+/*  Browser upload handler (P4-T11)                                    */
+/* ================================================================== */
+
+void DetectionPipeline::OnBrowserUpload(const BrowserUploadEvent& event)
+{
+    if (!running_) return;
+
+    auto start_time = std::chrono::steady_clock::now();
+
+    LOG_INFO("DetectionPipeline: [UPLOAD_SCAN] browser='{}' pid={} file={} size={}",
+             event.browser_name, event.browser_pid,
+             event.file_path, event.file_size);
+
+    {
+        std::lock_guard<std::mutex> lock(stats_mutex_);
+        stats_.browser_uploads_scanned++;
+    }
+
+    /* Skip if no policies loaded */
+    {
+        std::lock_guard<std::mutex> lock(policy_mutex_);
+        if (policies_.empty()) {
+            LOG_DEBUG("DetectionPipeline: [UPLOAD_ALLOW] no policies loaded");
+            return;
+        }
+    }
+
+    /* Read file content for scanning */
+    std::vector<uint8_t> content;
+    {
+        std::wstring wide_path(event.file_path.begin(), event.file_path.end());
+        HANDLE hFile = CreateFileW(wide_path.c_str(), GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (hFile != INVALID_HANDLE_VALUE) {
+            LARGE_INTEGER fsize;
+            if (GetFileSizeEx(hFile, &fsize) && fsize.QuadPart > 0) {
+                auto read_size = static_cast<size_t>(
+                    (std::min)(static_cast<int64_t>(fsize.QuadPart),
+                               detection_config_.max_scan_size));
+                content.resize(read_size);
+                DWORD bytes_read = 0;
+                if (!ReadFile(hFile, content.data(),
+                              static_cast<DWORD>(read_size), &bytes_read, nullptr)) {
+                    content.clear();
+                }
+                else {
+                    content.resize(bytes_read);
+                }
+            }
+            CloseHandle(hFile);
+        }
+    }
+
+    if (content.empty()) {
+        LOG_DEBUG("DetectionPipeline: [UPLOAD_ALLOW] could not read file: {}", event.file_path);
+        return;
+    }
+
+    /* Run detection */
+    DetectionResult detection;
+    try {
+        detection = RunDetection(
+            content.data(), content.size(),
+            event.file_path, event.file_size);
+    } catch (const std::exception& ex) {
+        LOG_ERROR("DetectionPipeline: browser upload detection failed: {}", ex.what());
+        std::lock_guard<std::mutex> lock(stats_mutex_);
+        stats_.errors++;
+        return;
+    }
+
+    /* Evaluate policies */
+    std::vector<PolicyViolation> violations;
+    {
+        std::lock_guard<std::mutex> lock(policy_mutex_);
+        violations = policy_evaluator_.EvaluateAll(policies_, detection);
+    }
+
+    if (violations.empty()) {
+        return;
+    }
+
+    /* Find worst violation */
+    const PolicyViolation* worst = &violations[0];
+    for (size_t i = 1; i < violations.size(); ++i) {
+        if (violations[i].severity > worst->severity) {
+            worst = &violations[i];
+        }
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(stats_mutex_);
+        stats_.browser_uploads_violations += violations.size();
+    }
+
+    std::string match_summary = std::to_string(worst->match_count) + " match(es)";
+    std::string file_desc = event.file_path + " (via " + event.browser_name + ")";
+
+    LOG_INFO("DetectionPipeline: [UPLOAD_VIOLATION] policy='{}' severity={} matches={} browser='{}' file={}",
+             worst->policy_name, SeverityToString(worst->severity),
+             worst->match_count, event.browser_name, event.file_path);
+
+    /* Determine response */
+    std::string action_str;
+
+    if (worst->response == ResponseAction::Block) {
+        action_str = "browser_upload_block";
+
+        {
+            std::lock_guard<std::mutex> lock(stats_mutex_);
+            stats_.browser_uploads_blocked++;
+        }
+
+        LOG_WARN("DetectionPipeline: [UPLOAD_BLOCK] sensitive file upload detected - "
+                 "policy='{}' browser='{}' file={}",
+                 worst->policy_name, event.browser_name, event.file_path);
+
+        /* Show block notification */
+        notifier_.ShowBlockNotification(
+            worst->policy_name,
+            SeverityToString(worst->severity),
+            file_desc,
+            match_summary,
+            "");
+
+    } else if (worst->response == ResponseAction::UserCancel) {
+        auto uc_result = user_cancel_action_.ShowDialog(
+            worst->policy_name,
+            SeverityToString(worst->severity),
+            file_desc,
+            match_summary);
+
+        if (uc_result.verdict == DriverMsgType::VerdictBlock) {
+            action_str = "browser_upload_user_cancel_block";
+            {
+                std::lock_guard<std::mutex> lock(stats_mutex_);
+                stats_.browser_uploads_blocked++;
+            }
+        } else {
+            action_str = "browser_upload_user_cancel_allow (justification: "
+                       + uc_result.justification + ")";
+        }
+
+    } else if (worst->response == ResponseAction::Notify) {
+        action_str = "browser_upload_notify";
+
+        notifier_.ShowNotifyNotification(
+            worst->policy_name,
+            SeverityToString(worst->severity),
+            file_desc,
+            match_summary);
+
+    } else {
+        action_str = "browser_upload_allow";
+    }
+
+    /* Queue incidents */
+    for (const auto& v : violations) {
+        if (!incident_queue_) continue;
+
+        QueuedIncident qi;
+        qi.policy_name = v.policy_name;
+        qi.severity = SeverityToString(v.severity);
+        qi.channel = "browser_upload";
+        qi.source_type = "endpoint";
+        qi.file_name = event.file_path;
+        qi.file_path = event.file_path;
+        qi.user = event.browser_name + " (pid: " + std::to_string(event.browser_pid) + ")";
+        qi.match_count = v.match_count;
+        qi.action_taken = action_str;
+
+        std::string matches_json = "{\"matches\":[";
+        for (size_t i = 0; i < v.matches.size() && i < 10; ++i) {
+            if (i > 0) matches_json += ",";
+            matches_json += "{\"type\":\"" + v.matches[i].analyzer_name + "\","
+                            "\"label\":\"" + v.matches[i].label + "\","
+                            "\"count\":1}";
+        }
+        matches_json += "]}";
+        qi.matched_content = matches_json;
+
+        if (!incident_queue_->Enqueue(qi)) {
+            LOG_WARN("DetectionPipeline: failed to queue browser upload incident");
+        }
+    }
+
+    auto elapsed = std::chrono::steady_clock::now() - start_time;
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+    LOG_INFO("DetectionPipeline: [UPLOAD_{}] violations={} elapsed={}ms",
+             action_str, violations.size(), ms);
 }
 
 /* ================================================================== */
