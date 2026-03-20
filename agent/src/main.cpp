@@ -24,6 +24,7 @@
 #include "akeso/grpc_client.h"
 #include "akeso/incident_queue.h"
 #include "akeso/policy_cache.h"
+#include "akeso/tamper_protection.h"
 
 #include <iostream>
 #include <string>
@@ -131,17 +132,22 @@ static bool InstallService() {
     desc.lpDescription = const_cast<LPWSTR>(AgentService::kDescription);
     ChangeServiceConfig2W(svc, SERVICE_CONFIG_DESCRIPTION, &desc);
 
-    /* Configure recovery: restart on first two failures */
+    /* Configure recovery: restart on all failures */
     SC_ACTION actions[3] = {
         { SC_ACTION_RESTART, 5000 },   /* First failure: restart after 5s */
         { SC_ACTION_RESTART, 15000 },  /* Second failure: restart after 15s */
-        { SC_ACTION_NONE, 0 }         /* Third+: do nothing */
+        { SC_ACTION_RESTART, 30000 }   /* Third+: restart after 30s */
     };
     SERVICE_FAILURE_ACTIONSW failActions = {};
     failActions.dwResetPeriod = 86400;  /* Reset failure count after 24h */
     failActions.cActions = 3;
     failActions.lpsaActions = actions;
     ChangeServiceConfig2W(svc, SERVICE_CONFIG_FAILURE_ACTIONS, &failActions);
+
+    /* Ensure recovery fires even on non-crash exits with error code */
+    SERVICE_FAILURE_ACTIONS_FLAG flag = {};
+    flag.fFailureActionsOnNonCrashFailures = TRUE;
+    ChangeServiceConfig2W(svc, SERVICE_CONFIG_FAILURE_ACTIONS_FLAG, &flag);
 
     CloseServiceHandle(svc);
     CloseServiceHandle(scm);
@@ -189,12 +195,15 @@ static bool UninstallService() {
 /* ------------------------------------------------------------------ */
 
 struct CmdArgs {
-    bool console        = false;
-    bool install        = false;
-    bool uninstall      = false;
-    bool version        = false;
-    bool test_policy    = false;
+    bool console              = false;
+    bool install              = false;
+    bool uninstall            = false;
+    bool version              = false;
+    bool test_policy          = false;
+    bool set_uninstall_pw     = false;
     std::string config_path;
+    std::string uninstall_password;
+    std::string new_uninstall_password;
 };
 
 static CmdArgs ParseArgs(int argc, char* argv[]) {
@@ -206,6 +215,13 @@ static CmdArgs ParseArgs(int argc, char* argv[]) {
         else if (arg == "--uninstall" || arg == "--remove") args.uninstall = true;
         else if (arg == "--version" || arg == "-v")      args.version = true;
         else if (arg == "--test-policy")                 args.test_policy = true;
+        else if (arg == "--set-uninstall-password" && i + 1 < argc)
+        {
+            args.set_uninstall_pw = true;
+            args.new_uninstall_password = argv[++i];
+        }
+        else if (arg == "--uninstall-password" && i + 1 < argc)
+            args.uninstall_password = argv[++i];
         else if ((arg == "--config" || arg == "-f") && i + 1 < argc)
             args.config_path = argv[++i];
     }
@@ -327,7 +343,46 @@ int main(int argc, char* argv[]) {
         return InstallService() ? 0 : 1;
     }
 
+    /* Set uninstall password */
+    if (args.set_uninstall_pw) {
+        AgentConfig cfg;
+        auto cfg_path = ConfigLoader::FindConfigFile(args.config_path);
+        if (!cfg_path.empty()) {
+            std::string err;
+            ConfigLoader::Load(cfg_path, cfg, err);
+        }
+        if (TamperProtection::SetUninstallPassword(
+                args.new_uninstall_password,
+                cfg.tamper_protection.uninstall_key_path)) {
+            std::cout << "Uninstall password set successfully." << std::endl;
+            return 0;
+        }
+        std::cerr << "Failed to set uninstall password." << std::endl;
+        return 1;
+    }
+
     if (args.uninstall) {
+        /* Verify uninstall password if configured */
+        AgentConfig cfg;
+        auto cfg_path = ConfigLoader::FindConfigFile(args.config_path);
+        if (!cfg_path.empty()) {
+            std::string err;
+            ConfigLoader::Load(cfg_path, cfg, err);
+        }
+        if (TamperProtection::HasUninstallPassword(
+                cfg.tamper_protection.uninstall_key_path)) {
+            if (args.uninstall_password.empty()) {
+                std::cerr << "Uninstall password required. Use --uninstall-password <pw>"
+                          << std::endl;
+                return 1;
+            }
+            if (!TamperProtection::VerifyUninstallPassword(
+                    args.uninstall_password,
+                    cfg.tamper_protection.uninstall_key_path)) {
+                std::cerr << "Incorrect uninstall password." << std::endl;
+                return 1;
+            }
+        }
         return UninstallService() ? 0 : 1;
     }
 
@@ -350,6 +405,10 @@ int main(int argc, char* argv[]) {
         InitializeLogging(config.logging, true);
 
         AgentService service;
+
+        /* Register tamper protection FIRST (hardens DACLs before anything else) */
+        auto tamper = std::make_shared<TamperProtection>(config.tamper_protection);
+        service.RegisterComponent(tamper);
 
         /* Register incident queue (starts before gRPC so queued incidents are ready) */
         auto incident_queue = std::make_shared<IncidentQueue>(
@@ -403,11 +462,13 @@ int main(int argc, char* argv[]) {
         /* Not launched by SCM — show usage */
         std::cout << "AkesoDLPAgent v" << kVersion << "\n\n"
                   << "Usage:\n"
-                  << "  akeso-dlp-agent --console     Run in console mode\n"
-                  << "  akeso-dlp-agent --install     Install as Windows service\n"
-                  << "  akeso-dlp-agent --uninstall   Remove Windows service\n"
-                  << "  akeso-dlp-agent --version     Show version\n"
-                  << "  akeso-dlp-agent --config FILE Specify config file\n"
+                  << "  akeso-dlp-agent --console              Run in console mode\n"
+                  << "  akeso-dlp-agent --install              Install as Windows service\n"
+                  << "  akeso-dlp-agent --uninstall            Remove Windows service\n"
+                  << "  akeso-dlp-agent --version              Show version\n"
+                  << "  akeso-dlp-agent --config FILE          Specify config file\n"
+                  << "  akeso-dlp-agent --set-uninstall-password PW  Set uninstall password\n"
+                  << "  akeso-dlp-agent --uninstall --uninstall-password PW  Uninstall with password\n"
                   << std::endl;
         return 1;
     }

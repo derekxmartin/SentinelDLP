@@ -74,6 +74,13 @@ struct LoggingConfig {
     int         max_files       = 5;
 };
 
+struct TamperProtectionConfig {
+    bool        enabled             = true;
+    bool        harden_service_dacl = true;
+    bool        harden_process_dacl = true;
+    std::string uninstall_key_path  = "C:\\AkesoDLP\\config\\uninstall.key";
+};
+
 struct HeartbeatConfig {
     int         interval_seconds    = 60;
     int         backoff_max_seconds = 300;
@@ -93,6 +100,7 @@ struct AgentConfig {
     RecoveryConfig      recovery;
     LoggingConfig       logging;
     HeartbeatConfig     heartbeat;
+    TamperProtectionConfig tamper_protection;
 };
 
 /* ------------------------------------------------------------------ */
