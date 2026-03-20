@@ -86,6 +86,7 @@ static const UNICODE_STRING SkippedPaths[] = {
     RTL_CONSTANT_STRING(L"\\AkesoDLP\\queue\\"),
     RTL_CONSTANT_STRING(L"\\AkesoDLP\\cache\\"),
     RTL_CONSTANT_STRING(L"\\AkesoDLP\\Recovery\\"),
+    RTL_CONSTANT_STRING(L"\\AppData\\Local\\Comms\\"),
 };
 #define SKIPPED_PATH_COUNT (sizeof(SkippedPaths) / sizeof(SkippedPaths[0]))
 
