@@ -17,6 +17,7 @@
 #include "akeso/agent_service.h"
 #include "akeso/config.h"
 #include "akeso/detection/pipeline.h"
+#include "akeso/detection/policy_evaluator.h"
 #include "akeso/driver_comm.h"
 #include "akeso/grpc_client.h"
 #include "akeso/incident_queue.h"
@@ -190,6 +191,7 @@ struct CmdArgs {
     bool install        = false;
     bool uninstall      = false;
     bool version        = false;
+    bool test_policy    = false;
     std::string config_path;
 };
 
@@ -201,10 +203,64 @@ static CmdArgs ParseArgs(int argc, char* argv[]) {
         else if (arg == "--install")                     args.install = true;
         else if (arg == "--uninstall" || arg == "--remove") args.uninstall = true;
         else if (arg == "--version" || arg == "-v")      args.version = true;
+        else if (arg == "--test-policy")                 args.test_policy = true;
         else if ((arg == "--config" || arg == "-f") && i + 1 < argc)
             args.config_path = argv[++i];
     }
     return args;
+}
+
+/*
+ * Create a demo policy for testing the block response flow.
+ * Matches SSN patterns (XXX-XX-XXXX) and credit card numbers
+ * (4XXX-XXXX-XXXX-XXXX) and blocks the file write.
+ */
+static std::vector<Policy> CreateTestPolicies() {
+    std::vector<Policy> policies;
+
+    /* Policy 1: SSN Detection — Block */
+    {
+        Policy p;
+        p.id = 1;
+        p.name = "PII Protection - SSN";
+        p.active = true;
+        p.default_severity = Severity::High;
+        p.response = ResponseAction::Block;
+
+        DetectionRule rule;
+        rule.name = "SSN Pattern";
+        RuleCondition cond;
+        cond.type = ConditionType::Regex;
+        cond.pattern_label = "\\b\\d{3}-\\d{2}-\\d{4}\\b";
+        cond.match_count_min = 1;
+        rule.conditions.push_back(cond);
+        p.detection_rules.push_back(rule);
+
+        policies.push_back(p);
+    }
+
+    /* Policy 2: Credit Card Detection — Block */
+    {
+        Policy p;
+        p.id = 2;
+        p.name = "PCI-DSS - Credit Cards";
+        p.active = true;
+        p.default_severity = Severity::Critical;
+        p.response = ResponseAction::Block;
+
+        DetectionRule rule;
+        rule.name = "Credit Card Pattern";
+        RuleCondition cond;
+        cond.type = ConditionType::Regex;
+        cond.pattern_label = "\\b4\\d{3}[- ]?\\d{4}[- ]?\\d{4}[- ]?\\d{4}\\b";
+        cond.match_count_min = 1;
+        rule.conditions.push_back(cond);
+        p.detection_rules.push_back(rule);
+
+        policies.push_back(p);
+    }
+
+    return policies;
 }
 
 }  // namespace akeso::dlp
@@ -273,6 +329,14 @@ int main(int argc, char* argv[]) {
         auto pipeline = std::make_shared<DetectionPipeline>(
             config, driver_comm, grpc_client, incident_queue, policy_cache);
         service.RegisterComponent(pipeline);
+
+        /* Seed test policies if requested */
+        if (args.test_policy) {
+            auto test_policies = CreateTestPolicies();
+            pipeline->UpdatePolicies(test_policies);
+            spdlog::info("Loaded {} test policies (--test-policy mode)",
+                         test_policies.size());
+        }
 
         return service.RunConsole(config) ? 0 : 1;
     }
