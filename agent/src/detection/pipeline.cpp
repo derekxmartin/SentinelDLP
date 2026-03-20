@@ -898,8 +898,31 @@ void DetectionPipeline::OnBrowserUpload(const BrowserUploadEvent& event)
     }
 
     /* Read file content for scanning */
-    auto content = BrowserUploadMonitor::ReadFileContent(
-        event.file_path, detection_config_.max_scan_size);
+    std::vector<uint8_t> content;
+    {
+        std::wstring wide_path(event.file_path.begin(), event.file_path.end());
+        HANDLE hFile = CreateFileW(wide_path.c_str(), GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (hFile != INVALID_HANDLE_VALUE) {
+            LARGE_INTEGER fsize;
+            if (GetFileSizeEx(hFile, &fsize) && fsize.QuadPart > 0) {
+                auto read_size = static_cast<size_t>(
+                    (std::min)(static_cast<int64_t>(fsize.QuadPart),
+                               detection_config_.max_scan_size));
+                content.resize(read_size);
+                DWORD bytes_read = 0;
+                if (!ReadFile(hFile, content.data(),
+                              static_cast<DWORD>(read_size), &bytes_read, nullptr)) {
+                    content.clear();
+                }
+                else {
+                    content.resize(bytes_read);
+                }
+            }
+            CloseHandle(hFile);
+        }
+    }
 
     if (content.empty()) {
         LOG_DEBUG("DetectionPipeline: [UPLOAD_ALLOW] could not read file: {}", event.file_path);
