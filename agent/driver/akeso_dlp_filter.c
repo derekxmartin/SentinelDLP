@@ -60,6 +60,7 @@ static const UNICODE_STRING SkippedExtensions[] = {
     RTL_CONSTANT_STRING(L"srd-shm"),
     RTL_CONSTANT_STRING(L"jfm"),
     RTL_CONSTANT_STRING(L"chk"),
+    RTL_CONSTANT_STRING(L"tbres"),
 };
 #define SKIPPED_EXT_COUNT (sizeof(SkippedExtensions) / sizeof(SkippedExtensions[0]))
 
@@ -97,6 +98,8 @@ static const UNICODE_STRING SkippedPaths[] = {
     RTL_CONSTANT_STRING(L"\\ProgramData\\Microsoft\\Windows\\DeviceMetadataCache\\"),
     RTL_CONSTANT_STRING(L"\\ProgramData\\Microsoft\\Network\\Downloader\\"),
     RTL_CONSTANT_STRING(L"\\AppData\\Roaming\\Microsoft\\Windows\\Themes\\"),
+    RTL_CONSTANT_STRING(L"\\Windows\\System32\\Tasks\\"),
+    RTL_CONSTANT_STRING(L"\\AppData\\Local\\Microsoft\\TokenBroker\\"),
 };
 #define SKIPPED_PATH_COUNT (sizeof(SkippedPaths) / sizeof(SkippedPaths[0]))
 

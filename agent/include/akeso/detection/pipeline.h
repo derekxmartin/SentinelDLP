@@ -27,6 +27,7 @@
 #pragma once
 
 #include "akeso/agent_service.h"
+#include "akeso/clipboard_monitor.h"
 #include "akeso/config.h"
 #include "akeso/detection/content_extractor.h"
 #include "akeso/detection/file_type_detector.h"
@@ -66,6 +67,9 @@ struct PipelineStats {
     uint64_t files_notified{0};
     uint64_t files_user_cancel{0};
     uint64_t files_ttd{0};
+    uint64_t clips_scanned{0};
+    uint64_t clips_violations{0};
+    uint64_t clips_blocked{0};
     uint64_t violations_detected{0};
     uint64_t ttd_requests_sent{0};
     uint64_t ttd_timeouts{0};
@@ -83,7 +87,8 @@ public:
         std::shared_ptr<DriverComm> driver_comm,
         std::shared_ptr<GrpcClient> grpc_client,
         std::shared_ptr<IncidentQueue> incident_queue,
-        std::shared_ptr<PolicyCache> policy_cache
+        std::shared_ptr<PolicyCache> policy_cache,
+        std::shared_ptr<ClipboardMonitor> clipboard_monitor = nullptr
     );
     ~DetectionPipeline() override;
 
@@ -118,6 +123,15 @@ public:
 private:
     /* The core verdict callback registered with DriverComm */
     DriverMsgType OnFileNotification(const FileNotification& notif);
+
+    /* Clipboard content handler (P4-T10) */
+    void OnClipboardContent(const ClipboardContent& content);
+
+    /* Queue a clipboard incident */
+    void QueueClipboardIncident(
+        const ClipboardContent& clip_content,
+        const PolicyViolation& violation,
+        const std::string& action_taken);
 
     /* Detection stages */
     DetectionResult RunDetection(
@@ -156,6 +170,7 @@ private:
     std::shared_ptr<GrpcClient>         grpc_client_;
     std::shared_ptr<IncidentQueue>      incident_queue_;
     std::shared_ptr<PolicyCache>        policy_cache_;
+    std::shared_ptr<ClipboardMonitor>   clipboard_monitor_;
 
     /* Detection components (owned) */
     FileTypeDetector                    file_type_detector_;

@@ -49,13 +49,15 @@ DetectionPipeline::DetectionPipeline(
     std::shared_ptr<DriverComm> driver_comm,
     std::shared_ptr<GrpcClient> grpc_client,
     std::shared_ptr<IncidentQueue> incident_queue,
-    std::shared_ptr<PolicyCache> policy_cache)
+    std::shared_ptr<PolicyCache> policy_cache,
+    std::shared_ptr<ClipboardMonitor> clipboard_monitor)
     : detection_config_(config.detection)
     , monitoring_config_(config.monitoring)
     , driver_comm_(std::move(driver_comm))
     , grpc_client_(std::move(grpc_client))
     , incident_queue_(std::move(incident_queue))
     , policy_cache_(std::move(policy_cache))
+    , clipboard_monitor_(std::move(clipboard_monitor))
     , content_extractor_(ExtractionOptions{
           static_cast<size_t>(config.detection.max_scan_size),
           2,        /* max_zip_depth on agent */
@@ -110,6 +112,16 @@ bool DetectionPipeline::Start() {
         LOG_INFO("DetectionPipeline: verdict callback registered with DriverComm");
     }
 
+    /* Register clipboard content callback (P4-T10) */
+    if (clipboard_monitor_) {
+        clipboard_monitor_->SetContentCallback(
+            [this](const ClipboardContent& content) {
+                OnClipboardContent(content);
+            }
+        );
+        LOG_INFO("DetectionPipeline: clipboard callback registered with ClipboardMonitor");
+    }
+
     running_ = true;
     LOG_INFO("DetectionPipeline: started");
     return true;
@@ -121,7 +133,10 @@ void DetectionPipeline::Stop() {
     LOG_INFO("DetectionPipeline: stopping...");
     running_ = false;
 
-    /* Clear callback */
+    /* Clear callbacks */
+    if (clipboard_monitor_) {
+        clipboard_monitor_->SetContentCallback(nullptr);
+    }
     if (driver_comm_) {
         driver_comm_->SetVerdictCallback(nullptr);
     }
@@ -650,6 +665,192 @@ void DetectionPipeline::QueueIncident(
         LOG_DEBUG("DetectionPipeline: incident queued for policy '{}'", violation.policy_name);
     } else {
         LOG_WARN("DetectionPipeline: failed to queue incident (duplicate or full)");
+    }
+}
+
+/* ================================================================== */
+/*  Clipboard content handler (P4-T10)                                 */
+/* ================================================================== */
+
+void DetectionPipeline::OnClipboardContent(const ClipboardContent& clip_content)
+{
+    if (!running_) return;
+
+    auto start_time = std::chrono::steady_clock::now();
+
+    LOG_INFO("DetectionPipeline: [CLIP_SCAN] source_pid={} source='{}' text={}B",
+             clip_content.source_pid, clip_content.source_process,
+             clip_content.text.size());
+
+    {
+        std::lock_guard<std::mutex> lock(stats_mutex_);
+        stats_.clips_scanned++;
+    }
+
+    /* Skip if no policies loaded */
+    {
+        std::lock_guard<std::mutex> lock(policy_mutex_);
+        if (policies_.empty()) {
+            LOG_DEBUG("DetectionPipeline: [CLIP_ALLOW] no policies loaded");
+            return;
+        }
+    }
+
+    /* Run detection on clipboard text */
+    const auto* content_bytes = reinterpret_cast<const uint8_t*>(clip_content.text.data());
+    size_t content_len = clip_content.text.size();
+
+    DetectionResult detection;
+    try {
+        detection = RunDetection(
+            content_bytes, content_len,
+            "clipboard", static_cast<int64_t>(content_len));
+    } catch (const std::exception& ex) {
+        LOG_ERROR("DetectionPipeline: clipboard detection failed: {}", ex.what());
+        std::lock_guard<std::mutex> lock(stats_mutex_);
+        stats_.errors++;
+        return;
+    }
+
+    /* Evaluate all policies */
+    std::vector<PolicyViolation> violations;
+    {
+        std::lock_guard<std::mutex> lock(policy_mutex_);
+        violations = policy_evaluator_.EvaluateAll(policies_, detection);
+    }
+
+    if (violations.empty()) {
+        return;  /* Clean clipboard content */
+    }
+
+    /* Find worst violation */
+    const PolicyViolation* worst = &violations[0];
+    for (size_t i = 1; i < violations.size(); ++i) {
+        if (violations[i].severity > worst->severity) {
+            worst = &violations[i];
+        }
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(stats_mutex_);
+        stats_.clips_violations += violations.size();
+    }
+
+    std::string match_summary = std::to_string(worst->match_count) + " match(es)";
+
+    LOG_INFO("DetectionPipeline: [CLIP_VIOLATION] policy='{}' severity={} matches={} source='{}'",
+             worst->policy_name, SeverityToString(worst->severity),
+             worst->match_count, clip_content.source_process);
+
+    /* Determine response */
+    std::string action_str;
+
+    if (worst->response == ResponseAction::Block) {
+        /* Clear the clipboard to remove sensitive data */
+        if (clipboard_monitor_) {
+            clipboard_monitor_->ClearClipboard();
+        }
+        action_str = "clipboard_block";
+
+        {
+            std::lock_guard<std::mutex> lock(stats_mutex_);
+            stats_.clips_blocked++;
+        }
+
+        LOG_INFO("DetectionPipeline: [CLIP_BLOCK] clipboard cleared - policy='{}' source='{}'",
+                 worst->policy_name, clip_content.source_process);
+
+        /* Show block notification */
+        notifier_.ShowBlockNotification(
+            worst->policy_name,
+            SeverityToString(worst->severity),
+            "clipboard (from " + clip_content.source_process + ")",
+            match_summary,
+            "");
+    } else if (worst->response == ResponseAction::UserCancel) {
+        /* Show justification dialog */
+        auto uc_result = user_cancel_action_.ShowDialog(
+            worst->policy_name,
+            SeverityToString(worst->severity),
+            "clipboard (from " + clip_content.source_process + ")",
+            match_summary);
+
+        if (uc_result.verdict == DriverMsgType::VerdictBlock) {
+            /* User cancelled or timed out - clear clipboard */
+            if (clipboard_monitor_) {
+                clipboard_monitor_->ClearClipboard();
+            }
+            action_str = "clipboard_user_cancel_block";
+
+            {
+                std::lock_guard<std::mutex> lock(stats_mutex_);
+                stats_.clips_blocked++;
+            }
+        } else {
+            action_str = "clipboard_user_cancel_allow (justification: " + uc_result.justification + ")";
+        }
+    } else if (worst->response == ResponseAction::Notify) {
+        action_str = "clipboard_notify";
+
+        /* Show notify toast */
+        notifier_.ShowNotifyNotification(
+            worst->policy_name,
+            SeverityToString(worst->severity),
+            "clipboard (from " + clip_content.source_process + ")",
+            match_summary);
+    } else {
+        action_str = "clipboard_allow";
+    }
+
+    /* Queue incidents */
+    for (const auto& v : violations) {
+        QueueClipboardIncident(clip_content, v, action_str);
+    }
+
+    auto elapsed = std::chrono::steady_clock::now() - start_time;
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+    LOG_INFO("DetectionPipeline: [CLIP_{}] violations={} elapsed={}ms",
+             action_str, violations.size(), ms);
+}
+
+/* ================================================================== */
+/*  Clipboard incident queuing                                         */
+/* ================================================================== */
+
+void DetectionPipeline::QueueClipboardIncident(
+    const ClipboardContent& clip_content,
+    const PolicyViolation& violation,
+    const std::string& action_taken)
+{
+    if (!incident_queue_) return;
+
+    QueuedIncident qi;
+    qi.policy_name = violation.policy_name;
+    qi.severity = SeverityToString(violation.severity);
+    qi.channel = "clipboard";
+    qi.source_type = "endpoint";
+    qi.file_name = "clipboard";
+    qi.file_path = "clipboard (source: " + clip_content.source_process
+                 + ", pid: " + std::to_string(clip_content.source_pid) + ")";
+    qi.user = "";
+    qi.match_count = violation.match_count;
+    qi.action_taken = action_taken;
+
+    /* Build matched content JSON */
+    std::string matches_json = "{\"matches\":[";
+    for (size_t i = 0; i < violation.matches.size() && i < 10; ++i) {
+        if (i > 0) matches_json += ",";
+        matches_json += "{\"type\":\"" + violation.matches[i].analyzer_name + "\","
+                        "\"label\":\"" + violation.matches[i].label + "\","
+                        "\"count\":1}";
+    }
+    matches_json += "]}";
+    qi.matched_content = matches_json;
+
+    if (incident_queue_->Enqueue(qi)) {
+        LOG_DEBUG("DetectionPipeline: clipboard incident queued for policy '{}'", violation.policy_name);
+    } else {
+        LOG_WARN("DetectionPipeline: failed to queue clipboard incident");
     }
 }
 
