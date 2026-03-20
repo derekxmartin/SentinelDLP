@@ -55,6 +55,11 @@ static const UNICODE_STRING SkippedExtensions[] = {
     RTL_CONSTANT_STRING(L"dat"),
     RTL_CONSTANT_STRING(L"jtx"),
     RTL_CONSTANT_STRING(L"edb"),
+    RTL_CONSTANT_STRING(L"srd"),
+    RTL_CONSTANT_STRING(L"srd-wal"),
+    RTL_CONSTANT_STRING(L"srd-shm"),
+    RTL_CONSTANT_STRING(L"jfm"),
+    RTL_CONSTANT_STRING(L"chk"),
 };
 #define SKIPPED_EXT_COUNT (sizeof(SkippedExtensions) / sizeof(SkippedExtensions[0]))
 
@@ -88,6 +93,10 @@ static const UNICODE_STRING SkippedPaths[] = {
     RTL_CONSTANT_STRING(L"\\AkesoDLP\\Recovery\\"),
     RTL_CONSTANT_STRING(L"\\AppData\\Local\\Comms\\"),
     RTL_CONSTANT_STRING(L"\\AppData\\Local\\Microsoft\\VSApplicationInsights\\"),
+    RTL_CONSTANT_STRING(L"\\ProgramData\\Microsoft\\Windows\\AppRepository\\"),
+    RTL_CONSTANT_STRING(L"\\ProgramData\\Microsoft\\Windows\\DeviceMetadataCache\\"),
+    RTL_CONSTANT_STRING(L"\\ProgramData\\Microsoft\\Network\\Downloader\\"),
+    RTL_CONSTANT_STRING(L"\\AppData\\Roaming\\Microsoft\\Windows\\Themes\\"),
 };
 #define SKIPPED_PATH_COUNT (sizeof(SkippedPaths) / sizeof(SkippedPaths[0]))
 
