@@ -47,7 +47,7 @@ if(COMMAND wdk_add_driver)
     )
 
     # Link against FltMgr (Filter Manager)
-    target_link_libraries(${DRIVER_NAME}
+    target_link_libraries(${DRIVER_NAME} PRIVATE
         fltMgr
     )
 
