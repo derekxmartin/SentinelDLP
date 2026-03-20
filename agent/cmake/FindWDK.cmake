@@ -162,10 +162,19 @@ function(wdk_add_driver _target)
         /d2Zi+
     )
 
-    # Linker flags
+    # Linker flags — use DriverEntry (standard WDM entry point, not KMDF FltDriverEntry)
+    # /NODEFAULTLIB tells the linker to ignore all default libraries (kernel32, user32, etc.)
+    # even though CMake may still pass them on the command line.
     set_target_properties(${_target} PROPERTIES
         SUFFIX ".sys"
-        LINK_FLAGS "/DRIVER /SUBSYSTEM:NATIVE /ENTRY:FltDriverEntry /NODEFAULTLIB /MANIFEST:NO"
+        LINKER_LANGUAGE C
+    )
+    target_link_options(${_target} PRIVATE
+        /DRIVER
+        /SUBSYSTEM:NATIVE
+        /ENTRY:DriverEntry
+        /NODEFAULTLIB
+        /MANIFEST:NO
     )
 
     # Link kernel libraries
@@ -178,7 +187,9 @@ function(wdk_add_driver _target)
         BufferOverflowFastFailK
     )
 
-    if(WDK_KMDF_LIB_DIR)
+    # Only link KMDF libraries if the driver opts in (not for WDM minifilters)
+    # Set WDK_USE_KMDF=ON before calling wdk_add_driver to enable KMDF.
+    if(WDK_KMDF_LIB_DIR AND WDK_USE_KMDF)
         target_link_directories(${_target} PRIVATE ${WDK_KMDF_LIB_DIR})
         target_link_libraries(${_target} PRIVATE WdfDriverEntry WdfLdr)
     endif()
