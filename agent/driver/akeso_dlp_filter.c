@@ -47,6 +47,9 @@ static const UNICODE_STRING SkippedExtensions[] = {
     RTL_CONSTANT_STRING(L"db-wal"),
     RTL_CONSTANT_STRING(L"db-shm"),
     RTL_CONSTANT_STRING(L"db-journal"),
+    RTL_CONSTANT_STRING(L"automaticDestinations-ms"),
+    RTL_CONSTANT_STRING(L"log"),
+    RTL_CONSTANT_STRING(L"lnk"),
 };
 #define SKIPPED_EXT_COUNT (sizeof(SkippedExtensions) / sizeof(SkippedExtensions[0]))
 
@@ -69,6 +72,10 @@ static const UNICODE_STRING SkippedPaths[] = {
     RTL_CONSTANT_STRING(L"\\AppData\\Local\\Microsoft\\Windows\\"),
     RTL_CONSTANT_STRING(L"\\AppData\\Local\\ConnectedDevicesPlatform\\"),
     RTL_CONSTANT_STRING(L"\\AppData\\Local\\Packages\\"),
+    RTL_CONSTANT_STRING(L"\\AppData\\Roaming\\Microsoft\\Windows\\Recent\\"),
+    RTL_CONSTANT_STRING(L"\\AkesoDLP\\logs\\"),
+    RTL_CONSTANT_STRING(L"\\AkesoDLP\\queue\\"),
+    RTL_CONSTANT_STRING(L"\\AkesoDLP\\cache\\"),
 };
 #define SKIPPED_PATH_COUNT (sizeof(SkippedPaths) / sizeof(SkippedPaths[0]))
 
@@ -789,7 +796,7 @@ AkesoSendNotification(
      * Send to user-mode with a 5-second timeout.
      * This prevents blocking the I/O path if user-mode is hung.
      */
-    timeout.QuadPart = -50000000LL;  /* 5 seconds in 100ns units */
+    timeout.QuadPart = -150000000LL;  /* 15 seconds in 100ns units */
 
     status = FltSendMessage(
         gFilterData.Filter,
