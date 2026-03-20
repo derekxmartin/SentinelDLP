@@ -349,8 +349,8 @@ void AgentService::WatchdogThread() {
     LOG_INFO("Watchdog thread started");
 
     while (watchdog_running_) {
-        /* Check every 10 seconds */
-        for (int i = 0; i < 10 && watchdog_running_; ++i) {
+        /* Check every 5 seconds */
+        for (int i = 0; i < 5 && watchdog_running_; ++i) {
             Sleep(1000);
         }
 

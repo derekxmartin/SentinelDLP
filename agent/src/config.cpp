@@ -112,6 +112,14 @@ static void ParseHeartbeat(const YAML::Node& node, HeartbeatConfig& cfg) {
     cfg.backoff_max_seconds = ReadOr<int>(node, "backoff_max_seconds", cfg.backoff_max_seconds);
 }
 
+static void ParseTamperProtection(const YAML::Node& node, TamperProtectionConfig& cfg) {
+    if (!node || !node.IsMap()) return;
+    cfg.enabled             = ReadOr<bool>(node, "enabled", cfg.enabled);
+    cfg.harden_service_dacl = ReadOr<bool>(node, "harden_service_dacl", cfg.harden_service_dacl);
+    cfg.harden_process_dacl = ReadOr<bool>(node, "harden_process_dacl", cfg.harden_process_dacl);
+    cfg.uninstall_key_path  = ReadOr<std::string>(node, "uninstall_key_path", cfg.uninstall_key_path);
+}
+
 /* ------------------------------------------------------------------ */
 /*  Core parse function                                                */
 /* ------------------------------------------------------------------ */
@@ -136,6 +144,7 @@ static bool ParseYaml(
         ParseRecovery(root["recovery"], config.recovery);
         ParseLogging(root["logging"], config.logging);
         ParseHeartbeat(root["heartbeat"], config.heartbeat);
+        ParseTamperProtection(root["tamper_protection"], config.tamper_protection);
 
         return true;
     } catch (const YAML::Exception& e) {
