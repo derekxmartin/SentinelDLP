@@ -32,6 +32,8 @@
 #include "akeso/detection/file_type_detector.h"
 #include "akeso/detection/policy_evaluator.h"
 #include "akeso/driver_comm.h"
+#include "akeso/response/block_action.h"
+#include "akeso/response/notification.h"
 
 #ifdef HAS_HYPERSCAN
 #include "akeso/detection/hs_regex_analyzer.h"
@@ -160,6 +162,10 @@ private:
     HsRegexAnalyzer                     regex_analyzer_;
 #endif
     KeywordAnalyzer                     keyword_analyzer_;
+
+    /* Response components (P4-T8) */
+    BlockAction                         block_action_;
+    DlpNotifier                         notifier_;
 
     /* Active policies (guarded by mutex) */
     std::vector<Policy>                 policies_;

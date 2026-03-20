@@ -335,20 +335,46 @@ claude-dlp/
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| P0 | Project scaffolding, Docker, database schema, protobuf | In Progress |
-| P1 | Server-side detection engine (regex, keywords, data IDs, file type, fingerprint) | Pending |
-| P2 | REST API & React console (auth, policies, incidents, agents) | Pending |
-| P3 | Endpoint agent core — minifilter driver, service, gRPC, policy cache | Pending |
-| P4 | Endpoint agent detection & response — Hyperscan, hooks, blocking, notifications | Pending |
-| P5 | Network monitor — HTTP proxy, SMTP relay, inline prevent | Pending |
-| P6 | Document fingerprinting (simhash) | Pending |
+| P0 | Project scaffolding, Docker, database schema, protobuf | Complete |
+| P1 | Server-side detection engine (regex, keywords, data IDs, file type, fingerprint) | Complete |
+| P2 | REST API & React console (auth, policies, incidents, agents) | Complete |
+| P3 | Endpoint agent core — minifilter driver, service, gRPC, policy cache | Complete |
+| P4 | Endpoint agent detection & response — Hyperscan, hooks, blocking, notifications | In Progress |
+| P5 | Network monitor — HTTP proxy, SMTP relay, inline prevent | Complete |
+| P6 | Document fingerprinting (simhash) | Complete |
 | P7 | Endpoint Discover — data at rest scanning | Pending |
-| P8 | Reporting, user risk scoring, SIEM event export | Pending |
+| P8 | Reporting, user risk scoring, SIEM event export | Complete |
 | P9 | Console polish, dark mode, global search, demo environment | Pending |
 | P10 | Integration testing & documentation | Pending |
 | P11 | Hardening & production readiness (metrics, load testing, packaging) | Pending |
 
-**Total: 86 tasks, 12 phases.**
+**Total: 86 tasks, 12 phases. 59 PRs merged.**
+
+### Current Focus: Phase 4 — Endpoint Agent Detection & Response
+
+The kernel-mode minifilter driver (`akeso_dlp_filter.sys`) is compiled, signed, loaded, and communicating with the user-mode agent in real-time on a Windows test VM:
+
+- **P4-T1 through P4-T6** — Hyperscan regex, Aho-Corasick keywords, data identifier validators, file type detector, content extractor, policy evaluator (complete)
+- **P4-T7** — Detection pipeline: driver notification → content extraction → Hyperscan + Aho-Corasick scan → policy evaluation → verdict (complete)
+- **P4-T8** — Block response: file recovery, toast notification, incident queuing (in progress)
+- **P4-T9 through P4-T13** — Notify/user-cancel, clipboard monitor, browser monitor, tamper protection, E2E test (pending)
+
+**End-to-end kernel interception verified on VM:**
+
+```
+fltmc
+Filter Name                     Num Instances    Altitude    Frame
+------------------------------  -------------  ------------  -----
+WdFilter                                4       328010         0
+AkesoDLPFilter                          3       320100         0
+```
+
+```
+[info] DriverComm: connected to \AkesoDLPPort
+[info] DetectionPipeline: verdict callback registered with DriverComm
+[info] DetectionPipeline: [SCAN] pid=1248 file=\Device\HarddiskVolume2\Users\derek\Desktop\test_dlp.txt size=38 preview=76B
+[info] DetectionPipeline: [ALLOW] no policies loaded — pid=1248
+```
 
 See `REQUIREMENTS.md` for the full implementation roadmap.
 
