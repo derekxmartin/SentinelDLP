@@ -66,6 +66,7 @@ DetectionPipeline::DetectionPipeline(
     , regex_analyzer_(config.detection)
 #endif
     , keyword_analyzer_(config.detection)
+    , block_action_(config.recovery)
 {
 }
 
@@ -95,6 +96,9 @@ bool DetectionPipeline::Start() {
         return false;
     }
 
+    /* Start notification dispatcher (P4-T8) */
+    notifier_.Start();
+
     /* Register verdict callback with DriverComm */
     if (driver_comm_) {
         driver_comm_->SetVerdictCallback(
@@ -122,6 +126,7 @@ void DetectionPipeline::Stop() {
     }
 
     /* Stop sub-components */
+    notifier_.Stop();
     keyword_analyzer_.Stop();
 #ifdef HAS_HYPERSCAN
     regex_analyzer_.Stop();
@@ -333,6 +338,36 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
     /* Queue all violations as incidents */
     for (const auto& v : violations) {
         QueueIncident(notif, v, action_str);
+    }
+
+    /* ---- Stage 6 (P4-T8): Execute block response ---- */
+    if (verdict == DriverMsgType::VerdictBlock) {
+        std::string match_summary = std::to_string(worst->match_count) + " match(es)";
+
+        /* Move file to recovery folder */
+        auto block_result = block_action_.Execute(
+            filepath_utf8,          /* NT device path */
+            "",                     /* DOS path (auto-converted) */
+            worst->policy_name,
+            SeverityToString(worst->severity),
+            match_summary,
+            notif.process_id);
+
+        /* Show toast notification */
+        notifier_.ShowBlockNotification(
+            worst->policy_name,
+            SeverityToString(worst->severity),
+            filepath_utf8,
+            match_summary,
+            block_result.recovery_path);
+    } else if (worst->response == ResponseAction::Notify) {
+        /* Notify action: file is allowed but user sees a warning */
+        std::string match_summary = std::to_string(worst->match_count) + " match(es)";
+        notifier_.ShowNotifyNotification(
+            worst->policy_name,
+            SeverityToString(worst->severity),
+            filepath_utf8,
+            match_summary);
     }
 
     /* Update stats */
