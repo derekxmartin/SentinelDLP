@@ -1,0 +1,15 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install aiosmtpd and project dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir aiosmtpd>=1.4.0 && \
+    pip install --no-cache-dir -r requirements.txt
+
+COPY network/ ./network/
+COPY server/ ./server/
+
+EXPOSE 2525
+
+CMD ["python", "-m", "network.smtp_entry", "--host", "0.0.0.0", "--port", "2525"]
