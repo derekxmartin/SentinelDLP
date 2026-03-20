@@ -135,6 +135,7 @@ add_executable(akeso-dlp-agent
     src/detection/file_type_detector.cpp
     src/detection/content_extractor.cpp
     src/detection/policy_evaluator.cpp
+    src/detection/pipeline.cpp
     src/driver_comm.cpp
 )
 

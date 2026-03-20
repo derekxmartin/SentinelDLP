@@ -16,8 +16,11 @@
 
 #include "akeso/agent_service.h"
 #include "akeso/config.h"
+#include "akeso/detection/pipeline.h"
+#include "akeso/driver_comm.h"
 #include "akeso/grpc_client.h"
 #include "akeso/incident_queue.h"
+#include "akeso/policy_cache.h"
 
 #include <iostream>
 #include <string>
@@ -258,11 +261,18 @@ int main(int argc, char* argv[]) {
         auto grpc_client = std::make_shared<GrpcClient>(config);
         service.RegisterComponent(grpc_client);
 
-        /*
-         * TODO: Register remaining components:
-         *   service.RegisterComponent(std::make_shared<DriverComm>(config));
-         *   service.RegisterComponent(std::make_shared<PolicyCache>(config));
-         */
+        /* Register policy cache */
+        auto policy_cache = std::make_shared<PolicyCache>(config);
+        service.RegisterComponent(policy_cache);
+
+        /* Register driver communication (connects to minifilter) */
+        auto driver_comm = std::make_shared<DriverComm>(config.driver);
+        service.RegisterComponent(driver_comm);
+
+        /* Register detection pipeline (wires driver → detection → verdict) */
+        auto pipeline = std::make_shared<DetectionPipeline>(
+            config, driver_comm, grpc_client, incident_queue, policy_cache);
+        service.RegisterComponent(pipeline);
 
         return service.RunConsole(config) ? 0 : 1;
     }

@@ -13,12 +13,19 @@ CatalogFile = akeso_dlp_filter.cat
 PnpLockdown = 1
 
 [DestinationDirs]
-DefaultDestDir          = 13
-AkesoDLPFilter.DriverFiles = 13
+DefaultDestDir          = 12
+AkesoDLPFilter.DriverFiles = 12
 
 ;;; ===================================================================
 ;;; Default install sections
 ;;; ===================================================================
+
+[DefaultInstall]
+OptionDesc  = %ServiceDescription%
+CopyFiles   = AkesoDLPFilter.DriverFiles
+
+[DefaultInstall.Services]
+AddService  = %ServiceName%,,AkesoDLPFilter.Service
 
 [DefaultInstall.NTAMD64]
 OptionDesc  = %ServiceDescription%
@@ -30,6 +37,13 @@ AddService  = %ServiceName%,,AkesoDLPFilter.Service
 ;;; ===================================================================
 ;;; Default uninstall sections
 ;;; ===================================================================
+
+[DefaultUninstall]
+LegacyUninstall = 1
+DelFiles        = AkesoDLPFilter.DriverFiles
+
+[DefaultUninstall.Services]
+DelService = %ServiceName%,0x200
 
 [DefaultUninstall.NTAMD64]
 LegacyUninstall = 1

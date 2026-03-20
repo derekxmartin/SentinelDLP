@@ -32,7 +32,7 @@ struct ServerConfig {
 };
 
 struct DriverConfig {
-    std::string port_name       = "\\\\AkesoDLPPort";
+    std::string port_name       = "\\AkesoDLPPort";
     int         max_connections  = 4;
     int         message_buffer_size = 65536;
 };

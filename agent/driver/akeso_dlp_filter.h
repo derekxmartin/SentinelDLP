@@ -17,6 +17,19 @@
 #include <ntstrsafe.h>
 
 /* ------------------------------------------------------------------ */
+/*  Debug output                                                       */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Use DbgPrint instead of KdPrintEx so output is visible in
+ * Sysinternals DebugView on retail Windows builds without a
+ * kernel debugger attached.
+ */
+#define AKESO_LOG(fmt, ...)   DbgPrint("AkesoDLP: " fmt, ##__VA_ARGS__)
+#define AKESO_ERR(fmt, ...)   DbgPrint("AkesoDLP [ERR]: " fmt, ##__VA_ARGS__)
+#define AKESO_WARN(fmt, ...)  DbgPrint("AkesoDLP [WARN]: " fmt, ##__VA_ARGS__)
+
+/* ------------------------------------------------------------------ */
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
