@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstring>
+#include <thread>
 
 #ifdef HAS_SPDLOG
 #include <spdlog/spdlog.h>
@@ -327,7 +328,7 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
         verdict = ActionToVerdict(worst->response);
     }
 
-    /* ---- Stage 5: Queue incident for server reporting ---- */
+    /* ---- Stage 5: Determine action string and update stats ---- */
     std::string action_str;
     switch (verdict) {
         case DriverMsgType::VerdictBlock:   action_str = "block"; break;
@@ -335,42 +336,6 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
         default:                            action_str = "log"; break;
     }
 
-    /* Queue all violations as incidents */
-    for (const auto& v : violations) {
-        QueueIncident(notif, v, action_str);
-    }
-
-    /* ---- Stage 6 (P4-T8): Execute block response ---- */
-    if (verdict == DriverMsgType::VerdictBlock) {
-        std::string match_summary = std::to_string(worst->match_count) + " match(es)";
-
-        /* Move file to recovery folder */
-        auto block_result = block_action_.Execute(
-            filepath_utf8,          /* NT device path */
-            "",                     /* DOS path (auto-converted) */
-            worst->policy_name,
-            SeverityToString(worst->severity),
-            match_summary,
-            notif.process_id);
-
-        /* Show toast notification */
-        notifier_.ShowBlockNotification(
-            worst->policy_name,
-            SeverityToString(worst->severity),
-            filepath_utf8,
-            match_summary,
-            block_result.recovery_path);
-    } else if (worst->response == ResponseAction::Notify) {
-        /* Notify action: file is allowed but user sees a warning */
-        std::string match_summary = std::to_string(worst->match_count) + " match(es)";
-        notifier_.ShowNotifyNotification(
-            worst->policy_name,
-            SeverityToString(worst->severity),
-            filepath_utf8,
-            match_summary);
-    }
-
-    /* Update stats */
     {
         std::lock_guard<std::mutex> lock(stats_mutex_);
         if (verdict == DriverMsgType::VerdictBlock) {
@@ -384,6 +349,61 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
     LOG_INFO("DetectionPipeline: [{}] file={} violations={} elapsed={}ms",
              action_str, filepath_utf8, violations.size(), ms);
+
+    /*
+     * ---- Stage 6: Post-verdict work (async) ----
+     *
+     * Return the verdict to the driver IMMEDIATELY so the I/O completes
+     * (or is denied) without waiting for incident queuing, file recovery,
+     * or toast notifications. All post-verdict work runs on a detached
+     * background thread.
+     */
+    auto post_verdict_work = [this,
+                              verdict,
+                              notif,
+                              violations = std::move(violations),
+                              filepath_utf8,
+                              action_str,
+                              worst_policy = worst->policy_name,
+                              worst_severity = SeverityToString(worst->severity),
+                              worst_match_count = worst->match_count,
+                              worst_response = worst->response]() {
+        /* Queue all violations as incidents */
+        for (const auto& v : violations) {
+            QueueIncident(notif, v, action_str);
+        }
+
+        /* Execute block response (P4-T8) */
+        if (verdict == DriverMsgType::VerdictBlock) {
+            std::string match_summary = std::to_string(worst_match_count) + " match(es)";
+
+            /* Move file to recovery folder */
+            auto block_result = block_action_.Execute(
+                filepath_utf8,
+                "",
+                worst_policy,
+                worst_severity,
+                match_summary,
+                notif.process_id);
+
+            /* Show toast notification */
+            notifier_.ShowBlockNotification(
+                worst_policy,
+                worst_severity,
+                filepath_utf8,
+                match_summary,
+                block_result.recovery_path);
+        } else if (worst_response == ResponseAction::Notify) {
+            std::string match_summary = std::to_string(worst_match_count) + " match(es)";
+            notifier_.ShowNotifyNotification(
+                worst_policy,
+                worst_severity,
+                filepath_utf8,
+                match_summary);
+        }
+    };
+
+    std::thread(std::move(post_verdict_work)).detach();
 
     return verdict;
 }
