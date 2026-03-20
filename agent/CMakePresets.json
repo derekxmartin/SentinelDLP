@@ -98,6 +98,11 @@
       "name": "msvc-release",
       "configurePreset": "msvc-release",
       "configuration": "Release"
+    },
+    {
+      "name": "release-driver",
+      "configurePreset": "release-driver",
+      "configuration": "Release"
     }
   ]
 }
