@@ -16,6 +16,124 @@
 AKESO_FILTER_DATA gFilterData = { 0 };
 
 /* ------------------------------------------------------------------ */
+/*  Fast-path noise filtering                                          */
+/* ------------------------------------------------------------------ */
+
+/*
+ * AkesoShouldSkipProcess — skip known system PIDs.
+ * PID 0 = Idle, PID 4 = System.
+ */
+static BOOLEAN
+AkesoShouldSkipProcess(void)
+{
+    ULONG pid = (ULONG)(ULONG_PTR)PsGetCurrentProcessId();
+    return (pid == 0 || pid == 4);
+}
+
+/*
+ * Extensions we never need to scan — system logs, databases,
+ * temp files, registry hives, ETW traces, etc.
+ */
+static const UNICODE_STRING SkippedExtensions[] = {
+    RTL_CONSTANT_STRING(L"evtx"),
+    RTL_CONSTANT_STRING(L"etl"),
+    RTL_CONSTANT_STRING(L"LOG1"),
+    RTL_CONSTANT_STRING(L"LOG2"),
+    RTL_CONSTANT_STRING(L"regtrans-ms"),
+    RTL_CONSTANT_STRING(L"blf"),
+    RTL_CONSTANT_STRING(L"tmp"),
+    RTL_CONSTANT_STRING(L"TMP"),
+    RTL_CONSTANT_STRING(L"pf"),
+    RTL_CONSTANT_STRING(L"db-wal"),
+    RTL_CONSTANT_STRING(L"db-shm"),
+    RTL_CONSTANT_STRING(L"db-journal"),
+};
+#define SKIPPED_EXT_COUNT (sizeof(SkippedExtensions) / sizeof(SkippedExtensions[0]))
+
+/*
+ * Path prefixes that are always noise — Windows internals,
+ * recycle bin, package cache, etc.
+ */
+static const UNICODE_STRING SkippedPaths[] = {
+    RTL_CONSTANT_STRING(L"\\Windows\\System32\\winevt\\"),
+    RTL_CONSTANT_STRING(L"\\Windows\\System32\\LogFiles\\"),
+    RTL_CONSTANT_STRING(L"\\Windows\\System32\\config\\"),
+    RTL_CONSTANT_STRING(L"\\Windows\\System32\\sru\\"),
+    RTL_CONSTANT_STRING(L"\\Windows\\Prefetch\\"),
+    RTL_CONSTANT_STRING(L"\\Windows\\appcompat\\"),
+    RTL_CONSTANT_STRING(L"\\Windows\\Temp\\"),
+    RTL_CONSTANT_STRING(L"\\Windows\\ServiceProfiles\\"),
+    RTL_CONSTANT_STRING(L"\\$Recycle.Bin\\"),
+    RTL_CONSTANT_STRING(L"\\System Volume Information\\"),
+    RTL_CONSTANT_STRING(L"\\ProgramData\\Microsoft\\Windows Defender\\"),
+    RTL_CONSTANT_STRING(L"\\AppData\\Local\\Microsoft\\Windows\\"),
+    RTL_CONSTANT_STRING(L"\\AppData\\Local\\ConnectedDevicesPlatform\\"),
+    RTL_CONSTANT_STRING(L"\\AppData\\Local\\Packages\\"),
+};
+#define SKIPPED_PATH_COUNT (sizeof(SkippedPaths) / sizeof(SkippedPaths[0]))
+
+/*
+ * AkesoShouldSkipFile — returns TRUE if the file should be excluded
+ * from DLP scanning.  Checks file extension and path substring.
+ *
+ * nameInfo must already be parsed (FltParseFileNameInformation).
+ */
+static BOOLEAN
+AkesoShouldSkipFile(
+    _In_ PFLT_FILE_NAME_INFORMATION NameInfo
+)
+{
+    ULONG i;
+
+    /* Check extension */
+    if (NameInfo->Extension.Length > 0) {
+        for (i = 0; i < SKIPPED_EXT_COUNT; i++) {
+            if (RtlEqualUnicodeString(&NameInfo->Extension,
+                    &SkippedExtensions[i], TRUE)) {
+                return TRUE;
+            }
+        }
+    }
+
+    /* Check path substrings */
+    if (NameInfo->Name.Length > 0) {
+        for (i = 0; i < SKIPPED_PATH_COUNT; i++) {
+            /*
+             * Use a simple substring search: walk the name looking
+             * for the skip pattern.  The name is like
+             * \Device\HarddiskVolume2\Windows\System32\winevt\...
+             * and the pattern is \Windows\System32\winevt\ — so we
+             * start searching after the volume prefix.
+             */
+            UNICODE_STRING searchArea = NameInfo->Name;
+
+            /* FltParseFileNameInformation gives us ParentDir and FinalComponent,
+             * but it's simpler to just search the full name. */
+            if (searchArea.Length >= SkippedPaths[i].Length) {
+                USHORT maxOffset = searchArea.Length - SkippedPaths[i].Length;
+                USHORT offset;
+                BOOLEAN found = FALSE;
+
+                for (offset = 0; offset <= maxOffset; offset += sizeof(WCHAR)) {
+                    UNICODE_STRING slice;
+                    slice.Buffer = (PWCH)((PUCHAR)searchArea.Buffer + offset);
+                    slice.Length = SkippedPaths[i].Length;
+                    slice.MaximumLength = slice.Length;
+
+                    if (RtlEqualUnicodeString(&slice, &SkippedPaths[i], TRUE)) {
+                        found = TRUE;
+                        break;
+                    }
+                }
+                if (found) return TRUE;
+            }
+        }
+    }
+
+    return FALSE;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Context definitions                                                */
 /* ------------------------------------------------------------------ */
 
@@ -381,17 +499,23 @@ AkesoPreWrite(
     *CompletionContext = NULL;
 
     /*
-     * Fast path: if no user-mode client is connected, allow everything.
-     * We don't want to block I/O when the agent isn't running.
+     * Fast path 1: no user-mode client — allow everything.
      */
     if (!gFilterData.ClientConnected) {
+        return FLT_PREOP_SUCCESS_NO_CALLBACK;
+    }
+
+    /*
+     * Fast path 2: skip system processes and paging I/O.
+     */
+    if (AkesoShouldSkipProcess() ||
+        (Data->Iopb->IrpFlags & IRP_PAGING_IO)) {
         return FLT_PREOP_SUCCESS_NO_CALLBACK;
     }
 
     /* Get instance context to check if this volume is monitored */
     status = FltGetInstanceContext(FltObjects->Instance, (PFLT_CONTEXT *)&instanceContext);
     if (!NT_SUCCESS(status) || instanceContext == NULL) {
-        AKESO_LOG("PreWrite: no instance context (status=0x%08X)\n", status);
         return FLT_PREOP_SUCCESS_NO_CALLBACK;
     }
 
@@ -400,24 +524,31 @@ AkesoPreWrite(
         return FLT_PREOP_SUCCESS_NO_CALLBACK;
     }
 
-    AKESO_LOG("PreWrite: intercepted write (PID=%lu, paging=%d)\n",
-        (ULONG)(ULONG_PTR)PsGetCurrentProcessId(),
-        (Data->Iopb->IrpFlags & IRP_PAGING_IO) ? 1 : 0);
-
     /*
-     * Skip kernel-mode originators (paging I/O, system threads).
-     * We only care about user-initiated writes.
+     * Fast path 3: skip noise files by extension and path.
+     * Get file name info for the check (and for the notification).
      */
-    if (Data->Iopb->IrpFlags & IRP_PAGING_IO) {
-        FltReleaseContext(instanceContext);
-        return FLT_PREOP_SUCCESS_NO_CALLBACK;
+    {
+        PFLT_FILE_NAME_INFORMATION nameInfo = NULL;
+        status = FltGetFileNameInformation(
+            Data,
+            FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT,
+            &nameInfo);
+
+        if (NT_SUCCESS(status)) {
+            FltParseFileNameInformation(nameInfo);
+            if (AkesoShouldSkipFile(nameInfo)) {
+                FltReleaseFileNameInformation(nameInfo);
+                FltReleaseContext(instanceContext);
+                return FLT_PREOP_SUCCESS_NO_CALLBACK;
+            }
+            FltReleaseFileNameInformation(nameInfo);
+        }
     }
 
     /*
      * Send notification to user-mode and get verdict.
      */
-    AKESO_LOG("PreWrite: sending notification to user-mode...\n");
-
     status = AkesoSendNotification(
         FltObjects,
         Data,
@@ -427,9 +558,6 @@ AkesoPreWrite(
     );
 
     FltReleaseContext(instanceContext);
-
-    AKESO_LOG("PreWrite: notification result=0x%08X, verdict=%d\n",
-        status, (int)verdict);
 
     if (!NT_SUCCESS(status)) {
         /* Communication failed — allow to prevent system hangs */
@@ -484,6 +612,11 @@ AkesoPostCreate(
         return FLT_POSTOP_FINISHED_PROCESSING;
     }
 
+    /* Skip system processes */
+    if (AkesoShouldSkipProcess()) {
+        return FLT_POSTOP_FINISHED_PROCESSING;
+    }
+
     /* Get instance context */
     status = FltGetInstanceContext(FltObjects->Instance, (PFLT_CONTEXT *)&instanceContext);
     if (!NT_SUCCESS(status) || instanceContext == NULL) {
@@ -503,6 +636,25 @@ AkesoPostCreate(
           (FILE_WRITE_DATA | FILE_APPEND_DATA))) {
         FltReleaseContext(instanceContext);
         return FLT_POSTOP_FINISHED_PROCESSING;
+    }
+
+    /* Skip noise files by extension and path */
+    {
+        PFLT_FILE_NAME_INFORMATION nameInfo = NULL;
+        status = FltGetFileNameInformation(
+            Data,
+            FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT,
+            &nameInfo);
+
+        if (NT_SUCCESS(status)) {
+            FltParseFileNameInformation(nameInfo);
+            if (AkesoShouldSkipFile(nameInfo)) {
+                FltReleaseFileNameInformation(nameInfo);
+                FltReleaseContext(instanceContext);
+                return FLT_POSTOP_FINISHED_PROCESSING;
+            }
+            FltReleaseFileNameInformation(nameInfo);
+        }
     }
 
     /*
