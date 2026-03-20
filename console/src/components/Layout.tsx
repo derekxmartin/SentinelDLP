@@ -173,8 +173,8 @@ export default function Layout() {
               {unreadCount > 0 && (
                 <span
                   style={{
-                    position: 'absolute', top: '0.25rem', right: '0.25rem',
-                    minWidth: '0.875rem', height: '0.875rem',
+                    position: 'absolute', top: '-0.125rem', right: '-0.25rem',
+                    minWidth: '0.9375rem', height: '0.9375rem',
                     borderRadius: '9999px', fontSize: '0.625rem', fontWeight: 700,
                     backgroundColor: '#ef4444', color: 'white',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
