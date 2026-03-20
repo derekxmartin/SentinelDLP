@@ -260,6 +260,48 @@ static std::vector<Policy> CreateTestPolicies() {
         policies.push_back(p);
     }
 
+    /* Policy 3: Confidential Document — UserCancel (requires justification) */
+    {
+        Policy p;
+        p.id = 3;
+        p.name = "Confidential Document Control";
+        p.active = true;
+        p.default_severity = Severity::Medium;
+        p.response = ResponseAction::UserCancel;
+
+        DetectionRule rule;
+        rule.name = "Confidential Marker";
+        RuleCondition cond;
+        cond.type = ConditionType::Keyword;
+        cond.pattern_label = "CONFIDENTIAL";
+        cond.match_count_min = 1;
+        rule.conditions.push_back(cond);
+        p.detection_rules.push_back(rule);
+
+        policies.push_back(p);
+    }
+
+    /* Policy 4: Internal Only — Notify */
+    {
+        Policy p;
+        p.id = 4;
+        p.name = "Internal Document Tracking";
+        p.active = true;
+        p.default_severity = Severity::Low;
+        p.response = ResponseAction::Notify;
+
+        DetectionRule rule;
+        rule.name = "Internal Only Marker";
+        RuleCondition cond;
+        cond.type = ConditionType::Keyword;
+        cond.pattern_label = "INTERNAL ONLY";
+        cond.match_count_min = 1;
+        rule.conditions.push_back(cond);
+        p.detection_rules.push_back(rule);
+
+        policies.push_back(p);
+    }
+
     return policies;
 }
 

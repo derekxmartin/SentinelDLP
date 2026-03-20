@@ -34,6 +34,7 @@
 #include "akeso/driver_comm.h"
 #include "akeso/response/block_action.h"
 #include "akeso/response/notification.h"
+#include "akeso/response/user_cancel.h"
 
 #ifdef HAS_HYPERSCAN
 #include "akeso/detection/hs_regex_analyzer.h"
@@ -62,6 +63,8 @@ struct PipelineStats {
     uint64_t files_scanned{0};
     uint64_t files_allowed{0};
     uint64_t files_blocked{0};
+    uint64_t files_notified{0};
+    uint64_t files_user_cancel{0};
     uint64_t files_ttd{0};
     uint64_t violations_detected{0};
     uint64_t ttd_requests_sent{0};
@@ -163,9 +166,10 @@ private:
 #endif
     KeywordAnalyzer                     keyword_analyzer_;
 
-    /* Response components (P4-T8) */
+    /* Response components (P4-T8, P4-T9) */
     BlockAction                         block_action_;
     DlpNotifier                         notifier_;
+    UserCancelAction                    user_cancel_action_;
 
     /* Active policies (guarded by mutex) */
     std::vector<Policy>                 policies_;
