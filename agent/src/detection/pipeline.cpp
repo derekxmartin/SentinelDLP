@@ -233,8 +233,9 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
     auto start_time = std::chrono::steady_clock::now();
     std::string filepath_utf8 = WideToUtf8(notif.file_path);
 
-    LOG_DEBUG("DetectionPipeline: notification type={}, pid={}, path={}",
-              static_cast<int>(notif.type), notif.process_id, filepath_utf8);
+    LOG_INFO("DetectionPipeline: [SCAN] pid={} file={} size={} preview={}B",
+             notif.process_id, filepath_utf8, notif.file_size,
+             notif.content_preview.size());
 
     /* Increment scan counter */
     {
@@ -244,7 +245,8 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
 
     /* Skip if no content preview available */
     if (notif.content_preview.empty()) {
-        LOG_TRACE("DetectionPipeline: no content preview, allowing");
+        LOG_INFO("DetectionPipeline: [ALLOW] no content preview — pid={} file={}",
+                 notif.process_id, filepath_utf8);
         std::lock_guard<std::mutex> lock(stats_mutex_);
         stats_.files_allowed++;
         return DriverMsgType::VerdictAllow;
@@ -254,7 +256,8 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
     {
         std::lock_guard<std::mutex> lock(policy_mutex_);
         if (policies_.empty()) {
-            LOG_TRACE("DetectionPipeline: no policies loaded, allowing");
+            LOG_INFO("DetectionPipeline: [ALLOW] no policies loaded — pid={} file={}",
+                     notif.process_id, filepath_utf8);
             std::lock_guard<std::mutex> slock(stats_mutex_);
             stats_.files_allowed++;
             return DriverMsgType::VerdictAllow;
@@ -344,8 +347,8 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
 
     auto elapsed = std::chrono::steady_clock::now() - start_time;
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-    LOG_DEBUG("DetectionPipeline: verdict={} for {} in {}ms",
-              static_cast<int>(verdict), filepath_utf8, ms);
+    LOG_INFO("DetectionPipeline: [{}] file={} violations={} elapsed={}ms",
+             action_str, filepath_utf8, violations.size(), ms);
 
     return verdict;
 }
