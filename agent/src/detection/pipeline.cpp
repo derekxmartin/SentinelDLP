@@ -135,7 +135,7 @@ void DetectionPipeline::Stop() {
 
     /* Log final stats */
     auto s = GetStats();
-    LOG_INFO("DetectionPipeline: stopped — scanned={}, allowed={}, blocked={}, "
+    LOG_INFO("DetectionPipeline: stopped - scanned={}, allowed={}, blocked={}, "
              "violations={}, ttd={}, errors={}",
              s.files_scanned, s.files_allowed, s.files_blocked,
              s.violations_detected, s.ttd_requests_sent, s.errors);
@@ -251,7 +251,7 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
 
     /* Skip if no content preview available */
     if (notif.content_preview.empty()) {
-        LOG_INFO("DetectionPipeline: [ALLOW] no content preview — pid={} file={}",
+        LOG_INFO("DetectionPipeline: [ALLOW] no content preview - pid={} file={}",
                  notif.process_id, filepath_utf8);
         std::lock_guard<std::mutex> lock(stats_mutex_);
         stats_.files_allowed++;
@@ -262,7 +262,7 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
     {
         std::lock_guard<std::mutex> lock(policy_mutex_);
         if (policies_.empty()) {
-            LOG_INFO("DetectionPipeline: [ALLOW] no policies loaded — pid={} file={}",
+            LOG_INFO("DetectionPipeline: [ALLOW] no policies loaded - pid={} file={}",
                      notif.process_id, filepath_utf8);
             std::lock_guard<std::mutex> slock(stats_mutex_);
             stats_.files_allowed++;
@@ -309,7 +309,7 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
         }
     }
 
-    LOG_INFO("DetectionPipeline: VIOLATION — policy='{}' severity={} matches={} file={}",
+    LOG_INFO("DetectionPipeline: VIOLATION - policy='{}' severity={} matches={} file={}",
              worst->policy_name, SeverityToString(worst->severity),
              worst->match_count, filepath_utf8);
 
@@ -320,10 +320,37 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
 
     /* ---- Stage 4: Determine verdict ---- */
     DriverMsgType verdict;
+    std::string user_cancel_justification;
 
     if (worst->response == ResponseAction::TTD) {
         /* Forward to server for full analysis */
         verdict = RequestTTD(notif, *worst);
+    } else if (worst->response == ResponseAction::UserCancel) {
+        /*
+         * UserCancel is SYNCHRONOUS — we must show the dialog and wait
+         * for the user's response before returning the verdict to the driver.
+         * The driver I/O is held pending while the user decides.
+         */
+        std::string match_summary = std::to_string(worst->match_count) + " match(es)";
+        auto uc_result = user_cancel_action_.ShowDialog(
+            worst->policy_name,
+            SeverityToString(worst->severity),
+            filepath_utf8,
+            match_summary);
+
+        verdict = uc_result.verdict;
+        user_cancel_justification = uc_result.justification;
+
+        if (uc_result.timed_out) {
+            LOG_WARN("DetectionPipeline: [USER_CANCEL] timed out - blocking file={}",
+                     filepath_utf8);
+        } else if (uc_result.user_cancelled) {
+            LOG_INFO("DetectionPipeline: [USER_CANCEL] user blocked - file={}",
+                     filepath_utf8);
+        } else {
+            LOG_INFO("DetectionPipeline: [USER_CANCEL] user allowed - justification='{}' file={}",
+                     uc_result.justification, filepath_utf8);
+        }
     } else {
         verdict = ActionToVerdict(worst->response);
     }
@@ -367,14 +394,25 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
                               worst_policy = worst->policy_name,
                               worst_severity = SeverityToString(worst->severity),
                               worst_match_count = worst->match_count,
-                              worst_response = worst->response]() {
+                              worst_response = worst->response,
+                              user_cancel_justification]() {
+        /* Build action string with justification for UserCancel */
+        std::string effective_action = action_str;
+        if (worst_response == ResponseAction::UserCancel) {
+            if (verdict == DriverMsgType::VerdictAllow) {
+                effective_action = "user_cancel_allow (justification: " + user_cancel_justification + ")";
+            } else {
+                effective_action = "user_cancel_block";
+            }
+        }
+
         /* Queue all violations as incidents */
         for (const auto& v : violations) {
-            QueueIncident(notif, v, action_str);
+            QueueIncident(notif, v, effective_action);
         }
 
         /* Execute block response (P4-T8) */
-        if (verdict == DriverMsgType::VerdictBlock) {
+        if (verdict == DriverMsgType::VerdictBlock && worst_response == ResponseAction::Block) {
             std::string match_summary = std::to_string(worst_match_count) + " match(es)";
 
             /* Move file to recovery folder */
@@ -393,6 +431,16 @@ DriverMsgType DetectionPipeline::OnFileNotification(const FileNotification& noti
                 filepath_utf8,
                 match_summary,
                 block_result.recovery_path);
+        } else if (verdict == DriverMsgType::VerdictBlock && worst_response == ResponseAction::UserCancel) {
+            /* UserCancel blocked — show block notification but no file recovery
+             * (the driver already denied the I/O, the user chose to block) */
+            std::string match_summary = std::to_string(worst_match_count) + " match(es)";
+            notifier_.ShowBlockNotification(
+                worst_policy,
+                worst_severity,
+                filepath_utf8,
+                match_summary + " (user cancelled)",
+                "");
         } else if (worst_response == ResponseAction::Notify) {
             std::string match_summary = std::to_string(worst_match_count) + " match(es)";
             notifier_.ShowNotifyNotification(
@@ -647,7 +695,7 @@ DriverMsgType DetectionPipeline::ActionToVerdict(ResponseAction action) {
         case ResponseAction::Notify:
             return DriverMsgType::VerdictAllow;  /* Notify doesn't block I/O */
         case ResponseAction::UserCancel:
-            /* TODO: show dialog, for now treat as block */
+            /* Handled in OnFileNotification before this is called */
             return DriverMsgType::VerdictBlock;
         case ResponseAction::TTD:
             /* Should not reach here — handled in caller */

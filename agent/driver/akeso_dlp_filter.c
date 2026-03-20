@@ -55,6 +55,11 @@ static const UNICODE_STRING SkippedExtensions[] = {
     RTL_CONSTANT_STRING(L"dat"),
     RTL_CONSTANT_STRING(L"jtx"),
     RTL_CONSTANT_STRING(L"edb"),
+    RTL_CONSTANT_STRING(L"srd"),
+    RTL_CONSTANT_STRING(L"srd-wal"),
+    RTL_CONSTANT_STRING(L"srd-shm"),
+    RTL_CONSTANT_STRING(L"jfm"),
+    RTL_CONSTANT_STRING(L"chk"),
 };
 #define SKIPPED_EXT_COUNT (sizeof(SkippedExtensions) / sizeof(SkippedExtensions[0]))
 
@@ -86,6 +91,12 @@ static const UNICODE_STRING SkippedPaths[] = {
     RTL_CONSTANT_STRING(L"\\AkesoDLP\\queue\\"),
     RTL_CONSTANT_STRING(L"\\AkesoDLP\\cache\\"),
     RTL_CONSTANT_STRING(L"\\AkesoDLP\\Recovery\\"),
+    RTL_CONSTANT_STRING(L"\\AppData\\Local\\Comms\\"),
+    RTL_CONSTANT_STRING(L"\\AppData\\Local\\Microsoft\\VSApplicationInsights\\"),
+    RTL_CONSTANT_STRING(L"\\ProgramData\\Microsoft\\Windows\\AppRepository\\"),
+    RTL_CONSTANT_STRING(L"\\ProgramData\\Microsoft\\Windows\\DeviceMetadataCache\\"),
+    RTL_CONSTANT_STRING(L"\\ProgramData\\Microsoft\\Network\\Downloader\\"),
+    RTL_CONSTANT_STRING(L"\\AppData\\Roaming\\Microsoft\\Windows\\Themes\\"),
 };
 #define SKIPPED_PATH_COUNT (sizeof(SkippedPaths) / sizeof(SkippedPaths[0]))
 
@@ -803,10 +814,13 @@ AkesoSendNotification(
     }
 
     /*
-     * Send to user-mode with a 5-second timeout.
-     * This prevents blocking the I/O path if user-mode is hung.
+     * Send to user-mode with a generous timeout.
+     * Must be long enough for UserCancel dialogs (up to 120s)
+     * where the user needs time to type a justification.
+     * Normal Allow/Block verdicts return in ~1ms so this only
+     * matters as a safety net for the dialog case.
      */
-    timeout.QuadPart = -150000000LL;  /* 15 seconds in 100ns units */
+    timeout.QuadPart = -1500000000LL;  /* 150 seconds in 100ns units */
 
     status = FltSendMessage(
         gFilterData.Filter,
