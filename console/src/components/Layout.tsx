@@ -24,10 +24,12 @@ import {
   FileBarChart,
   AlertTriangle,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
+import { useNotificationStore } from '../stores/notificationStore';
 import GlobalSearch from './GlobalSearch';
-import { useState } from 'react';
+import NotificationPanel from './NotificationPanel';
 
 const NAV_ITEMS = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -75,6 +77,12 @@ export default function Layout() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const [searchOpen, setSearchOpen] = useState(false);
+  const { unreadCount, togglePanel, startPolling, stopPolling } = useNotificationStore();
+
+  useEffect(() => {
+    startPolling();
+    return () => stopPolling();
+  }, [startPolling, stopPolling]);
 
   async function handleLogout() {
     await logout();
@@ -157,8 +165,25 @@ export default function Layout() {
 
           {/* Right side */}
           <div className="flex items-center gap-3">
-            <button className="p-2 rounded-lg text-slate-400 hover:text-slate-300 hover:bg-slate-800 transition-colors relative">
+            <button
+              onClick={togglePanel}
+              className="p-2 rounded-lg text-slate-400 hover:text-slate-300 hover:bg-slate-800 transition-colors relative"
+            >
               <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute', top: '0.25rem', right: '0.25rem',
+                    minWidth: '0.875rem', height: '0.875rem',
+                    borderRadius: '9999px', fontSize: '0.625rem', fontWeight: 700,
+                    backgroundColor: '#ef4444', color: 'white',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 0.2rem', lineHeight: 1,
+                  }}
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
           </div>
         </header>
@@ -171,6 +196,9 @@ export default function Layout() {
 
       {/* Global search dialog */}
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+
+      {/* Notification panel */}
+      <NotificationPanel />
     </div>
   );
 }

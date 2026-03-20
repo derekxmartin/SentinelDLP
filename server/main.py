@@ -15,6 +15,7 @@ from server.api.search import router as search_router
 from server.api.system import router as system_router
 from server.api.fingerprints import router as fingerprints_router
 from server.api.network_settings import router as network_settings_router
+from server.api.notifications import router as notifications_router
 from server.api.reports import router as reports_router
 from server.api.users import router as users_router
 
@@ -63,6 +64,7 @@ app.include_router(identifiers_router)
 app.include_router(fingerprints_router)
 app.include_router(incidents_router)
 app.include_router(network_settings_router)
+app.include_router(notifications_router)
 app.include_router(policies_router)
 app.include_router(reports_router)
 app.include_router(response_rules_router)
