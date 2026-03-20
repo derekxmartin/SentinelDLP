@@ -13,6 +13,7 @@ from server.models.detection import DataIdentifier, KeywordDictionary
 from server.models.incident import Incident, IncidentNote, IncidentHistory
 from server.models.agent import AgentGroup, Agent
 from server.models.audit import AuditLog
+from server.models.notification import Notification, NotificationType, NotificationSeverity
 
 __all__ = [
     "Base",
@@ -35,4 +36,7 @@ __all__ = [
     "AgentGroup",
     "Agent",
     "AuditLog",
+    "Notification",
+    "NotificationType",
+    "NotificationSeverity",
 ]

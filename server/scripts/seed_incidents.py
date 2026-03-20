@@ -20,6 +20,7 @@ from datetime import datetime, timedelta, timezone
 
 from server.database import async_session
 from server.models.incident import Channel, Incident, IncidentNote, IncidentStatus
+from server.models.notification import Notification, NotificationSeverity, NotificationType
 from server.models.policy import Severity
 
 
@@ -151,9 +152,21 @@ def _make_incident(user: str, policy: dict, dt: datetime) -> Incident:
     )
 
 
+async def _ensure_notifications_table():
+    """Create the notifications table if it doesn't exist."""
+    from server.database import engine
+    from server.models.notification import Notification
+    from server.models.base import Base
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all, tables=[Notification.__table__])
+
+
 async def seed_incidents():
     print("AkesoDLP Incident Seed Script")
     print("=" * 50)
+
+    await _ensure_notifications_table()
 
     # Make some users more "risky" than others
     risky_users = random.sample(USERS, 3)
@@ -195,6 +208,97 @@ async def seed_incidents():
                 )
                 session.add(note)
                 note_count += 1
+
+        # --- Seed notifications for admin user ---
+        from sqlalchemy import select
+        from server.models.auth import User
+
+        admin_result = await session.execute(
+            select(User.id).where(User.username == "admin")
+        )
+        admin_id = admin_result.scalar()
+
+        if admin_id:
+            sample_notifications = [
+                Notification(
+                    user_id=admin_id,
+                    type=NotificationType.INCIDENT_CREATED,
+                    severity=NotificationSeverity.CRITICAL,
+                    title="Critical incident detected",
+                    message="Confidential Document Detection triggered by tnguyen — 5 matches found in merger_deck.pptx",
+                    resource_type="incident",
+                    resource_id=incidents[0].id if incidents else None,
+                ),
+                Notification(
+                    user_id=admin_id,
+                    type=NotificationType.INCIDENT_CREATED,
+                    severity=NotificationSeverity.HIGH,
+                    title="PCI-DSS violation detected",
+                    message="Credit card numbers found in customer_list.xlsx uploaded by acheng via browser_upload",
+                    resource_type="incident",
+                    resource_id=incidents[1].id if len(incidents) > 1 else None,
+                ),
+                Notification(
+                    user_id=admin_id,
+                    type=NotificationType.POLICY_CHANGED,
+                    severity=NotificationSeverity.MEDIUM,
+                    title="Policy activated",
+                    message="HIPAA: Protected Health Information policy was activated by admin",
+                    resource_type="policy",
+                    resource_id=None,
+                ),
+                Notification(
+                    user_id=admin_id,
+                    type=NotificationType.AGENT_STATUS,
+                    severity=NotificationSeverity.HIGH,
+                    title="Agent went offline",
+                    message="Endpoint agent on DESKTOP-ACHENG has not sent a heartbeat in 15 minutes",
+                    resource_type="agent",
+                    resource_id=None,
+                ),
+                Notification(
+                    user_id=admin_id,
+                    type=NotificationType.SYSTEM,
+                    severity=NotificationSeverity.INFO,
+                    title="Detection engine updated",
+                    message="Fingerprint index rebuilt with 12 documents — simhash analyzer ready",
+                ),
+                Notification(
+                    user_id=admin_id,
+                    type=NotificationType.INCIDENT_CREATED,
+                    severity=NotificationSeverity.MEDIUM,
+                    title="SOX policy match",
+                    message="Financial keywords detected in Q4_financials.pdf — action: notify",
+                    resource_type="incident",
+                    resource_id=incidents[2].id if len(incidents) > 2 else None,
+                ),
+                Notification(
+                    user_id=admin_id,
+                    type=NotificationType.AGENT_STATUS,
+                    severity=NotificationSeverity.LOW,
+                    title="New agent registered",
+                    message="Endpoint agent on LAPTOP-RJOHNSON connected and synced policies",
+                    resource_type="agent",
+                    resource_id=None,
+                ),
+                Notification(
+                    user_id=admin_id,
+                    type=NotificationType.INCIDENT_CREATED,
+                    severity=NotificationSeverity.CRITICAL,
+                    title="Data exfiltration blocked",
+                    message="Source code archive blocked from USB transfer by bthompson — 12 matches",
+                    resource_type="incident",
+                    resource_id=incidents[3].id if len(incidents) > 3 else None,
+                ),
+            ]
+            # Stagger creation times
+            for i, notif in enumerate(sample_notifications):
+                notif.created_at = datetime.now(timezone.utc) - timedelta(hours=i * 3, minutes=random.randint(0, 59))
+            session.add_all(sample_notifications)
+            notif_count = len(sample_notifications)
+            print(f"\nCreated {notif_count} notifications for admin user")
+        else:
+            print("\nWarning: admin user not found — skipping notifications")
 
         await session.commit()
 
