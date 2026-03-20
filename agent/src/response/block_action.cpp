@@ -57,8 +57,8 @@ BlockResult BlockAction::Execute(
     const std::string& match_summary,
     uint32_t process_id)
 {
-    LOG_INFO("BlockAction: executing block response for file={} policy='{}' severity={}",
-             dos_path.empty() ? file_path : dos_path, policy_name, severity);
+    LOG_INFO("BlockAction: executing block response for file={} policy='{}' severity={} {}",
+             dos_path.empty() ? file_path : dos_path, policy_name, severity, match_summary);
 
     /* Determine the DOS path for file operations */
     std::string effective_path = dos_path;
