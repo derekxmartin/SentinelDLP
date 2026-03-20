@@ -18,6 +18,9 @@
   --color-surface-sidebar: #0f172a;   /* slate-900 */
   --color-surface-card: #1e293b;      /* slate-800 */
   --color-accent: #6366f1;            /* indigo-500 */
+  --color-accent-rgb: 99, 102, 241;   /* indigo-500 RGB */
+  --color-text-primary: #f8fafc;      /* slate-50 */
+  --color-text-secondary: #94a3b8;    /* slate-400 */
 }
 
 /* Light theme */
@@ -26,6 +29,9 @@
   --color-surface-sidebar: #ffffff;   /* white */
   --color-surface-card: #ffffff;      /* white */
   --color-accent: #4f46e5;            /* indigo-600 */
+  --color-accent-rgb: 79, 70, 229;    /* indigo-600 RGB */
+  --color-text-primary: #0f172a;      /* slate-900 */
+  --color-text-secondary: #64748b;    /* slate-500 */
 }
 
 * {

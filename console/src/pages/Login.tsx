@@ -48,7 +48,25 @@ export default function Login() {
         navigate('/');
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed';
+      let message = 'Login failed';
+      if (err && typeof err === 'object' && 'status' in err) {
+        const apiErr = err as { status: number; detail: string };
+        if (apiErr.status === 0) {
+          message = apiErr.detail; // Network/server down — already descriptive
+        } else if (apiErr.status === 401) {
+          message = 'Invalid username or password';
+        } else if (apiErr.status === 422) {
+          message = 'Please enter both username and password';
+        } else if (apiErr.status === 502 || apiErr.status === 503 || apiErr.status === 504) {
+          message = 'API server is not running. Start it with: uvicorn server.main:app --port 8000';
+        } else if (apiErr.status >= 500) {
+          message = `Server error (${apiErr.status}). Check the server logs.`;
+        } else {
+          message = apiErr.detail || `Request failed (${apiErr.status})`;
+        }
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
       setError(message);
     } finally {
       setLoading(false);
