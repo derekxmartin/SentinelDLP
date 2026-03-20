@@ -75,7 +75,19 @@ async function request<T = unknown>(
     headers['Content-Type'] = 'application/json';
   }
 
-  const resp = await fetch(url, { ...init, headers, credentials: 'include' });
+  let resp: Response;
+  try {
+    resp = await fetch(url, { ...init, headers, credentials: 'include' });
+  } catch (err) {
+    // Network error — server unreachable, DNS failure, CORS, etc.
+    const isDown = err instanceof TypeError && /fetch|network/i.test(err.message);
+    throw new ApiError(
+      0,
+      isDown
+        ? `Cannot reach the API server at ${BASE_URL}. Is the server running? (uvicorn server.main:app --port 8000)`
+        : `Network error: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
 
   // Silent refresh on 401
   if (resp.status === 401 && accessToken) {

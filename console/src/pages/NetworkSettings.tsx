@@ -92,10 +92,28 @@ export default function NetworkSettings() {
   const [newDomain, setNewDomain] = useState('');
 
   useEffect(() => {
-    api.get<NetworkSettings>('/settings/network')
+    api.get<Record<string, unknown>>('/settings/network')
       .then((data) => {
-        setHttp(data.httpProxy);
-        setSmtp(data.smtpRelay);
+        // Server returns snake_case keys
+        const hp = (data.http_proxy ?? data.httpProxy) as Record<string, unknown> | undefined;
+        const sr = (data.smtp_relay ?? data.smtpRelay) as Record<string, unknown> | undefined;
+        if (hp) {
+          setHttp({
+            mode: (hp.mode as 'monitor' | 'prevent') ?? 'monitor',
+            blockThreshold: (hp.block_threshold ?? hp.blockThreshold ?? 1) as number,
+            domainAllowlist: (hp.domain_allowlist ?? hp.domainAllowlist ?? []) as string[],
+          });
+        }
+        if (sr) {
+          setSmtp({
+            mode: (sr.mode as 'monitor' | 'prevent') ?? 'monitor',
+            upstreamHost: (sr.upstream_host ?? sr.upstreamHost ?? 'mailhog') as string,
+            upstreamPort: (sr.upstream_port ?? sr.upstreamPort ?? 1025) as number,
+            blockThreshold: (sr.block_threshold ?? sr.blockThreshold ?? 5) as number,
+            modifyThreshold: (sr.modify_threshold ?? sr.modifyThreshold ?? 1) as number,
+            quarantineAddress: (sr.quarantine_address ?? sr.quarantineAddress ?? 'quarantine@dlp.local') as string,
+          });
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -111,7 +129,7 @@ export default function NetworkSettings() {
   async function handleSave() {
     setSaving(true);
     try {
-      const data = await api.put<NetworkSettings>('/settings/network', {
+      await api.put('/settings/network', {
         http_proxy: {
           mode: http.mode,
           block_threshold: http.blockThreshold,
@@ -126,8 +144,6 @@ export default function NetworkSettings() {
           quarantine_address: smtp.quarantineAddress,
         },
       });
-      setHttp(data.httpProxy);
-      setSmtp(data.smtpRelay);
       setToast({ type: 'success', message: 'Settings saved. Restart network services to apply.' });
     } catch {
       setToast({ type: 'error', message: 'Failed to save settings.' });
