@@ -52,7 +52,7 @@
       "name": "msvc-debug",
       "displayName": "MSVC Debug",
       "inherits": "default",
-      "generator": "Visual Studio 18 2026",
+      "generator": "Visual Studio 17 2022",
       "architecture": {
         "value": "x64",
         "strategy": "set"
@@ -67,7 +67,7 @@
       "name": "msvc-release",
       "displayName": "MSVC Release",
       "inherits": "default",
-      "generator": "Visual Studio 18 2026",
+      "generator": "Visual Studio 17 2022",
       "architecture": {
         "value": "x64",
         "strategy": "set"
