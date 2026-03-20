@@ -266,12 +266,11 @@ AkesoInstanceSetup(
     instanceContext->VolumeType = volumeType;
 
     /*
-     * Only monitor removable and network volumes by default.
-     * Fixed volumes are attached to but not actively monitored.
+     * Monitor all volume types for now.
+     * TODO: Make configurable via user-mode command — in production,
+     * fixed volumes may be excluded to reduce overhead.
      */
-    instanceContext->MonitorEnabled =
-        (volumeType == AkesoVolumeRemovable ||
-         volumeType == AkesoVolumeNetwork);
+    instanceContext->MonitorEnabled = TRUE;
 
     /* Store volume name for logging */
     instanceContext->VolumeName.Buffer = instanceContext->VolumeNameBuffer;
