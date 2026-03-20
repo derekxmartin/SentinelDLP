@@ -27,6 +27,7 @@
 #pragma once
 
 #include "akeso/agent_service.h"
+#include "akeso/browser_upload_monitor.h"
 #include "akeso/clipboard_monitor.h"
 #include "akeso/config.h"
 #include "akeso/detection/content_extractor.h"
@@ -70,6 +71,9 @@ struct PipelineStats {
     uint64_t clips_scanned{0};
     uint64_t clips_violations{0};
     uint64_t clips_blocked{0};
+    uint64_t browser_uploads_scanned{0};
+    uint64_t browser_uploads_violations{0};
+    uint64_t browser_uploads_blocked{0};
     uint64_t violations_detected{0};
     uint64_t ttd_requests_sent{0};
     uint64_t ttd_timeouts{0};
@@ -88,7 +92,8 @@ public:
         std::shared_ptr<GrpcClient> grpc_client,
         std::shared_ptr<IncidentQueue> incident_queue,
         std::shared_ptr<PolicyCache> policy_cache,
-        std::shared_ptr<ClipboardMonitor> clipboard_monitor = nullptr
+        std::shared_ptr<ClipboardMonitor> clipboard_monitor = nullptr,
+        std::shared_ptr<BrowserUploadMonitor> browser_monitor = nullptr
     );
     ~DetectionPipeline() override;
 
@@ -126,6 +131,9 @@ private:
 
     /* Clipboard content handler (P4-T10) */
     void OnClipboardContent(const ClipboardContent& content);
+
+    /* Browser upload handler (P4-T11) */
+    void OnBrowserUpload(const BrowserUploadEvent& event);
 
     /* Queue a clipboard incident */
     void QueueClipboardIncident(
@@ -171,6 +179,7 @@ private:
     std::shared_ptr<IncidentQueue>      incident_queue_;
     std::shared_ptr<PolicyCache>        policy_cache_;
     std::shared_ptr<ClipboardMonitor>   clipboard_monitor_;
+    std::shared_ptr<BrowserUploadMonitor> browser_monitor_;
 
     /* Detection components (owned) */
     FileTypeDetector                    file_type_detector_;

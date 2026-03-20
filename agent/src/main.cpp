@@ -15,6 +15,7 @@
  */
 
 #include "akeso/agent_service.h"
+#include "akeso/browser_upload_monitor.h"
 #include "akeso/clipboard_monitor.h"
 #include "akeso/config.h"
 #include "akeso/detection/pipeline.h"
@@ -373,10 +374,17 @@ int main(int argc, char* argv[]) {
             config.monitoring.clipboard);
         service.RegisterComponent(clipboard_monitor);
 
-        /* Register detection pipeline (wires driver + clipboard → detection → verdict) */
+        /* Register browser upload monitor (P4-T11) */
+        auto browser_monitor = std::make_shared<BrowserUploadMonitor>(
+            config.monitoring.browser_upload,
+            config.monitoring.max_scan_size,
+            config.monitoring.browser_upload_cooldown_seconds);
+        service.RegisterComponent(browser_monitor);
+
+        /* Register detection pipeline (wires driver + clipboard + browser -> detection -> verdict) */
         auto pipeline = std::make_shared<DetectionPipeline>(
             config, driver_comm, grpc_client, incident_queue, policy_cache,
-            clipboard_monitor);
+            clipboard_monitor, browser_monitor);
         service.RegisterComponent(pipeline);
 
         /* Seed test policies if requested */

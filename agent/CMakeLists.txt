@@ -140,6 +140,7 @@ add_executable(akeso-dlp-agent
     src/response/notification.cpp
     src/response/user_cancel.cpp
     src/clipboard_monitor.cpp
+    src/browser_upload_monitor.cpp
     src/driver_comm.cpp
 )
 
@@ -197,6 +198,7 @@ if(WIN32)
         fltlib      # Minifilter user-mode API
         user32      # Window + clipboard APIs
         shell32     # Shell_NotifyIcon
+        tdh         # ETW Trace Data Helper (browser upload monitor)
         ws2_32      # Winsock
     )
 endif()
