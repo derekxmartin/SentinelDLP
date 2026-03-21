@@ -678,7 +678,7 @@ void DetectionPipeline::QueueIncident(
     if (incident_queue_->Enqueue(qi)) {
         LOG_DEBUG("DetectionPipeline: incident queued for policy '{}'", violation.policy_name);
     } else {
-        LOG_WARN("DetectionPipeline: failed to queue incident (duplicate or full)");
+        LOG_DEBUG("DetectionPipeline: incident not queued (duplicate or full)");
     }
 }
 
@@ -864,7 +864,7 @@ void DetectionPipeline::QueueClipboardIncident(
     if (incident_queue_->Enqueue(qi)) {
         LOG_DEBUG("DetectionPipeline: clipboard incident queued for policy '{}'", violation.policy_name);
     } else {
-        LOG_WARN("DetectionPipeline: failed to queue clipboard incident");
+        LOG_DEBUG("DetectionPipeline: clipboard incident not queued (duplicate or full)");
     }
 }
 
@@ -1030,12 +1030,21 @@ void DetectionPipeline::OnBrowserUpload(const BrowserUploadEvent& event)
     for (const auto& v : violations) {
         if (!incident_queue_) continue;
 
+        /* Extract just the filename from the path */
+        std::string filename = event.file_path;
+        {
+            auto pos = filename.find_last_of("\\/");
+            if (pos != std::string::npos) {
+                filename = filename.substr(pos + 1);
+            }
+        }
+
         QueuedIncident qi;
         qi.policy_name = v.policy_name;
         qi.severity = SeverityToString(v.severity);
         qi.channel = "browser_upload";
         qi.source_type = "endpoint";
-        qi.file_name = event.file_path;
+        qi.file_name = filename;
         qi.file_path = event.file_path;
         qi.user = event.browser_name + " (pid: " + std::to_string(event.browser_pid) + ")";
         qi.match_count = v.match_count;
@@ -1052,7 +1061,7 @@ void DetectionPipeline::OnBrowserUpload(const BrowserUploadEvent& event)
         qi.matched_content = matches_json;
 
         if (!incident_queue_->Enqueue(qi)) {
-            LOG_WARN("DetectionPipeline: failed to queue browser upload incident");
+            LOG_DEBUG("DetectionPipeline: browser upload incident not queued (duplicate or full)");
         }
     }
 
