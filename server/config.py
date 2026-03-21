@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 _logger = logging.getLogger(__name__)
 
 _INSECURE_JWT_SECRET = "change-me-in-production"
+_DEFAULT_CORS_ORIGINS = ["http://localhost:3000"]
 
 
 class Settings(BaseSettings):
@@ -47,7 +48,7 @@ class Settings(BaseSettings):
     network_smtp_upstream_port: int = 1025
 
     # --- CORS ---
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = Field(default=_DEFAULT_CORS_ORIGINS)
 
     # --- Auth ---
     jwt_secret: str = Field(default=_INSECURE_JWT_SECRET)
@@ -93,6 +94,11 @@ class Settings(BaseSettings):
                 "Default database credentials detected — set "
                 "DLP_DATABASE_URL with strong credentials for production."
             )
+        if self.cors_origins == _DEFAULT_CORS_ORIGINS and not self.debug:
+            _logger.warning(
+                "CORS origins default to localhost — set DLP_CORS_ORIGINS "
+                "to your production domain(s) for deployment."
+            )
         return self
 
 
@@ -107,6 +113,12 @@ def validate_production_config() -> None:
             "SECURITY: DLP_JWT_SECRET must be set to a strong random "
             "value in production. Set DLP_DEBUG=true to bypass this "
             "check in development."
+        )
+    if settings.cors_origins == _DEFAULT_CORS_ORIGINS and not settings.debug:
+        raise ValueError(
+            "SECURITY: DLP_CORS_ORIGINS must be explicitly set in "
+            "production. Set DLP_DEBUG=true to bypass this check in "
+            "development."
         )
 
 
