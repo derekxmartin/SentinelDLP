@@ -105,6 +105,8 @@ static const UNICODE_STRING SkippedPaths[] = {
     RTL_CONSTANT_STRING(L"\\AppData\\Local\\Mozilla\\Firefox\\Profiles"),
     RTL_CONSTANT_STRING(L"\\AppData\\Local\\BraveSoftware\\Brave-Browser\\User Data"),
     RTL_CONSTANT_STRING(L"\\AppData\\Local\\D3DSCache"),
+    RTL_CONSTANT_STRING(L"\\ProgramData\\Microsoft\\Windows\\WER\\"),
+    RTL_CONSTANT_STRING(L"\\AppData\\LocalLow\\Microsoft\\CryptnetUrlCache\\"),
 };
 #define SKIPPED_PATH_COUNT (sizeof(SkippedPaths) / sizeof(SkippedPaths[0]))
 
