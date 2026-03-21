@@ -428,6 +428,11 @@ int main(int argc, char* argv[]) {
         auto driver_comm = std::make_shared<DriverComm>(config.driver);
         service.RegisterComponent(driver_comm);
 
+        /* Wire driver health into heartbeat */
+        grpc_client->SetDriverStatusCallback([driver_comm]() {
+            return driver_comm->IsHealthy();
+        });
+
         /* Register clipboard monitor (P4-T10) */
         auto clipboard_monitor = std::make_shared<ClipboardMonitor>(
             config.monitoring.clipboard);

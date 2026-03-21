@@ -412,7 +412,7 @@ void GrpcClient::HeartbeatThread() {
             request.set_policy_version(policy_version_.load());
 
             auto* agent_status = request.mutable_status();
-            agent_status->set_driver_loaded(false);  /* TODO: check actual driver */
+            agent_status->set_driver_loaded(driver_status_cb_ ? driver_status_cb_() : false);
             agent_status->set_detection_engine_ready(true);
             agent_status->set_pending_incidents(0);
 
