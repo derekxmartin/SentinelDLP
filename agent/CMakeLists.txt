@@ -141,6 +141,7 @@ add_executable(akeso-dlp-agent
     src/response/user_cancel.cpp
     src/clipboard_monitor.cpp
     src/browser_upload_monitor.cpp
+    src/discover_scanner.cpp
     src/tamper_protection.cpp
     src/driver_comm.cpp
 )

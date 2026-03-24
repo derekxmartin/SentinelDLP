@@ -51,7 +51,8 @@ DetectionPipeline::DetectionPipeline(
     std::shared_ptr<IncidentQueue> incident_queue,
     std::shared_ptr<PolicyCache> policy_cache,
     std::shared_ptr<ClipboardMonitor> clipboard_monitor,
-    std::shared_ptr<BrowserUploadMonitor> browser_monitor)
+    std::shared_ptr<BrowserUploadMonitor> browser_monitor,
+    std::shared_ptr<DiscoverScanner> discover_scanner)
     : detection_config_(config.detection)
     , monitoring_config_(config.monitoring)
     , driver_comm_(std::move(driver_comm))
@@ -60,6 +61,7 @@ DetectionPipeline::DetectionPipeline(
     , policy_cache_(std::move(policy_cache))
     , clipboard_monitor_(std::move(clipboard_monitor))
     , browser_monitor_(std::move(browser_monitor))
+    , discover_scanner_(std::move(discover_scanner))
     , content_extractor_(ExtractionOptions{
           static_cast<size_t>(config.detection.max_scan_size),
           2,        /* max_zip_depth on agent */
@@ -134,6 +136,16 @@ bool DetectionPipeline::Start() {
         LOG_INFO("DetectionPipeline: upload callback registered with BrowserUploadMonitor");
     }
 
+    /* Register discover file callback (P7-T1) */
+    if (discover_scanner_) {
+        discover_scanner_->SetFileCallback(
+            [this](const DiscoverFileEvent& event) {
+                OnDiscoverFile(event);
+            }
+        );
+        LOG_INFO("DetectionPipeline: discover callback registered with DiscoverScanner");
+    }
+
     running_ = true;
     LOG_INFO("DetectionPipeline: started");
     return true;
@@ -146,6 +158,9 @@ void DetectionPipeline::Stop() {
     running_ = false;
 
     /* Clear callbacks */
+    if (discover_scanner_) {
+        discover_scanner_->SetFileCallback(nullptr);
+    }
     if (browser_monitor_) {
         browser_monitor_->SetUploadCallback(nullptr);
     }
@@ -1069,6 +1084,140 @@ void DetectionPipeline::OnBrowserUpload(const BrowserUploadEvent& event)
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
     LOG_INFO("DetectionPipeline: [UPLOAD_{}] violations={} elapsed={}ms",
              action_str, violations.size(), ms);
+}
+
+/* ================================================================== */
+/*  Discover file handler (P7-T1)                                      */
+/* ================================================================== */
+
+void DetectionPipeline::OnDiscoverFile(const DiscoverFileEvent& event)
+{
+    if (!running_) return;
+
+    LOG_INFO("DetectionPipeline: [DISCOVER_SCAN] file={} size={} owner={}",
+             event.file_path, event.file_size, event.file_owner);
+
+    {
+        std::lock_guard<std::mutex> lock(stats_mutex_);
+        stats_.discover_files_scanned++;
+    }
+
+    /* Skip if no policies loaded */
+    {
+        std::lock_guard<std::mutex> lock(policy_mutex_);
+        if (policies_.empty()) {
+            LOG_DEBUG("DetectionPipeline: [DISCOVER_SKIP] no policies loaded");
+            return;
+        }
+    }
+
+    /* Read file content for scanning */
+    std::vector<uint8_t> content;
+    {
+#ifdef _WIN32
+        std::wstring wide_path(event.file_path.begin(), event.file_path.end());
+        HANDLE hFile = CreateFileW(wide_path.c_str(), GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (hFile != INVALID_HANDLE_VALUE) {
+            LARGE_INTEGER fsize;
+            if (GetFileSizeEx(hFile, &fsize) && fsize.QuadPart > 0) {
+                auto read_size = static_cast<size_t>(
+                    (std::min)(static_cast<int64_t>(fsize.QuadPart),
+                               detection_config_.max_scan_size));
+                content.resize(read_size);
+                DWORD bytes_read = 0;
+                if (!ReadFile(hFile, content.data(),
+                              static_cast<DWORD>(read_size), &bytes_read, nullptr)) {
+                    content.clear();
+                } else {
+                    content.resize(bytes_read);
+                }
+            }
+            CloseHandle(hFile);
+        }
+#endif
+    }
+
+    if (content.empty()) {
+        LOG_DEBUG("DetectionPipeline: [DISCOVER_SKIP] could not read file: {}", event.file_path);
+        return;
+    }
+
+    /* Run detection */
+    DetectionResult detection;
+    try {
+        detection = RunDetection(
+            content.data(), content.size(),
+            event.file_path, event.file_size);
+    } catch (const std::exception& ex) {
+        LOG_ERROR("DetectionPipeline: discover detection failed: {}", ex.what());
+        std::lock_guard<std::mutex> lock(stats_mutex_);
+        stats_.errors++;
+        return;
+    }
+
+    /* Evaluate policies */
+    std::vector<PolicyViolation> violations;
+    {
+        std::lock_guard<std::mutex> lock(policy_mutex_);
+        violations = policy_evaluator_.EvaluateAll(policies_, detection);
+    }
+
+    if (violations.empty()) {
+        return;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(stats_mutex_);
+        stats_.discover_violations += violations.size();
+        stats_.violations_detected += violations.size();
+    }
+
+    /* Find worst violation */
+    const PolicyViolation* worst = &violations[0];
+    for (size_t i = 1; i < violations.size(); ++i) {
+        if (violations[i].severity > worst->severity) {
+            worst = &violations[i];
+        }
+    }
+
+    LOG_WARN("DetectionPipeline: [DISCOVER_VIOLATION] policy='{}' severity={} matches={} "
+             "file={} owner={} modified={}",
+             worst->policy_name, SeverityToString(worst->severity),
+             worst->match_count, event.file_path, event.file_owner,
+             event.modification_date);
+
+    /* Queue incidents (discover is always log-only, no blocking) */
+    for (const auto& v : violations) {
+        if (!incident_queue_) continue;
+
+        QueuedIncident qi;
+        qi.policy_name = v.policy_name;
+        qi.severity = SeverityToString(v.severity);
+        qi.channel = "discover";
+        qi.source_type = "discover";
+        qi.file_name = event.file_name;
+        qi.file_path = event.file_path;
+        qi.user = event.file_owner;
+        qi.match_count = v.match_count;
+        qi.action_taken = "log";
+
+        std::string matches_json = "{\"matches\":[";
+        for (size_t i = 0; i < v.matches.size() && i < 10; ++i) {
+            if (i > 0) matches_json += ",";
+            matches_json += "{\"type\":\"" + v.matches[i].analyzer_name + "\","
+                            "\"label\":\"" + v.matches[i].label + "\","
+                            "\"count\":1}";
+        }
+        matches_json += "],\"file_owner\":\"" + event.file_owner + "\","
+                        "\"modification_date\":\"" + event.modification_date + "\"}";
+        qi.matched_content = matches_json;
+
+        if (!incident_queue_->Enqueue(qi)) {
+            LOG_DEBUG("DetectionPipeline: discover incident not queued (duplicate or full)");
+        }
+    }
 }
 
 /* ================================================================== */

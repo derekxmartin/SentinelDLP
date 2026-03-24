@@ -30,6 +30,7 @@
 #include "akeso/browser_upload_monitor.h"
 #include "akeso/clipboard_monitor.h"
 #include "akeso/config.h"
+#include "akeso/discover_scanner.h"
 #include "akeso/detection/content_extractor.h"
 #include "akeso/detection/file_type_detector.h"
 #include "akeso/detection/policy_evaluator.h"
@@ -74,6 +75,8 @@ struct PipelineStats {
     uint64_t browser_uploads_scanned{0};
     uint64_t browser_uploads_violations{0};
     uint64_t browser_uploads_blocked{0};
+    uint64_t discover_files_scanned{0};
+    uint64_t discover_violations{0};
     uint64_t violations_detected{0};
     uint64_t ttd_requests_sent{0};
     uint64_t ttd_timeouts{0};
@@ -93,7 +96,8 @@ public:
         std::shared_ptr<IncidentQueue> incident_queue,
         std::shared_ptr<PolicyCache> policy_cache,
         std::shared_ptr<ClipboardMonitor> clipboard_monitor = nullptr,
-        std::shared_ptr<BrowserUploadMonitor> browser_monitor = nullptr
+        std::shared_ptr<BrowserUploadMonitor> browser_monitor = nullptr,
+        std::shared_ptr<DiscoverScanner> discover_scanner = nullptr
     );
     ~DetectionPipeline() override;
 
@@ -134,6 +138,9 @@ private:
 
     /* Browser upload handler (P4-T11) */
     void OnBrowserUpload(const BrowserUploadEvent& event);
+
+    /* Discover file handler (P7-T1) */
+    void OnDiscoverFile(const DiscoverFileEvent& event);
 
     /* Queue a clipboard incident */
     void QueueClipboardIncident(
@@ -180,6 +187,7 @@ private:
     std::shared_ptr<PolicyCache>        policy_cache_;
     std::shared_ptr<ClipboardMonitor>   clipboard_monitor_;
     std::shared_ptr<BrowserUploadMonitor> browser_monitor_;
+    std::shared_ptr<DiscoverScanner>      discover_scanner_;
 
     /* Detection components (owned) */
     FileTypeDetector                    file_type_detector_;

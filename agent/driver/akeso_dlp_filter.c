@@ -107,6 +107,7 @@ static const UNICODE_STRING SkippedPaths[] = {
     RTL_CONSTANT_STRING(L"\\AppData\\Local\\D3DSCache"),
     RTL_CONSTANT_STRING(L"\\ProgramData\\Microsoft\\Windows\\WER\\"),
     RTL_CONSTANT_STRING(L"\\AppData\\LocalLow\\Microsoft\\CryptnetUrlCache\\"),
+    RTL_CONSTANT_STRING(L"\\AkesoEDR\\"),
 };
 #define SKIPPED_PATH_COUNT (sizeof(SkippedPaths) / sizeof(SkippedPaths[0]))
 
