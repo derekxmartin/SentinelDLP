@@ -112,6 +112,29 @@ static void ParseHeartbeat(const YAML::Node& node, HeartbeatConfig& cfg) {
     cfg.backoff_max_seconds = ReadOr<int>(node, "backoff_max_seconds", cfg.backoff_max_seconds);
 }
 
+static void ParseDiscover(const YAML::Node& node, DiscoverConfig& cfg) {
+    if (!node || !node.IsMap()) return;
+    cfg.enabled = ReadOr<bool>(node, "enabled", cfg.enabled);
+    cfg.max_file_size = ReadOr<int64_t>(node, "max_file_size", cfg.max_file_size);
+    cfg.scan_interval_seconds = ReadOr<int>(node, "scan_interval_seconds", cfg.scan_interval_seconds);
+
+    if (node["target_directories"] && node["target_directories"].IsSequence()) {
+        cfg.target_directories.clear();
+        for (const auto& item : node["target_directories"])
+            cfg.target_directories.push_back(item.as<std::string>());
+    }
+    if (node["file_extensions"] && node["file_extensions"].IsSequence()) {
+        cfg.file_extensions.clear();
+        for (const auto& item : node["file_extensions"])
+            cfg.file_extensions.push_back(item.as<std::string>());
+    }
+    if (node["path_exclusions"] && node["path_exclusions"].IsSequence()) {
+        cfg.path_exclusions.clear();
+        for (const auto& item : node["path_exclusions"])
+            cfg.path_exclusions.push_back(item.as<std::string>());
+    }
+}
+
 static void ParseTamperProtection(const YAML::Node& node, TamperProtectionConfig& cfg) {
     if (!node || !node.IsMap()) return;
     cfg.enabled             = ReadOr<bool>(node, "enabled", cfg.enabled);
@@ -145,6 +168,7 @@ static bool ParseYaml(
         ParseLogging(root["logging"], config.logging);
         ParseHeartbeat(root["heartbeat"], config.heartbeat);
         ParseTamperProtection(root["tamper_protection"], config.tamper_protection);
+        ParseDiscover(root["discover"], config.discover);
 
         return true;
     } catch (const YAML::Exception& e) {

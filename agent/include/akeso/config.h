@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 #include <filesystem>
 
 namespace akeso::dlp {
@@ -81,6 +82,15 @@ struct TamperProtectionConfig {
     std::string uninstall_key_path  = "C:\\AkesoDLP\\config\\uninstall.key";
 };
 
+struct DiscoverConfig {
+    bool        enabled                 = false;
+    std::vector<std::string> target_directories;
+    std::vector<std::string> file_extensions;    /* empty = all */
+    std::vector<std::string> path_exclusions;
+    int64_t     max_file_size           = 52428800;  /* 50 MB */
+    int         scan_interval_seconds   = 3600;      /* 1 hour */
+};
+
 struct HeartbeatConfig {
     int         interval_seconds    = 60;
     int         backoff_max_seconds = 300;
@@ -101,6 +111,7 @@ struct AgentConfig {
     LoggingConfig       logging;
     HeartbeatConfig     heartbeat;
     TamperProtectionConfig tamper_protection;
+    DiscoverConfig      discover;
 };
 
 /* ------------------------------------------------------------------ */

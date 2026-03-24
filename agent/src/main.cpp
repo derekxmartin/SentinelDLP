@@ -24,6 +24,7 @@
 #include "akeso/grpc_client.h"
 #include "akeso/incident_queue.h"
 #include "akeso/policy_cache.h"
+#include "akeso/discover_scanner.h"
 #include "akeso/tamper_protection.h"
 
 #include <iostream>
@@ -445,10 +446,14 @@ int main(int argc, char* argv[]) {
             config.monitoring.browser_upload_cooldown_seconds);
         service.RegisterComponent(browser_monitor);
 
-        /* Register detection pipeline (wires driver + clipboard + browser -> detection -> verdict) */
+        /* Register discover scanner (P7-T1) */
+        auto discover_scanner = std::make_shared<DiscoverScanner>(config.discover);
+        service.RegisterComponent(discover_scanner);
+
+        /* Register detection pipeline (wires driver + clipboard + browser + discover -> detection -> verdict) */
         auto pipeline = std::make_shared<DetectionPipeline>(
             config, driver_comm, grpc_client, incident_queue, policy_cache,
-            clipboard_monitor, browser_monitor);
+            clipboard_monitor, browser_monitor, discover_scanner);
         service.RegisterComponent(pipeline);
 
         /* Seed test policies if requested */
