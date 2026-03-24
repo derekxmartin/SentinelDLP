@@ -66,6 +66,7 @@ async def create_discover(db: AsyncSession, data: dict) -> DiscoverScan:
     )
     db.add(scan)
     await db.flush()
+    await db.refresh(scan)
     return scan
 
 
@@ -75,6 +76,7 @@ async def update_discover(db: AsyncSession, scan: DiscoverScan, data: dict) -> D
         if hasattr(scan, key):
             setattr(scan, key, value)
     await db.flush()
+    await db.refresh(scan)
     return scan
 
 
@@ -83,6 +85,7 @@ async def trigger_discover(db: AsyncSession, scan: DiscoverScan) -> DiscoverScan
     scan.status = DiscoverStatus.RUNNING
     scan.started_at = datetime.now(timezone.utc)
     await db.flush()
+    await db.refresh(scan)
     return scan
 
 
@@ -101,4 +104,5 @@ async def complete_discover(
     scan.duration_ms = data.get("duration_ms")
     scan.findings = data.get("findings")
     await db.flush()
+    await db.refresh(scan)
     return scan
