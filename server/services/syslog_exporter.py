@@ -221,13 +221,14 @@ class SyslogExporter:
 
     def _send_message(self, message: str) -> None:
         """Send a formatted syslog message."""
+        if self._socket is None:
+            raise RuntimeError("Syslog socket not connected — call _connect() first")
+
         data = message.encode("utf-8")
 
         if self.config.transport == SyslogTransport.UDP:
-            assert self._socket is not None
             self._socket.sendto(data, (self.config.host, self.config.port))
         else:
-            assert self._socket is not None
             # TCP/TLS: length-prefix framing (RFC 5425)
             self._socket.sendall(f"{len(data)} ".encode() + data)
 
