@@ -16,6 +16,9 @@
 #include <atomic>
 #include <cstdint>
 #include <filesystem>
+
+struct sqlite3;
+struct sqlite3_stmt;
 #include <functional>
 #include <mutex>
 #include <string>
@@ -49,6 +52,7 @@ struct DiscoverStats {
     uint64_t files_skipped_size{0};
     uint64_t files_skipped_extension{0};
     uint64_t files_skipped_exclusion{0};
+    uint64_t files_skipped_unchanged{0};
     uint64_t files_error{0};
 };
 
@@ -88,6 +92,13 @@ private:
     static std::string GetFileOwner(const std::wstring& path);
 #endif
     static std::string FormatFileTime(const std::filesystem::file_time_type& ftime);
+    static int64_t FileTimeToEpoch(const std::filesystem::file_time_type& ftime);
+
+    /* Incremental cache (P7-T2) */
+    bool OpenCache();
+    void CloseCache();
+    bool IsFileChanged(const std::string& path, int64_t size, int64_t mod_time);
+    void UpdateCache(const std::string& path, int64_t size, int64_t mod_time);
 
     DiscoverConfig              config_;
     std::thread                 thread_;
@@ -98,6 +109,11 @@ private:
 
     mutable std::mutex          stats_mutex_;
     DiscoverStats               stats_;
+
+    /* SQLite incremental cache */
+    sqlite3*                    db_{nullptr};
+    sqlite3_stmt*               stmt_lookup_{nullptr};
+    sqlite3_stmt*               stmt_upsert_{nullptr};
 };
 
 }  // namespace akeso::dlp
