@@ -89,6 +89,7 @@ struct DiscoverConfig {
     std::vector<std::string> path_exclusions;
     int64_t     max_file_size           = 52428800;  /* 50 MB */
     int         scan_interval_seconds   = 3600;      /* 1 hour */
+    std::string cache_db_path           = "C:\\AkesoDLP\\cache\\discover_cache.db";
 };
 
 struct HeartbeatConfig {

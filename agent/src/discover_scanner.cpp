@@ -9,6 +9,8 @@
 #include <chrono>
 #include <cctype>
 
+#include <sqlite3.h>
+
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -65,6 +67,10 @@ bool DiscoverScanner::Start()
         return true;
     }
 
+    if (!OpenCache()) {
+        LOG_WARN("DiscoverScanner: cache DB failed to open — running without incremental mode");
+    }
+
     running_ = true;
     thread_ = std::thread(&DiscoverScanner::ScanThread, this);
 
@@ -82,6 +88,8 @@ void DiscoverScanner::Stop()
     if (thread_.joinable()) {
         thread_.join();
     }
+
+    CloseCache();
 
     auto s = GetStats();
     LOG_INFO("DiscoverScanner: stopped (scans={}, examined={}, scanned={}, errors={})",
@@ -163,10 +171,10 @@ void DiscoverScanner::RunFullScan()
 
     auto s = GetStats();
     LOG_INFO("DiscoverScanner: scan complete in {}ms (examined={}, scanned={}, "
-             "skipped_size={}, skipped_ext={}, skipped_excl={}, errors={})",
+             "unchanged={}, skipped_size={}, skipped_ext={}, skipped_excl={}, errors={})",
              elapsed.count(), s.files_examined, s.files_scanned,
-             s.files_skipped_size, s.files_skipped_extension,
-             s.files_skipped_exclusion, s.files_error);
+             s.files_skipped_unchanged, s.files_skipped_size,
+             s.files_skipped_extension, s.files_skipped_exclusion, s.files_error);
 }
 
 /* ================================================================== */
@@ -226,6 +234,16 @@ void DiscoverScanner::WalkDirectory(const fs::path& dir)
             continue;
         }
 
+        /* Incremental check — skip unchanged files (P7-T2) */
+        int64_t mod_epoch = FileTimeToEpoch(entry.last_write_time(ec));
+        if (ec) { ec.clear(); mod_epoch = 0; }
+
+        if (db_ && !IsFileChanged(path.string(), static_cast<int64_t>(fsize), mod_epoch)) {
+            std::lock_guard<std::mutex> lock(stats_mutex_);
+            stats_.files_skipped_unchanged++;
+            continue;
+        }
+
         /* Build event */
         DiscoverFileEvent event;
         event.file_path = path.string();
@@ -246,8 +264,15 @@ void DiscoverScanner::WalkDirectory(const fs::path& dir)
             if (callback_) {
                 try {
                     callback_(event);
-                    std::lock_guard<std::mutex> slock(stats_mutex_);
-                    stats_.files_scanned++;
+                    {
+                        std::lock_guard<std::mutex> slock(stats_mutex_);
+                        stats_.files_scanned++;
+                    }
+                    /* Update cache after successful scan */
+                    if (db_) {
+                        UpdateCache(event.file_path,
+                                    event.file_size, mod_epoch);
+                    }
                 } catch (const std::exception& ex) {
                     LOG_ERROR("DiscoverScanner: callback error for {}: {}",
                               event.file_path, ex.what());
@@ -385,6 +410,135 @@ std::string DiscoverScanner::FormatFileTime(const fs::file_time_type& ftime)
 #else
     (void)ftime;
     return "unknown";
+#endif
+}
+
+/* ================================================================== */
+/*  Incremental cache (P7-T2)                                          */
+/* ================================================================== */
+
+bool DiscoverScanner::OpenCache()
+{
+    /* Ensure parent directory exists */
+    fs::path db_path(config_.cache_db_path);
+    fs::create_directories(db_path.parent_path());
+
+    int rc = sqlite3_open(config_.cache_db_path.c_str(), &db_);
+    if (rc != SQLITE_OK) {
+        LOG_ERROR("DiscoverScanner: failed to open cache DB {}: {}",
+                  config_.cache_db_path, sqlite3_errmsg(db_));
+        sqlite3_close(db_);
+        db_ = nullptr;
+        return false;
+    }
+
+    /* WAL mode for concurrent reads */
+    sqlite3_exec(db_, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
+
+    /* Create schema */
+    const char* schema =
+        "CREATE TABLE IF NOT EXISTS discover_files ("
+        "  file_path    TEXT PRIMARY KEY,"
+        "  file_size    INTEGER NOT NULL,"
+        "  mod_time     INTEGER NOT NULL,"
+        "  last_scanned INTEGER NOT NULL"
+        ");";
+    char* err = nullptr;
+    rc = sqlite3_exec(db_, schema, nullptr, nullptr, &err);
+    if (rc != SQLITE_OK) {
+        LOG_ERROR("DiscoverScanner: schema creation failed: {}", err ? err : "unknown");
+        sqlite3_free(err);
+        sqlite3_close(db_);
+        db_ = nullptr;
+        return false;
+    }
+
+    /* Prepare statements */
+    rc = sqlite3_prepare_v2(db_,
+        "SELECT file_size, mod_time FROM discover_files WHERE file_path = ?;",
+        -1, &stmt_lookup_, nullptr);
+    if (rc != SQLITE_OK) {
+        LOG_ERROR("DiscoverScanner: failed to prepare lookup stmt");
+        sqlite3_close(db_);
+        db_ = nullptr;
+        return false;
+    }
+
+    rc = sqlite3_prepare_v2(db_,
+        "INSERT OR REPLACE INTO discover_files (file_path, file_size, mod_time, last_scanned) "
+        "VALUES (?, ?, ?, ?);",
+        -1, &stmt_upsert_, nullptr);
+    if (rc != SQLITE_OK) {
+        LOG_ERROR("DiscoverScanner: failed to prepare upsert stmt");
+        sqlite3_finalize(stmt_lookup_);
+        stmt_lookup_ = nullptr;
+        sqlite3_close(db_);
+        db_ = nullptr;
+        return false;
+    }
+
+    LOG_INFO("DiscoverScanner: cache DB opened at {}", config_.cache_db_path);
+    return true;
+}
+
+void DiscoverScanner::CloseCache()
+{
+    if (stmt_lookup_) { sqlite3_finalize(stmt_lookup_); stmt_lookup_ = nullptr; }
+    if (stmt_upsert_) { sqlite3_finalize(stmt_upsert_); stmt_upsert_ = nullptr; }
+    if (db_) { sqlite3_close(db_); db_ = nullptr; }
+}
+
+bool DiscoverScanner::IsFileChanged(const std::string& path, int64_t size, int64_t mod_time)
+{
+    if (!stmt_lookup_) return true;
+
+    sqlite3_reset(stmt_lookup_);
+    sqlite3_bind_text(stmt_lookup_, 1, path.c_str(), -1, SQLITE_TRANSIENT);
+
+    int rc = sqlite3_step(stmt_lookup_);
+    if (rc != SQLITE_ROW) {
+        /* No cached entry — file is new */
+        return true;
+    }
+
+    int64_t cached_size = sqlite3_column_int64(stmt_lookup_, 0);
+    int64_t cached_mod  = sqlite3_column_int64(stmt_lookup_, 1);
+
+    return (size != cached_size || mod_time != cached_mod);
+}
+
+void DiscoverScanner::UpdateCache(const std::string& path, int64_t size, int64_t mod_time)
+{
+    if (!stmt_upsert_) return;
+
+    int64_t now = std::chrono::duration_cast<std::chrono::seconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+
+    sqlite3_reset(stmt_upsert_);
+    sqlite3_bind_text(stmt_upsert_, 1, path.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int64(stmt_upsert_, 2, size);
+    sqlite3_bind_int64(stmt_upsert_, 3, mod_time);
+    sqlite3_bind_int64(stmt_upsert_, 4, now);
+
+    sqlite3_step(stmt_upsert_);
+}
+
+int64_t DiscoverScanner::FileTimeToEpoch(const fs::file_time_type& ftime)
+{
+#ifdef _WIN32
+    /* MSVC file_time_type uses 100ns ticks from Jan 1 1601 */
+    auto ticks = std::chrono::duration_cast<
+        std::chrono::duration<int64_t, std::ratio<1, 10000000>>>(
+        ftime.time_since_epoch()).count();
+
+    /* Convert FILETIME ticks (1601 epoch) to Unix epoch (1970) */
+    /* Difference: 11644473600 seconds = 116444736000000000 100ns ticks */
+    constexpr int64_t kTicksToUnixEpoch = 116444736000000000LL;
+    return (ticks - kTicksToUnixEpoch) / 10000000;
+#else
+    auto sctp = std::chrono::time_point_cast<std::chrono::seconds>(
+        std::chrono::file_clock::to_sys(ftime));
+    return sctp.time_since_epoch().count();
 #endif
 }
 
