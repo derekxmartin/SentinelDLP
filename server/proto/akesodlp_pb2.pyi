@@ -440,3 +440,79 @@ class TTDPolicyResult(_message.Message):
     matches: _containers.RepeatedCompositeFieldContainer[MatchDetail]
     match_count: int
     def __init__(self, policy_id: _Optional[str] = ..., policy_name: _Optional[str] = ..., matched: bool = ..., severity: _Optional[_Union[Severity, str]] = ..., matches: _Optional[_Iterable[_Union[MatchDetail, _Mapping]]] = ..., match_count: _Optional[int] = ...) -> None: ...
+
+class GetDiscoverScansRequest(_message.Message):
+    __slots__ = ("agent_id",)
+    AGENT_ID_FIELD_NUMBER: _ClassVar[int]
+    agent_id: str
+    def __init__(self, agent_id: _Optional[str] = ...) -> None: ...
+
+class GetDiscoverScansResponse(_message.Message):
+    __slots__ = ("scans",)
+    SCANS_FIELD_NUMBER: _ClassVar[int]
+    scans: _containers.RepeatedCompositeFieldContainer[DiscoverScanDef]
+    def __init__(self, scans: _Optional[_Iterable[_Union[DiscoverScanDef, _Mapping]]] = ...) -> None: ...
+
+class DiscoverScanDef(_message.Message):
+    __slots__ = ("discover_id", "name", "scan_path", "recursive", "file_extensions", "path_exclusions")
+    DISCOVER_ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    SCAN_PATH_FIELD_NUMBER: _ClassVar[int]
+    RECURSIVE_FIELD_NUMBER: _ClassVar[int]
+    FILE_EXTENSIONS_FIELD_NUMBER: _ClassVar[int]
+    PATH_EXCLUSIONS_FIELD_NUMBER: _ClassVar[int]
+    discover_id: str
+    name: str
+    scan_path: str
+    recursive: bool
+    file_extensions: _containers.RepeatedScalarFieldContainer[str]
+    path_exclusions: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, discover_id: _Optional[str] = ..., name: _Optional[str] = ..., scan_path: _Optional[str] = ..., recursive: bool = ..., file_extensions: _Optional[_Iterable[str]] = ..., path_exclusions: _Optional[_Iterable[str]] = ...) -> None: ...
+
+class ReportDiscoverResultsRequest(_message.Message):
+    __slots__ = ("agent_id", "discover_id", "files_examined", "files_scanned", "violations_found", "files_quarantined", "duration_ms", "findings")
+    AGENT_ID_FIELD_NUMBER: _ClassVar[int]
+    DISCOVER_ID_FIELD_NUMBER: _ClassVar[int]
+    FILES_EXAMINED_FIELD_NUMBER: _ClassVar[int]
+    FILES_SCANNED_FIELD_NUMBER: _ClassVar[int]
+    VIOLATIONS_FOUND_FIELD_NUMBER: _ClassVar[int]
+    FILES_QUARANTINED_FIELD_NUMBER: _ClassVar[int]
+    DURATION_MS_FIELD_NUMBER: _ClassVar[int]
+    FINDINGS_FIELD_NUMBER: _ClassVar[int]
+    agent_id: str
+    discover_id: str
+    files_examined: int
+    files_scanned: int
+    violations_found: int
+    files_quarantined: int
+    duration_ms: int
+    findings: _containers.RepeatedCompositeFieldContainer[DiscoverFinding]
+    def __init__(self, agent_id: _Optional[str] = ..., discover_id: _Optional[str] = ..., files_examined: _Optional[int] = ..., files_scanned: _Optional[int] = ..., violations_found: _Optional[int] = ..., files_quarantined: _Optional[int] = ..., duration_ms: _Optional[int] = ..., findings: _Optional[_Iterable[_Union[DiscoverFinding, _Mapping]]] = ...) -> None: ...
+
+class DiscoverFinding(_message.Message):
+    __slots__ = ("file_path", "file_name", "file_size", "file_owner", "policy_name", "severity", "match_count", "action_taken")
+    FILE_PATH_FIELD_NUMBER: _ClassVar[int]
+    FILE_NAME_FIELD_NUMBER: _ClassVar[int]
+    FILE_SIZE_FIELD_NUMBER: _ClassVar[int]
+    FILE_OWNER_FIELD_NUMBER: _ClassVar[int]
+    POLICY_NAME_FIELD_NUMBER: _ClassVar[int]
+    SEVERITY_FIELD_NUMBER: _ClassVar[int]
+    MATCH_COUNT_FIELD_NUMBER: _ClassVar[int]
+    ACTION_TAKEN_FIELD_NUMBER: _ClassVar[int]
+    file_path: str
+    file_name: str
+    file_size: int
+    file_owner: str
+    policy_name: str
+    severity: Severity
+    match_count: int
+    action_taken: str
+    def __init__(self, file_path: _Optional[str] = ..., file_name: _Optional[str] = ..., file_size: _Optional[int] = ..., file_owner: _Optional[str] = ..., policy_name: _Optional[str] = ..., severity: _Optional[_Union[Severity, str]] = ..., match_count: _Optional[int] = ..., action_taken: _Optional[str] = ...) -> None: ...
+
+class ReportDiscoverResultsResponse(_message.Message):
+    __slots__ = ("success", "message")
+    SUCCESS_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    success: bool
+    message: str
+    def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...

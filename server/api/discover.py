@@ -152,6 +152,23 @@ async def trigger_discover(
 
     scan = await discover_service.trigger_discover(db, scan)
     await db.commit()
+
+    # Queue command for agent delivery via next heartbeat
+    from server.command_queue import get_command_queue, AgentCommand
+    params = {
+        "discover_id": str(discover_id),
+        "scan_path": scan.scan_path or "",
+    }
+    if scan.file_extensions:
+        params["file_extensions"] = ",".join(scan.file_extensions)
+    if scan.path_exclusions:
+        params["path_exclusions"] = ",".join(scan.path_exclusions)
+
+    get_command_queue().enqueue(
+        scan.agent_id,  # None = broadcast to all agents
+        AgentCommand(command_type="run_discover", parameters=params),
+    )
+
     return scan
 
 

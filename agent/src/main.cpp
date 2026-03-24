@@ -28,7 +28,9 @@
 #include "akeso/tamper_protection.h"
 
 #include <iostream>
+#include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #ifdef HAS_SPDLOG
@@ -455,6 +457,48 @@ int main(int argc, char* argv[]) {
             config, driver_comm, grpc_client, incident_queue, policy_cache,
             clipboard_monitor, browser_monitor, discover_scanner);
         service.RegisterComponent(pipeline);
+
+        /* Wire server command handling (P8-T1) */
+        grpc_client->SetCommandCallback(
+            [discover_scanner, grpc_client](const akesodlp::AgentCommand& cmd) {
+                if (cmd.command_type() == "run_discover") {
+                    const auto& params = cmd.parameters();
+                    auto it_id = params.find("discover_id");
+                    auto it_path = params.find("scan_path");
+                    if (it_id == params.end() || it_path == params.end()) {
+                        spdlog::warn("run_discover command missing discover_id or scan_path");
+                        return;
+                    }
+
+                    DiscoverScanner::RemoteScanParams rp;
+                    rp.discover_id = it_id->second;
+                    rp.scan_path = it_path->second;
+
+                    /* Parse optional comma-separated extensions */
+                    auto it_ext = params.find("file_extensions");
+                    if (it_ext != params.end() && !it_ext->second.empty()) {
+                        std::istringstream ss(it_ext->second);
+                        std::string ext;
+                        while (std::getline(ss, ext, ',')) {
+                            if (!ext.empty()) rp.file_extensions.push_back(ext);
+                        }
+                    }
+
+                    /* Run scan in background thread to avoid blocking heartbeat */
+                    std::thread([discover_scanner, grpc_client, rp]() {
+                        auto stats = discover_scanner->RunRemoteScan(rp);
+
+                        /* Report results back to server */
+                        akesodlp::ReportDiscoverResultsRequest req;
+                        req.set_agent_id(grpc_client->GetAgentId());
+                        req.set_discover_id(rp.discover_id);
+                        req.set_files_examined(stats.files_examined);
+                        req.set_files_scanned(stats.files_scanned);
+                        req.set_duration_ms(0);  /* TODO: track actual ms */
+                        grpc_client->ReportDiscoverResults(req);
+                    }).detach();
+                }
+            });
 
         /* Seed test policies if requested */
         if (args.test_policy) {

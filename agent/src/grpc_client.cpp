@@ -357,6 +357,55 @@ bool GrpcClient::DetectContent(
 }
 
 /* ================================================================== */
+/*  Discover integration (P8-T1)                                       */
+/* ================================================================== */
+
+bool GrpcClient::GetDiscoverScans(akesodlp::GetDiscoverScansResponse* response) {
+    std::lock_guard<std::mutex> lock(stub_mutex_);
+    if (!stub_ || agent_id_.empty()) return false;
+
+    akesodlp::GetDiscoverScansRequest request;
+    request.set_agent_id(agent_id_);
+
+    grpc::ClientContext context;
+    context.set_deadline(
+        std::chrono::system_clock::now() + std::chrono::seconds(10));
+
+    auto status = stub_->GetDiscoverScans(&context, request, response);
+
+    if (!status.ok()) {
+        LOG_WARN("GrpcClient: GetDiscoverScans failed: {}", status.error_message());
+        return false;
+    }
+
+    LOG_DEBUG("GrpcClient: GetDiscoverScans returned {} scans", response->scans_size());
+    return true;
+}
+
+bool GrpcClient::ReportDiscoverResults(
+    const akesodlp::ReportDiscoverResultsRequest& request
+) {
+    std::lock_guard<std::mutex> lock(stub_mutex_);
+    if (!stub_) return false;
+
+    grpc::ClientContext context;
+    context.set_deadline(
+        std::chrono::system_clock::now() + std::chrono::seconds(30));
+
+    akesodlp::ReportDiscoverResultsResponse response;
+    auto status = stub_->ReportDiscoverResults(&context, request, &response);
+
+    if (!status.ok()) {
+        LOG_ERROR("GrpcClient: ReportDiscoverResults failed: {}",
+                  status.error_message());
+        return false;
+    }
+
+    LOG_INFO("GrpcClient: Discover results reported: {}", response.message());
+    return response.success();
+}
+
+/* ================================================================== */
 /*  Heartbeat thread                                                   */
 /* ================================================================== */
 

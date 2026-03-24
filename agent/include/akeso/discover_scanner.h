@@ -79,6 +79,16 @@ public:
     /* Callback for pipeline integration */
     void SetFileCallback(DiscoverFileCallback callback);
 
+    /* Remote scan trigger (P8-T1) — runs a one-shot scan with given params */
+    struct RemoteScanParams {
+        std::string discover_id;
+        std::string scan_path;
+        bool recursive{true};
+        std::vector<std::string> file_extensions;
+        std::vector<std::string> path_exclusions;
+    };
+    DiscoverStats RunRemoteScan(const RemoteScanParams& params);
+
     /* Statistics */
     DiscoverStats GetStats() const;
 

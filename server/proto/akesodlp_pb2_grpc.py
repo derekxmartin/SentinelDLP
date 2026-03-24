@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from server.proto import akesodlp_pb2 as akesodlp__pb2
+import akesodlp_pb2 as akesodlp__pb2
 
 GRPC_GENERATED_VERSION = '1.78.0'
 GRPC_VERSION = grpc.__version__
@@ -68,6 +68,16 @@ class AkesoDLPServiceStub(object):
                 request_serializer=akesodlp__pb2.DetectContentRequest.SerializeToString,
                 response_deserializer=akesodlp__pb2.DetectContentResponse.FromString,
                 _registered_method=True)
+        self.GetDiscoverScans = channel.unary_unary(
+                '/akesodlp.AkesoDLPService/GetDiscoverScans',
+                request_serializer=akesodlp__pb2.GetDiscoverScansRequest.SerializeToString,
+                response_deserializer=akesodlp__pb2.GetDiscoverScansResponse.FromString,
+                _registered_method=True)
+        self.ReportDiscoverResults = channel.unary_unary(
+                '/akesodlp.AkesoDLPService/ReportDiscoverResults',
+                request_serializer=akesodlp__pb2.ReportDiscoverResultsRequest.SerializeToString,
+                response_deserializer=akesodlp__pb2.ReportDiscoverResultsResponse.FromString,
+                _registered_method=True)
 
 
 class AkesoDLPServiceServicer(object):
@@ -119,6 +129,20 @@ class AkesoDLPServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetDiscoverScans(self, request, context):
+        """Agent pulls pending discover scans assigned to it
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ReportDiscoverResults(self, request, context):
+        """Agent reports discover scan results back to server
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_AkesoDLPServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -151,6 +175,16 @@ def add_AkesoDLPServiceServicer_to_server(servicer, server):
                     servicer.DetectContent,
                     request_deserializer=akesodlp__pb2.DetectContentRequest.FromString,
                     response_serializer=akesodlp__pb2.DetectContentResponse.SerializeToString,
+            ),
+            'GetDiscoverScans': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetDiscoverScans,
+                    request_deserializer=akesodlp__pb2.GetDiscoverScansRequest.FromString,
+                    response_serializer=akesodlp__pb2.GetDiscoverScansResponse.SerializeToString,
+            ),
+            'ReportDiscoverResults': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReportDiscoverResults,
+                    request_deserializer=akesodlp__pb2.ReportDiscoverResultsRequest.FromString,
+                    response_serializer=akesodlp__pb2.ReportDiscoverResultsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -319,6 +353,60 @@ class AkesoDLPService(object):
             '/akesodlp.AkesoDLPService/DetectContent',
             akesodlp__pb2.DetectContentRequest.SerializeToString,
             akesodlp__pb2.DetectContentResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetDiscoverScans(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akesodlp.AkesoDLPService/GetDiscoverScans',
+            akesodlp__pb2.GetDiscoverScansRequest.SerializeToString,
+            akesodlp__pb2.GetDiscoverScansResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ReportDiscoverResults(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/akesodlp.AkesoDLPService/ReportDiscoverResults',
+            akesodlp__pb2.ReportDiscoverResultsRequest.SerializeToString,
+            akesodlp__pb2.ReportDiscoverResultsResponse.FromString,
             options,
             channel_credentials,
             insecure,
