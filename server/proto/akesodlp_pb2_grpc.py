@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-import akesodlp_pb2 as akesodlp__pb2
+from server.proto import akesodlp_pb2 as akesodlp__pb2
 
 GRPC_GENERATED_VERSION = '1.78.0'
 GRPC_VERSION = grpc.__version__
