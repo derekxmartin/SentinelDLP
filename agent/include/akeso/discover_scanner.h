@@ -16,6 +16,9 @@
 #include <atomic>
 #include <cstdint>
 #include <filesystem>
+
+struct sqlite3;
+struct sqlite3_stmt;
 #include <functional>
 #include <mutex>
 #include <string>
@@ -108,9 +111,9 @@ private:
     DiscoverStats               stats_;
 
     /* SQLite incremental cache */
-    struct sqlite3*             db_{nullptr};
-    struct sqlite3_stmt*        stmt_lookup_{nullptr};
-    struct sqlite3_stmt*        stmt_upsert_{nullptr};
+    sqlite3*                    db_{nullptr};
+    sqlite3_stmt*               stmt_lookup_{nullptr};
+    sqlite3_stmt*               stmt_upsert_{nullptr};
 };
 
 }  // namespace akeso::dlp
