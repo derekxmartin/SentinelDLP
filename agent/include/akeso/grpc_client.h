@@ -79,6 +79,10 @@ public:
     bool DetectContent(const akesodlp::DetectContentRequest& request,
                        akesodlp::DetectContentResponse* response);
 
+    /* Discover integration (P8-T1) */
+    bool GetDiscoverScans(akesodlp::GetDiscoverScansResponse* response);
+    bool ReportDiscoverResults(const akesodlp::ReportDiscoverResultsRequest& request);
+
     /* State */
     ConnectionState GetConnectionState() const { return conn_state_.load(); }
     const std::string& GetAgentId() const { return agent_id_; }

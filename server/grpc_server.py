@@ -174,10 +174,23 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
                 await db.commit()
 
                 current_ver = get_bus().get_version()
+
+                # Deliver any pending commands for this agent
+                from server.command_queue import get_command_queue
+                pending_cmds = get_command_queue().drain(str(agent_id))
+                proto_cmds = [
+                    pb2.AgentCommand(
+                        command_type=c.command_type,
+                        parameters=c.parameters,
+                    )
+                    for c in pending_cmds
+                ]
+
                 return pb2.HeartbeatResponse(
                     success=True,
                     policy_update_available=(request.policy_version < current_ver),
                     latest_policy_version=current_ver,
+                    commands=proto_cmds,
                 )
         except Exception as exc:
             logger.error("Heartbeat failed: %s", exc, exc_info=True)
@@ -502,6 +515,103 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
                 request_id=request.request_id,
                 verdict=pb2.TTD_LOG,
                 message=str(exc),
+            )
+
+
+    # --- GetDiscoverScans ---
+
+    async def GetDiscoverScans(self, request, context):
+        """Return pending/running discover scans assigned to this agent."""
+        try:
+            agent_id = request.agent_id
+            async with async_session() as db:
+                from server.services import discover_service
+                from server.models.discover import DiscoverStatus
+                scans, _ = await discover_service.list_discovers(
+                    db, status_filter=DiscoverStatus.RUNNING.value, agent_id=agent_id,
+                )
+                # Also include unassigned running scans (agent_id is null)
+                unassigned, _ = await discover_service.list_discovers(
+                    db, status_filter=DiscoverStatus.RUNNING.value,
+                )
+
+                seen_ids = set()
+                proto_scans = []
+                for scan in list(scans) + list(unassigned):
+                    sid = str(scan.id)
+                    if sid in seen_ids:
+                        continue
+                    seen_ids.add(sid)
+                    proto_scans.append(pb2.DiscoverScanDef(
+                        discover_id=sid,
+                        name=scan.name or "",
+                        scan_path=scan.scan_path or "",
+                        recursive=scan.recursive if scan.recursive is not None else True,
+                        file_extensions=scan.file_extensions or [],
+                        path_exclusions=scan.path_exclusions or [],
+                    ))
+
+                return pb2.GetDiscoverScansResponse(scans=proto_scans)
+        except Exception as exc:
+            logger.error("GetDiscoverScans failed: %s", exc, exc_info=True)
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(exc))
+            return pb2.GetDiscoverScansResponse()
+
+    # --- ReportDiscoverResults ---
+
+    async def ReportDiscoverResults(self, request, context):
+        """Agent reports discover scan results — update DB status to completed."""
+        try:
+            discover_id = uuid.UUID(request.discover_id)
+            async with async_session() as db:
+                from server.services import discover_service
+                scan = await discover_service.get_discover(db, discover_id)
+                if scan is None:
+                    context.set_code(grpc.StatusCode.NOT_FOUND)
+                    context.set_details("Discover scan not found")
+                    return pb2.ReportDiscoverResultsResponse(
+                        success=False, message="Scan not found",
+                    )
+
+                # Convert findings to JSON-serializable list
+                findings_json = []
+                for f in request.findings:
+                    findings_json.append({
+                        "file_path": f.file_path,
+                        "file_name": f.file_name,
+                        "file_size": f.file_size,
+                        "file_owner": f.file_owner,
+                        "policy_name": f.policy_name,
+                        "severity": pb2.Severity.Name(f.severity),
+                        "match_count": f.match_count,
+                        "action_taken": f.action_taken,
+                    })
+
+                # Assign agent_id if not already set
+                if not scan.agent_id:
+                    scan.agent_id = request.agent_id
+
+                await discover_service.complete_discover(db, scan, {
+                    "files_examined": request.files_examined,
+                    "files_scanned": request.files_scanned,
+                    "violations_found": request.violations_found,
+                    "files_quarantined": request.files_quarantined,
+                    "duration_ms": request.duration_ms,
+                    "findings": findings_json,
+                })
+                await db.commit()
+
+                return pb2.ReportDiscoverResultsResponse(
+                    success=True,
+                    message=f"Results recorded: {request.violations_found} violations",
+                )
+        except Exception as exc:
+            logger.error("ReportDiscoverResults failed: %s", exc, exc_info=True)
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(exc))
+            return pb2.ReportDiscoverResultsResponse(
+                success=False, message=str(exc),
             )
 
 

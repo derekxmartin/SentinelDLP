@@ -28,6 +28,12 @@ service AkesoDLPService {
 
   // Two-Tier Detection — agent sends content for server-side evaluation
   rpc DetectContent(DetectContentRequest) returns (DetectContentResponse);
+
+  // Agent pulls pending discover scans assigned to it
+  rpc GetDiscoverScans(GetDiscoverScansRequest) returns (GetDiscoverScansResponse);
+
+  // Agent reports discover scan results back to server
+  rpc ReportDiscoverResults(ReportDiscoverResultsRequest) returns (ReportDiscoverResultsResponse);
 }
 
 // =============================================================================
@@ -321,4 +327,52 @@ enum Channel {
   CHANNEL_EMAIL = 5;
   CHANNEL_HTTP_UPLOAD = 6;
   CHANNEL_DISCOVER = 7;
+}
+
+// =============================================================================
+// Discover Scans (agent-server integration)
+// =============================================================================
+
+message GetDiscoverScansRequest {
+  string agent_id = 1;
+}
+
+message GetDiscoverScansResponse {
+  repeated DiscoverScanDef scans = 1;
+}
+
+message DiscoverScanDef {
+  string discover_id = 1;
+  string name = 2;
+  string scan_path = 3;
+  bool recursive = 4;
+  repeated string file_extensions = 5;
+  repeated string path_exclusions = 6;
+}
+
+message ReportDiscoverResultsRequest {
+  string agent_id = 1;
+  string discover_id = 2;
+  int64 files_examined = 3;
+  int64 files_scanned = 4;
+  int64 violations_found = 5;
+  int64 files_quarantined = 6;
+  int64 duration_ms = 7;
+  repeated DiscoverFinding findings = 8;
+}
+
+message DiscoverFinding {
+  string file_path = 1;
+  string file_name = 2;
+  int64 file_size = 3;
+  string file_owner = 4;
+  string policy_name = 5;
+  Severity severity = 6;
+  int32 match_count = 7;
+  string action_taken = 8;
+}
+
+message ReportDiscoverResultsResponse {
+  bool success = 1;
+  string message = 2;
 }

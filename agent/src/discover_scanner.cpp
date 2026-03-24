@@ -180,6 +180,47 @@ void DiscoverScanner::RunFullScan()
 }
 
 /* ================================================================== */
+/*  Remote scan trigger (P8-T1)                                        */
+/* ================================================================== */
+
+DiscoverStats DiscoverScanner::RunRemoteScan(const RemoteScanParams& params)
+{
+    LOG_INFO("DiscoverScanner: running remote scan '{}' on {}",
+             params.discover_id, params.scan_path);
+
+    /* Save current config and stats, apply remote params */
+    DiscoverConfig saved_config = config_;
+    {
+        std::lock_guard<std::mutex> lock(stats_mutex_);
+        stats_ = DiscoverStats{};  /* Reset stats for this scan */
+    }
+
+    config_.target_directories = { params.scan_path };
+    if (!params.file_extensions.empty()) {
+        config_.file_extensions = params.file_extensions;
+    }
+    if (!params.path_exclusions.empty()) {
+        config_.path_exclusions = params.path_exclusions;
+    }
+
+    /* Run the scan (reuses existing WalkDirectory/pipeline) */
+    RunFullScan();
+
+    /* Capture stats before restoring */
+    DiscoverStats result = GetStats();
+
+    /* Restore original config */
+    config_ = saved_config;
+
+    LOG_INFO("DiscoverScanner: remote scan '{}' complete "
+             "(examined={}, scanned={}, violations={})",
+             params.discover_id, result.files_examined,
+             result.files_scanned, result.scans_completed);
+
+    return result;
+}
+
+/* ================================================================== */
 /*  Directory walker                                                   */
 /* ================================================================== */
 
