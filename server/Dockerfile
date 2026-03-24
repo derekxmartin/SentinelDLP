@@ -2,6 +2,7 @@ FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client wget libmagic1 \
+    libxml2-dev libxslt1-dev gcc \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

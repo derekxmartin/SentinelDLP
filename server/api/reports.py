@@ -1,11 +1,14 @@
-"""Reports & User Risk API endpoints (P8-T7).
+"""Reports & User Risk API endpoints (P8-T2).
 
 Endpoints:
   POST   /api/reports/summary            — Generate summary report (JSON)
-  POST   /api/reports/detail             — Generate detail report (JSON)
   POST   /api/reports/summary/csv        — Export summary as CSV
+  POST   /api/reports/summary/pdf        — Export summary as PDF
+  POST   /api/reports/detail             — Generate detail report (JSON)
   POST   /api/reports/detail/csv         — Export detail as CSV
+  POST   /api/reports/detail/pdf         — Export detail as PDF
   POST   /api/reports/trend              — Generate trend report (JSON)
+  POST   /api/reports/trend/csv          — Export trend as CSV
   GET    /api/reports/risk               — User risk scores
 """
 
@@ -30,9 +33,12 @@ from server.services.report_generator import (
     generate_summary,
     generate_trend,
 )
+from fastapi.responses import Response
 from server.services.report_exporter import (
     export_detail_csv,
+    export_detail_pdf,
     export_summary_csv,
+    export_summary_pdf,
     export_trend_csv,
 )
 from server.services.risk_calculator import (
@@ -184,6 +190,32 @@ async def summary_csv(
     )
 
 
+@router.post("/summary/pdf")
+async def summary_pdf(
+    body: ReportRequest,
+    user: CurrentUser = Depends(RequirePermission("incidents:read")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Export summary report as PDF."""
+    incidents = await _fetch_incidents(
+        db, body.start_date, body.end_date,
+        body.severity, body.channel, body.policy_name,
+    )
+    start, end = body.start_date, body.end_date
+    if not start or not end:
+        d_start, d_end = _default_range()
+        start = start or d_start
+        end = end or d_end
+
+    report = generate_summary(incidents, start, end)
+    pdf_bytes = export_summary_pdf(report)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=summary_report.pdf"},
+    )
+
+
 # ---------------------------------------------------------------------------
 # Detail
 # ---------------------------------------------------------------------------
@@ -256,6 +288,32 @@ async def detail_csv(
     )
 
 
+@router.post("/detail/pdf")
+async def detail_pdf(
+    body: ReportRequest,
+    user: CurrentUser = Depends(RequirePermission("incidents:read")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Export detail report as PDF."""
+    incidents = await _fetch_incidents(
+        db, body.start_date, body.end_date,
+        body.severity, body.channel, body.policy_name,
+    )
+    start, end = body.start_date, body.end_date
+    if not start or not end:
+        d_start, d_end = _default_range()
+        start = start or d_start
+        end = end or d_end
+
+    report = generate_detail(incidents, start, end)
+    pdf_bytes = export_detail_pdf(report)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=detail_report.pdf"},
+    )
+
+
 # ---------------------------------------------------------------------------
 # Trend
 # ---------------------------------------------------------------------------
@@ -288,7 +346,8 @@ async def trend_report(
         prev_start = start - duration
         prev_incidents = await _fetch_incidents(db, prev_start, prev_end)
 
-    report = generate_trend(current_incidents, prev_incidents, start, end, prev_start, prev_end)
+    all_incidents = current_incidents + prev_incidents
+    report = generate_trend(all_incidents, start, end)
     return {
         "current_period": _summary_to_dict(report.current_period),
         "previous_period": _summary_to_dict(report.previous_period),
@@ -303,6 +362,40 @@ async def trend_report(
             for d in report.deltas
         ],
     }
+
+
+@router.post("/trend/csv")
+async def trend_csv(
+    body: TrendRequest,
+    user: CurrentUser = Depends(RequirePermission("incidents:read")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Export trend report as CSV."""
+    start, end = body.start_date, body.end_date
+    if not start or not end:
+        d_start, d_end = _default_range()
+        start = start or d_start
+        end = end or d_end
+
+    current_incidents = await _fetch_incidents(db, start, end)
+
+    if body.previous_start and body.previous_end:
+        prev_incidents = await _fetch_incidents(db, body.previous_start, body.previous_end)
+        prev_start, prev_end = body.previous_start, body.previous_end
+    else:
+        duration = end - start
+        prev_end = start
+        prev_start = start - duration
+        prev_incidents = await _fetch_incidents(db, prev_start, prev_end)
+
+    all_incidents = current_incidents + prev_incidents
+    report = generate_trend(all_incidents, start, end)
+    csv_content = export_trend_csv(report)
+    return PlainTextResponse(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=trend_report.csv"},
+    )
 
 
 # ---------------------------------------------------------------------------
