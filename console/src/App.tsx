@@ -23,6 +23,7 @@ import AuthGuard from './components/AuthGuard';
 import CommandPalette from './components/CommandPalette';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
+import Discovers from './pages/Discovers';
 import Fingerprints from './pages/Fingerprints';
 import Incidents from './pages/Incidents';
 import IncidentSnapshot from './pages/IncidentSnapshot';
@@ -74,6 +75,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="incidents" element={<Incidents />} />
           <Route path="incidents/:id" element={<IncidentSnapshot />} />
+          <Route path="discovers" element={<Discovers />} />
           <Route path="policies" element={<Policies />} />
           <Route path="policies/:id" element={<PolicyEditor />} />
           <Route path="detection" element={<Placeholder title="Detection" task="a future sprint" />} />

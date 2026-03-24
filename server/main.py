@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from server.config import settings, validate_production_config
 from server.api.auth import router as auth_router
 from server.api.detection import router as detection_router
+from server.api.discover import router as discover_router
 from server.api.dictionaries import router as dictionaries_router
 from server.api.identifiers import router as identifiers_router
 from server.api.incidents import router as incidents_router
@@ -24,6 +25,12 @@ from server.api.users import router as users_router
 async def lifespan(app: FastAPI):
     # Startup — enforce production security requirements
     validate_production_config()
+
+    # Ensure new tables exist (non-destructive — skips existing tables)
+    from server.database import engine
+    from server.models import Base
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
     # Initialize policy event bus Redis bridge
     import logging
@@ -74,6 +81,7 @@ app.add_middleware(
 # --- Routers ---
 app.include_router(auth_router)
 app.include_router(detection_router)
+app.include_router(discover_router)
 app.include_router(dictionaries_router)
 app.include_router(identifiers_router)
 app.include_router(fingerprints_router)

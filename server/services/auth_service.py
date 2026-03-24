@@ -185,12 +185,14 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         "users:read", "users:write",
         "policies:read", "policies:write",
         "incidents:read", "incidents:write",
+        "discovers:read", "discovers:write",
         "detection:run",
         "system:admin",
     },
     "Analyst": {
         "incidents:read", "incidents:write",
         "policies:read",
+        "discovers:read",
         "detection:run",
     },
     "Remediator": {
