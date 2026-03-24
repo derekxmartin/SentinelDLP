@@ -87,6 +87,7 @@ public:
     /* Callbacks */
     void SetPolicyCallback(PolicyCallback cb) { policy_callback_ = std::move(cb); }
     void SetCommandCallback(CommandCallback cb) { command_callback_ = std::move(cb); }
+    void SetDriverStatusCallback(std::function<bool()> cb) { driver_status_cb_ = std::move(cb); }
 
 private:
     /* Connection management */
@@ -131,6 +132,7 @@ private:
     /* Callbacks */
     PolicyCallback                  policy_callback_;
     CommandCallback                 command_callback_;
+    std::function<bool()>           driver_status_cb_;
 
     /* Startup time for uptime calculation */
     std::chrono::steady_clock::time_point start_time_;
