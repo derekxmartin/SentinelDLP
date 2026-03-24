@@ -1,6 +1,7 @@
 """Tests for gRPC server (P2-T6).
 
-Tests all RPCs: Register, Heartbeat, GetPolicies, ReportIncident, DetectContent.
+Tests all RPCs: Register, Heartbeat, GetPolicies, ReportIncident,
+DetectContent, PolicyUpdates.
 Uses an in-process gRPC server with async SQLite database.
 
 Acceptance:
@@ -9,10 +10,12 @@ Acceptance:
 - Policies returned in proto format
 - Incident reported → appears in DB
 - TTD request → detection result returned with timeout respected
+- PolicyUpdates streams real-time policy changes to agents
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import uuid
 
@@ -137,6 +140,10 @@ async def setup_db(monkeypatch):
 
     # Patch the database module's async_session
     monkeypatch.setattr(db_module, "async_session", TestSessionLocal)
+
+    # Reset policy event bus between tests
+    import server.policy_events as pe_module
+    pe_module._bus = pe_module.PolicyEventBus()
 
     yield
 
@@ -443,3 +450,128 @@ class TestDetectContent:
         ))
         assert resp.total_match_count >= 1
         assert resp.verdict == pb2.TTD_BLOCK
+
+
+class TestPolicyUpdates:
+    @pytest.mark.asyncio
+    async def test_full_sync_on_stale_version(self, stub):
+        """Agent with stale version receives FULL_SYNC with all active policies."""
+        from server.policy_events import get_bus
+
+        # Bump version so agent is stale
+        bus = get_bus()
+        bus.increment_version()
+
+        reg = await stub.Register(pb2.RegisterRequest(hostname="STREAM-TEST-001"))
+
+        stream = stub.PolicyUpdates(pb2.PolicyUpdatesRequest(
+            agent_id=reg.agent_id,
+            current_version=0,
+        ))
+
+        updates = await _read_stream(stream, max_messages=10, timeout=5.0)
+
+        assert len(updates) >= 1
+        assert updates[0].update_type == pb2.POLICY_FULL_SYNC
+        assert updates[0].policy.name == "PCI-DSS Active"
+
+    @pytest.mark.asyncio
+    async def test_receives_add_event(self, stub):
+        """Stream receives ADD event when a policy event is published."""
+        from server.policy_events import get_bus, publish_policy_event
+
+        reg = await stub.Register(pb2.RegisterRequest(hostname="STREAM-TEST-002"))
+
+        bus = get_bus()
+        current_ver = bus.get_version()
+
+        stream = stub.PolicyUpdates(pb2.PolicyUpdatesRequest(
+            agent_id=reg.agent_id,
+            current_version=current_ver,
+        ))
+
+        # Create a new policy in DB and publish event
+        async with TestSessionLocal() as db:
+            new_policy = Policy(
+                id=uuid.uuid4(),
+                name="Stream Test Policy",
+                description="Created for stream test",
+                status=PolicyStatus.ACTIVE,
+                severity=Severity.MEDIUM,
+                is_template=False,
+                ttd_fallback="log",
+            )
+            db.add(new_policy)
+            await db.commit()
+            policy_id = str(new_policy.id)
+
+        await asyncio.sleep(0.1)
+        await publish_policy_event("POLICY_ADD", policy_id)
+
+        updates = await _read_stream(stream, max_messages=1, timeout=5.0)
+
+        assert len(updates) >= 1
+        assert updates[0].update_type == pb2.POLICY_ADD
+        assert updates[0].policy_id == policy_id
+
+    @pytest.mark.asyncio
+    async def test_receives_remove_event(self, stub):
+        """Stream receives REMOVE event with policy_id but no policy body."""
+        from server.policy_events import get_bus, publish_policy_event
+
+        reg = await stub.Register(pb2.RegisterRequest(hostname="STREAM-TEST-003"))
+
+        bus = get_bus()
+        current_ver = bus.get_version()
+
+        stream = stub.PolicyUpdates(pb2.PolicyUpdatesRequest(
+            agent_id=reg.agent_id,
+            current_version=current_ver,
+        ))
+
+        fake_id = str(uuid.uuid4())
+        await asyncio.sleep(0.1)
+        await publish_policy_event("POLICY_REMOVE", fake_id)
+
+        updates = await _read_stream(stream, max_messages=1, timeout=5.0)
+
+        assert len(updates) >= 1
+        assert updates[0].update_type == pb2.POLICY_REMOVE
+        assert updates[0].policy_id == fake_id
+        assert updates[0].policy.name == ""
+
+    @pytest.mark.asyncio
+    async def test_heartbeat_reports_update_available(self, stub):
+        """Heartbeat returns policy_update_available when version is stale."""
+        from server.policy_events import get_bus
+
+        bus = get_bus()
+        bus.increment_version()
+
+        reg = await stub.Register(pb2.RegisterRequest(hostname="STREAM-TEST-004"))
+
+        resp = await stub.Heartbeat(pb2.HeartbeatRequest(
+            agent_id=reg.agent_id,
+            policy_version=0,
+        ))
+        assert resp.success is True
+        assert resp.policy_update_available is True
+        assert resp.latest_policy_version >= 1
+
+
+async def _read_stream(stream, max_messages: int = 10, timeout: float = 5.0):
+    """Read up to *max_messages* from a gRPC stream with a timeout."""
+    results = []
+
+    async def _drain():
+        async for msg in stream:
+            results.append(msg)
+            if len(results) >= max_messages:
+                stream.cancel()
+                break
+
+    try:
+        await asyncio.wait_for(_drain(), timeout=timeout)
+    except (asyncio.TimeoutError, grpc.aio.AioRpcError):
+        pass
+    return results
