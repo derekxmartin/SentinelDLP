@@ -98,6 +98,12 @@ static void ParseRecovery(const YAML::Node& node, RecoveryConfig& cfg) {
     cfg.path = ReadOr<std::string>(node, "path", cfg.path);
 }
 
+static void ParseQuarantine(const YAML::Node& node, QuarantineConfig& cfg) {
+    if (!node || !node.IsMap()) return;
+    cfg.enabled = ReadOr<bool>(node, "enabled", cfg.enabled);
+    cfg.path    = ReadOr<std::string>(node, "path", cfg.path);
+}
+
 static void ParseLogging(const YAML::Node& node, LoggingConfig& cfg) {
     if (!node || !node.IsMap()) return;
     cfg.level       = ReadOr<std::string>(node, "level", cfg.level);
@@ -170,6 +176,7 @@ static bool ParseYaml(
         ParseLogging(root["logging"], config.logging);
         ParseHeartbeat(root["heartbeat"], config.heartbeat);
         ParseTamperProtection(root["tamper_protection"], config.tamper_protection);
+        ParseQuarantine(root["quarantine"], config.quarantine);
         ParseDiscover(root["discover"], config.discover);
 
         return true;

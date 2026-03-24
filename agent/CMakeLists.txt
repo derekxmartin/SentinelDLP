@@ -138,6 +138,7 @@ add_executable(akeso-dlp-agent
     src/detection/pipeline.cpp
     src/response/block_action.cpp
     src/response/notification.cpp
+    src/response/quarantine_action.cpp
     src/response/user_cancel.cpp
     src/clipboard_monitor.cpp
     src/browser_upload_monitor.cpp

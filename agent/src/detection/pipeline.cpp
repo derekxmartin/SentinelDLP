@@ -74,6 +74,7 @@ DetectionPipeline::DetectionPipeline(
 #endif
     , keyword_analyzer_(config.detection)
     , block_action_(config.recovery)
+    , quarantine_action_(config.quarantine)
 {
 }
 
@@ -1188,7 +1189,25 @@ void DetectionPipeline::OnDiscoverFile(const DiscoverFileEvent& event)
              worst->match_count, event.file_path, event.file_owner,
              event.modification_date);
 
-    /* Queue incidents (discover is always log-only, no blocking) */
+    /* Quarantine the file if enabled (P7-T4) */
+    std::string action_str = "log";
+    if (quarantine_action_.IsEnabled()) {
+        std::string match_summary = std::to_string(worst->match_count) + " match(es)";
+        auto qr = quarantine_action_.Execute(
+            event.file_path, worst->policy_name,
+            SeverityToString(worst->severity),
+            match_summary, event.file_owner);
+        if (qr.success) {
+            action_str = "quarantine";
+            LOG_INFO("DetectionPipeline: [DISCOVER_QUARANTINE] file={} → {}",
+                     event.file_path, qr.quarantine_path);
+        } else {
+            LOG_WARN("DetectionPipeline: quarantine failed for {}: {}",
+                     event.file_path, qr.error);
+        }
+    }
+
+    /* Queue incidents */
     for (const auto& v : violations) {
         if (!incident_queue_) continue;
 
@@ -1201,7 +1220,7 @@ void DetectionPipeline::OnDiscoverFile(const DiscoverFileEvent& event)
         qi.file_path = event.file_path;
         qi.user = event.file_owner;
         qi.match_count = v.match_count;
-        qi.action_taken = "log";
+        qi.action_taken = action_str;
 
         std::string matches_json = "{\"matches\":[";
         for (size_t i = 0; i < v.matches.size() && i < 10; ++i) {
