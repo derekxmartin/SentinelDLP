@@ -346,7 +346,8 @@ async def trend_report(
         prev_start = start - duration
         prev_incidents = await _fetch_incidents(db, prev_start, prev_end)
 
-    report = generate_trend(current_incidents, prev_incidents, start, end, prev_start, prev_end)
+    all_incidents = current_incidents + prev_incidents
+    report = generate_trend(all_incidents, start, end)
     return {
         "current_period": _summary_to_dict(report.current_period),
         "previous_period": _summary_to_dict(report.previous_period),
@@ -387,7 +388,8 @@ async def trend_csv(
         prev_start = start - duration
         prev_incidents = await _fetch_incidents(db, prev_start, prev_end)
 
-    report = generate_trend(current_incidents, prev_incidents, start, end, prev_start, prev_end)
+    all_incidents = current_incidents + prev_incidents
+    report = generate_trend(all_incidents, start, end)
     csv_content = export_trend_csv(report)
     return PlainTextResponse(
         content=csv_content,
