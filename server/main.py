@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from server.config import settings, validate_production_config
+from server.api.agents import router as agents_router
 from server.api.auth import router as auth_router
 from server.api.detection import router as detection_router
 from server.api.discover import router as discover_router
@@ -79,6 +80,7 @@ app.add_middleware(
 )
 
 # --- Routers ---
+app.include_router(agents_router)
 app.include_router(auth_router)
 app.include_router(detection_router)
 app.include_router(discover_router)

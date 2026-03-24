@@ -37,6 +37,7 @@ const NAV_ITEMS = [
   { to: '/incidents', icon: ShieldAlert, label: 'Incidents' },
   { to: '/policies', icon: FileText, label: 'Policies' },
   { to: '/detection', icon: ScanSearch, label: 'Detection' },
+  { to: '/agents', icon: Monitor, label: 'Agents' },
   { to: '/discovers', icon: HardDrive, label: 'Discover' },
   { to: '/identifiers', icon: BookOpen, label: 'Identifiers' },
   { to: '/users', icon: Users, label: 'Users' },
