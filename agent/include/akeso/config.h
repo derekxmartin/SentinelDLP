@@ -68,6 +68,11 @@ struct RecoveryConfig {
     std::string path            = "C:\\AkesoDLP\\Recovery";
 };
 
+struct QuarantineConfig {
+    bool        enabled         = true;
+    std::string path            = "C:\\AkesoDLP\\Quarantine";
+};
+
 struct LoggingConfig {
     std::string level           = "info";
     std::string file            = "C:\\AkesoDLP\\logs\\agent.log";
@@ -113,6 +118,7 @@ struct AgentConfig {
     LoggingConfig       logging;
     HeartbeatConfig     heartbeat;
     TamperProtectionConfig tamper_protection;
+    QuarantineConfig    quarantine;
     DiscoverConfig      discover;
 };
 

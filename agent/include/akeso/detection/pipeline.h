@@ -37,6 +37,7 @@
 #include "akeso/driver_comm.h"
 #include "akeso/response/block_action.h"
 #include "akeso/response/notification.h"
+#include "akeso/response/quarantine_action.h"
 #include "akeso/response/user_cancel.h"
 
 #ifdef HAS_HYPERSCAN
@@ -198,10 +199,11 @@ private:
 #endif
     KeywordAnalyzer                     keyword_analyzer_;
 
-    /* Response components (P4-T8, P4-T9) */
+    /* Response components (P4-T8, P4-T9, P7-T4) */
     BlockAction                         block_action_;
     DlpNotifier                         notifier_;
     UserCancelAction                    user_cancel_action_;
+    QuarantineAction                    quarantine_action_;
 
     /* Active policies (guarded by mutex) */
     std::vector<Policy>                 policies_;
