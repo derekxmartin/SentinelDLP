@@ -637,7 +637,8 @@ async def serve(
     Returns:
         The running gRPC server instance.
     """
-    server = grpc.aio.server()
+    from server.grpc_rate_limiter import RateLimitInterceptor
+    server = grpc.aio.server(interceptors=[RateLimitInterceptor()])
     pb2_grpc.add_AkesoDLPServiceServicer_to_server(
         AkesoDLPServicer(), server
     )
