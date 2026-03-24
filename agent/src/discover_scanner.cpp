@@ -171,10 +171,12 @@ void DiscoverScanner::RunFullScan()
 
     auto s = GetStats();
     LOG_INFO("DiscoverScanner: scan complete in {}ms (examined={}, scanned={}, "
-             "unchanged={}, skipped_size={}, skipped_ext={}, skipped_excl={}, errors={})",
+             "unchanged={}, skipped_size={}, skipped_ext={}, skipped_excl={}, "
+             "throttle_waits={}, errors={})",
              elapsed.count(), s.files_examined, s.files_scanned,
              s.files_skipped_unchanged, s.files_skipped_size,
-             s.files_skipped_extension, s.files_skipped_exclusion, s.files_error);
+             s.files_skipped_extension, s.files_skipped_exclusion,
+             s.throttle_waits, s.files_error);
 }
 
 /* ================================================================== */
@@ -193,6 +195,9 @@ void DiscoverScanner::WalkDirectory(const fs::path& dir)
             ec.clear();
             continue;
         }
+
+        /* CPU throttle — sleep if system CPU exceeds threshold (P7-T3) */
+        ThrottleIfNeeded();
 
         const auto& entry = *it;
 
@@ -411,6 +416,74 @@ std::string DiscoverScanner::FormatFileTime(const fs::file_time_type& ftime)
     (void)ftime;
     return "unknown";
 #endif
+}
+
+/* ================================================================== */
+/*  CPU throttling (P7-T3)                                             */
+/* ================================================================== */
+
+double DiscoverScanner::GetSystemCpuUsage()
+{
+#ifdef _WIN32
+    FILETIME idle_ft, kernel_ft, user_ft;
+    if (!GetSystemTimes(&idle_ft, &kernel_ft, &user_ft)) {
+        return 0.0;
+    }
+
+    auto to_u64 = [](const FILETIME& ft) -> uint64_t {
+        return (static_cast<uint64_t>(ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+    };
+
+    uint64_t idle  = to_u64(idle_ft);
+    uint64_t total = to_u64(kernel_ft) + to_u64(user_ft);
+
+    if (prev_total_ == 0) {
+        /* First call — seed values, return 0 */
+        prev_idle_  = idle;
+        prev_total_ = total;
+        return 0.0;
+    }
+
+    uint64_t delta_idle  = idle - prev_idle_;
+    uint64_t delta_total = total - prev_total_;
+
+    prev_idle_  = idle;
+    prev_total_ = total;
+
+    if (delta_total == 0) return 0.0;
+    return 100.0 * (1.0 - static_cast<double>(delta_idle) / static_cast<double>(delta_total));
+#else
+    return 0.0;
+#endif
+}
+
+void DiscoverScanner::ThrottleIfNeeded()
+{
+    if (config_.cpu_threshold_percent <= 0) return;
+
+    double cpu = GetSystemCpuUsage();
+    if (cpu <= static_cast<double>(config_.cpu_threshold_percent)) return;
+
+    /* CPU above threshold — back off with progressive sleep */
+    LOG_DEBUG("DiscoverScanner: CPU at {:.1f}% (threshold {}%), throttling...",
+              cpu, config_.cpu_threshold_percent);
+
+    int sleep_ms = 500;
+    for (int i = 0; i < 10 && running_; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
+
+        {
+            std::lock_guard<std::mutex> lock(stats_mutex_);
+            stats_.throttle_waits++;
+        }
+
+        cpu = GetSystemCpuUsage();
+        if (cpu <= static_cast<double>(config_.cpu_threshold_percent)) {
+            break;
+        }
+        /* Progressive backoff: 500ms → 1s → 1.5s → 2s (cap) */
+        sleep_ms = (std::min)(sleep_ms + 500, 2000);
+    }
 }
 
 /* ================================================================== */

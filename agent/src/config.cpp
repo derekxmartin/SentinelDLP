@@ -118,6 +118,7 @@ static void ParseDiscover(const YAML::Node& node, DiscoverConfig& cfg) {
     cfg.max_file_size = ReadOr<int64_t>(node, "max_file_size", cfg.max_file_size);
     cfg.scan_interval_seconds = ReadOr<int>(node, "scan_interval_seconds", cfg.scan_interval_seconds);
     cfg.cache_db_path = ReadOr<std::string>(node, "cache_db_path", cfg.cache_db_path);
+    cfg.cpu_threshold_percent = ReadOr<int>(node, "cpu_threshold_percent", cfg.cpu_threshold_percent);
 
     if (node["target_directories"] && node["target_directories"].IsSequence()) {
         cfg.target_directories.clear();

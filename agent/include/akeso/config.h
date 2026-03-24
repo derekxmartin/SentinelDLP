@@ -90,6 +90,7 @@ struct DiscoverConfig {
     int64_t     max_file_size           = 52428800;  /* 50 MB */
     int         scan_interval_seconds   = 3600;      /* 1 hour */
     std::string cache_db_path           = "C:\\AkesoDLP\\cache\\discover_cache.db";
+    int         cpu_threshold_percent   = 15;        /* throttle when system CPU exceeds this */
 };
 
 struct HeartbeatConfig {
