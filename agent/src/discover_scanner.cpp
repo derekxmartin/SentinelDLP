@@ -117,6 +117,11 @@ void DiscoverScanner::ScanThread()
 {
     LOG_INFO("DiscoverScanner: scan thread started");
 
+    /* Wait for pipeline to register its callback before first scan */
+    for (int i = 0; i < 5 && running_; ++i) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
     while (running_) {
         RunFullScan();
 
