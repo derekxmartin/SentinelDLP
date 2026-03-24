@@ -2,11 +2,11 @@
 
 Runs alongside FastAPI on port 50051. Implements:
   - Register: Agent registration → DB entry
-  - Heartbeat: Status + last_checkin update
+  - Heartbeat: Status + last_checkin update, real policy version check
   - GetPolicies: Serialized active policy set
   - ReportIncident: Creates incident in DB
   - DetectContent: Runs detection engine, returns verdict
-  - PolicyUpdates: Server-stream stub (placeholder)
+  - PolicyUpdates: Server-stream pushing real-time policy changes
 
 Supports mTLS when cert/key files are provided.
 """
@@ -23,6 +23,7 @@ import grpc
 
 from server.database import async_session
 from server.detection.engine import DetectionEngine
+from server.policy_events import get_bus
 from server.detection.analyzers.data_identifier_analyzer import (
     DataIdentifierAnalyzer,
     DataIdentifierConfig,
@@ -56,6 +57,13 @@ _CHANNEL_TO_PROTO = {
     "email": pb2.CHANNEL_EMAIL,
     "http_upload": pb2.CHANNEL_HTTP_UPLOAD,
     "discover": pb2.CHANNEL_DISCOVER,
+}
+
+_UPDATE_TYPE_TO_PROTO = {
+    "POLICY_ADD": pb2.POLICY_ADD,
+    "POLICY_MODIFY": pb2.POLICY_MODIFY,
+    "POLICY_REMOVE": pb2.POLICY_REMOVE,
+    "POLICY_FULL_SYNC": pb2.POLICY_FULL_SYNC,
 }
 
 
@@ -165,16 +173,103 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
 
                 await db.commit()
 
+                current_ver = get_bus().get_version()
                 return pb2.HeartbeatResponse(
                     success=True,
-                    policy_update_available=False,
-                    latest_policy_version=agent.policy_version,
+                    policy_update_available=(request.policy_version < current_ver),
+                    latest_policy_version=current_ver,
                 )
         except Exception as exc:
             logger.error("Heartbeat failed: %s", exc, exc_info=True)
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(str(exc))
             return pb2.HeartbeatResponse(success=False)
+
+    # --- Shared policy serialization helpers ---
+
+    @staticmethod
+    def _build_policy_definition(policy) -> pb2.PolicyDefinition:
+        """Serialize a DB Policy object into a proto PolicyDefinition."""
+        # Detection rules
+        rules = []
+        for rule in policy.detection_rules:
+            conditions = []
+            for c in rule.conditions:
+                config_json = json.dumps(c.config) if isinstance(c.config, dict) else str(c.config or "{}")
+                conditions.append(pb2.RuleConditionDef(
+                    condition_type=c.condition_type.value if hasattr(c.condition_type, "value") else str(c.condition_type),
+                    component=c.component.value if hasattr(c.component, "value") else str(c.component),
+                    config_json=config_json,
+                    match_count_min=c.match_count_min,
+                ))
+            rules.append(pb2.DetectionRuleDef(
+                rule_id=str(rule.id),
+                name=rule.name,
+                rule_type=rule.rule_type,
+                conditions=conditions,
+            ))
+
+        # Exceptions
+        exceptions = []
+        for exc in policy.exceptions:
+            exc_conditions = []
+            for c in exc.conditions:
+                config_json = json.dumps(c.config) if isinstance(c.config, dict) else str(c.config or "{}")
+                exc_conditions.append(pb2.RuleConditionDef(
+                    condition_type=c.condition_type.value if hasattr(c.condition_type, "value") else str(c.condition_type),
+                    component=c.component.value if hasattr(c.component, "value") else str(c.component),
+                    config_json=config_json,
+                    match_count_min=c.match_count_min,
+                ))
+            exceptions.append(pb2.PolicyExceptionDef(
+                exception_id=str(exc.id),
+                name=exc.name,
+                scope=exc.scope.value if hasattr(exc.scope, "value") else str(exc.scope),
+                exception_type=exc.exception_type,
+                conditions=exc_conditions,
+            ))
+
+        # Response rule
+        response_rule = None
+        if policy.response_rule:
+            rr = policy.response_rule
+            actions = []
+            for a in getattr(rr, "actions", []):
+                actions.append(pb2.ResponseActionDef(
+                    action_type=a.action_type.value if hasattr(a.action_type, "value") else str(a.action_type),
+                    config_json=json.dumps(a.config) if a.config else "{}",
+                    order=a.order,
+                ))
+            response_rule = pb2.ResponseRuleDef(
+                rule_id=str(rr.id),
+                name=rr.name,
+                actions=actions,
+            )
+
+        # Severity thresholds
+        thresholds = []
+        if policy.severity_thresholds:
+            raw = policy.severity_thresholds
+            if isinstance(raw, str):
+                raw = json.loads(raw)
+            for t in raw:
+                thresholds.append(pb2.SeverityThreshold(
+                    threshold=t["threshold"],
+                    severity=_SEVERITY_TO_PROTO.get(t["severity"], pb2.SEVERITY_MEDIUM),
+                ))
+
+        return pb2.PolicyDefinition(
+            policy_id=str(policy.id),
+            name=policy.name,
+            description=policy.description or "",
+            severity=_SEVERITY_TO_PROTO.get(policy.severity.value, pb2.SEVERITY_MEDIUM),
+            status=policy.status.value,
+            ttd_fallback=policy.ttd_fallback,
+            severity_thresholds=thresholds,
+            detection_rules=rules,
+            exceptions=exceptions,
+            response_rule=response_rule,
+        )
 
     # --- GetPolicies ---
 
@@ -183,92 +278,10 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
         try:
             async with async_session() as db:
                 policies = await agent_service.get_active_policies(db)
-
-                policy_defs = []
-                for p in policies:
-                    # Build detection rules
-                    rules = []
-                    for rule in p.detection_rules:
-                        conditions = []
-                        for c in rule.conditions:
-                            config_json = json.dumps(c.config) if isinstance(c.config, dict) else str(c.config or "{}")
-                            conditions.append(pb2.RuleConditionDef(
-                                condition_type=c.condition_type.value if hasattr(c.condition_type, "value") else str(c.condition_type),
-                                component=c.component.value if hasattr(c.component, "value") else str(c.component),
-                                config_json=config_json,
-                                match_count_min=c.match_count_min,
-                            ))
-                        rules.append(pb2.DetectionRuleDef(
-                            rule_id=str(rule.id),
-                            name=rule.name,
-                            rule_type=rule.rule_type,
-                            conditions=conditions,
-                        ))
-
-                    # Build exceptions
-                    exceptions = []
-                    for exc in p.exceptions:
-                        exc_conditions = []
-                        for c in exc.conditions:
-                            config_json = json.dumps(c.config) if isinstance(c.config, dict) else str(c.config or "{}")
-                            exc_conditions.append(pb2.RuleConditionDef(
-                                condition_type=c.condition_type.value if hasattr(c.condition_type, "value") else str(c.condition_type),
-                                component=c.component.value if hasattr(c.component, "value") else str(c.component),
-                                config_json=config_json,
-                                match_count_min=c.match_count_min,
-                            ))
-                        exceptions.append(pb2.PolicyExceptionDef(
-                            exception_id=str(exc.id),
-                            name=exc.name,
-                            scope=exc.scope.value if hasattr(exc.scope, "value") else str(exc.scope),
-                            exception_type=exc.exception_type,
-                            conditions=exc_conditions,
-                        ))
-
-                    # Build response rule
-                    response_rule = None
-                    if p.response_rule:
-                        rr = p.response_rule
-                        actions = []
-                        for a in getattr(rr, "actions", []):
-                            actions.append(pb2.ResponseActionDef(
-                                action_type=a.action_type.value if hasattr(a.action_type, "value") else str(a.action_type),
-                                config_json=json.dumps(a.config) if a.config else "{}",
-                                order=a.order,
-                            ))
-                        response_rule = pb2.ResponseRuleDef(
-                            rule_id=str(rr.id),
-                            name=rr.name,
-                            actions=actions,
-                        )
-
-                    # Severity thresholds
-                    thresholds = []
-                    if p.severity_thresholds:
-                        raw = p.severity_thresholds
-                        if isinstance(raw, str):
-                            raw = json.loads(raw)
-                        for t in raw:
-                            thresholds.append(pb2.SeverityThreshold(
-                                threshold=t["threshold"],
-                                severity=_SEVERITY_TO_PROTO.get(t["severity"], pb2.SEVERITY_MEDIUM),
-                            ))
-
-                    policy_defs.append(pb2.PolicyDefinition(
-                        policy_id=str(p.id),
-                        name=p.name,
-                        description=p.description or "",
-                        severity=_SEVERITY_TO_PROTO.get(p.severity.value, pb2.SEVERITY_MEDIUM),
-                        status=p.status.value,
-                        ttd_fallback=p.ttd_fallback,
-                        severity_thresholds=thresholds,
-                        detection_rules=rules,
-                        exceptions=exceptions,
-                        response_rule=response_rule,
-                    ))
+                policy_defs = [self._build_policy_definition(p) for p in policies]
 
                 return pb2.GetPoliciesResponse(
-                    policy_version=1,
+                    policy_version=get_bus().get_version(),
                     policies=policy_defs,
                 )
         except Exception as exc:
@@ -277,13 +290,73 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
             context.set_details(str(exc))
             return pb2.GetPoliciesResponse()
 
-    # --- PolicyUpdates (server-stream stub) ---
+    # --- PolicyUpdates (server-stream) ---
 
     async def PolicyUpdates(self, request, context):
-        """Server-stream for policy updates. Stub — yields nothing."""
-        # In production, this would watch for policy changes and push updates
-        # For now, just return immediately (no updates)
-        return
+        """Server-stream pushing real-time policy changes to agents."""
+        from server.services import policy_service
+
+        bus = get_bus()
+        queue = await bus.subscribe()
+
+        try:
+            # Full sync if agent is behind
+            current_ver = bus.get_version()
+            if request.current_version < current_ver:
+                logger.info(
+                    "PolicyUpdates: agent %s at v%d, server at v%d — sending full sync",
+                    request.agent_id, request.current_version, current_ver,
+                )
+                async with async_session() as db:
+                    policies = await agent_service.get_active_policies(db)
+                    for p in policies:
+                        yield pb2.PolicyUpdate(
+                            update_type=pb2.POLICY_FULL_SYNC,
+                            new_version=current_ver,
+                            policy=self._build_policy_definition(p),
+                            policy_id=str(p.id),
+                        )
+
+            # Stream incremental updates
+            while not context.cancelled():
+                try:
+                    event = await asyncio.wait_for(queue.get(), timeout=30.0)
+                except asyncio.TimeoutError:
+                    continue  # Re-check cancelled
+
+                update = pb2.PolicyUpdate(
+                    update_type=_UPDATE_TYPE_TO_PROTO.get(
+                        event["update_type"], pb2.POLICY_UPDATE_TYPE_UNSPECIFIED
+                    ),
+                    new_version=event.get("new_version", 0),
+                    policy_id=event.get("policy_id", ""),
+                )
+
+                if event["update_type"] in ("POLICY_ADD", "POLICY_MODIFY"):
+                    try:
+                        async with async_session() as db:
+                            policy = await policy_service.get_policy(
+                                db, uuid.UUID(event["policy_id"])
+                            )
+                            if policy:
+                                update.policy.CopyFrom(
+                                    self._build_policy_definition(policy)
+                                )
+                    except Exception:
+                        logger.exception(
+                            "PolicyUpdates: failed to fetch policy %s",
+                            event["policy_id"],
+                        )
+
+                yield update
+
+        except asyncio.CancelledError:
+            pass
+        except Exception:
+            logger.exception("PolicyUpdates: stream error for agent %s", request.agent_id)
+        finally:
+            await bus.unsubscribe(queue)
+            logger.debug("PolicyUpdates: agent %s disconnected", request.agent_id)
 
     # --- ReportIncident ---
 

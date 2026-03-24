@@ -41,6 +41,7 @@ from server.schemas.policy import (
     PolicyResponse,
     PolicyUpdate,
 )
+from server.policy_events import publish_policy_event, POLICY_ADD, POLICY_MODIFY, POLICY_REMOVE
 from server.services import policy_service
 
 logger = logging.getLogger(__name__)
@@ -133,6 +134,7 @@ async def create_from_template(
         changes={"template_name": body.template_name, "name": body.name},
     )
     await db.commit()
+    await publish_policy_event(POLICY_ADD, str(policy.id))
     return policy
 
 
@@ -181,6 +183,7 @@ async def create_policy(
         changes={"name": body.name},
     )
     await db.commit()
+    await publish_policy_event(POLICY_ADD, str(policy.id))
     return policy
 
 
@@ -223,6 +226,7 @@ async def update_policy(
         changes={"old": _serialize_changes(old_values), "new": _serialize_changes(update_data)},
     )
     await db.commit()
+    await publish_policy_event(POLICY_MODIFY, str(policy.id))
     return policy
 
 
@@ -238,13 +242,15 @@ async def delete_policy(
     _policy_or_404(policy)
 
     name = policy.name
+    pid = str(policy_id)
     await policy_service.delete_policy(db, policy)
     await _audit(
         db, user, "policy.delete", request,
-        resource_id=str(policy_id),
+        resource_id=pid,
         detail=f"Deleted policy '{name}'",
     )
     await db.commit()
+    await publish_policy_event(POLICY_REMOVE, pid)
 
 
 # ---------------------------------------------------------------------------
@@ -272,6 +278,7 @@ async def activate_policy(
         changes={"old_status": old_status, "new_status": "active"},
     )
     await db.commit()
+    await publish_policy_event(POLICY_MODIFY, str(policy_id))
     return policy
 
 
@@ -295,6 +302,7 @@ async def suspend_policy(
         changes={"old_status": old_status, "new_status": "suspended"},
     )
     await db.commit()
+    await publish_policy_event(POLICY_MODIFY, str(policy_id))
     return policy
 
 
@@ -324,6 +332,7 @@ async def add_rule(
         changes={"rule_name": body.name},
     )
     await db.commit()
+    await publish_policy_event(POLICY_MODIFY, str(policy_id))
     return rule
 
 
@@ -354,6 +363,7 @@ async def remove_rule(
         changes={"rule_id": str(rule_id)},
     )
     await db.commit()
+    await publish_policy_event(POLICY_MODIFY, str(policy_id))
 
 
 # ---------------------------------------------------------------------------
@@ -386,6 +396,7 @@ async def add_exception(
         changes={"exception_name": body.name},
     )
     await db.commit()
+    await publish_policy_event(POLICY_MODIFY, str(policy_id))
     return exc
 
 
@@ -418,6 +429,7 @@ async def remove_exception(
         changes={"exception_id": str(exception_id)},
     )
     await db.commit()
+    await publish_policy_event(POLICY_MODIFY, str(policy_id))
 
 
 # ---------------------------------------------------------------------------
