@@ -54,6 +54,7 @@ struct DiscoverStats {
     uint64_t files_skipped_exclusion{0};
     uint64_t files_skipped_unchanged{0};
     uint64_t files_error{0};
+    uint64_t throttle_waits{0};
 };
 
 /* ------------------------------------------------------------------ */
@@ -94,6 +95,10 @@ private:
     static std::string FormatFileTime(const std::filesystem::file_time_type& ftime);
     static int64_t FileTimeToEpoch(const std::filesystem::file_time_type& ftime);
 
+    /* CPU throttling (P7-T3) */
+    void ThrottleIfNeeded();
+    double GetSystemCpuUsage();
+
     /* Incremental cache (P7-T2) */
     bool OpenCache();
     void CloseCache();
@@ -109,6 +114,10 @@ private:
 
     mutable std::mutex          stats_mutex_;
     DiscoverStats               stats_;
+
+    /* CPU throttling state (P7-T3) */
+    uint64_t                    prev_idle_{0};
+    uint64_t                    prev_total_{0};
 
     /* SQLite incremental cache */
     sqlite3*                    db_{nullptr};
