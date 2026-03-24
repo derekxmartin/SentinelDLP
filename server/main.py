@@ -26,6 +26,12 @@ async def lifespan(app: FastAPI):
     # Startup — enforce production security requirements
     validate_production_config()
 
+    # Ensure new tables exist (non-destructive — skips existing tables)
+    from server.database import engine
+    from server.models import Base
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
     # Initialize policy event bus Redis bridge
     import logging
     _logger = logging.getLogger(__name__)
