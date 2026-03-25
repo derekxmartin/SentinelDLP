@@ -1,5 +1,5 @@
 .PHONY: server console agent agent-build up down clean test lint \
-       install dev demo demo-seed reset test-e2e help
+       install dev demo demo-seed reset test-e2e help deploy db-maintain
 
 PYTHON ?= python3
 COMPOSE = docker compose
@@ -13,7 +13,7 @@ help:
 	@echo "  ========================================="
 	@echo ""
 	@echo "  Quickstart:"
-	@echo "    make install   - Build & start all services, seed admin user"
+	@echo "    make install   - Build and start all services, seed admin user"
 	@echo "    make dev       - Hot-reload development (FastAPI + Vite HMR)"
 	@echo "    make demo      - Portfolio demo (install + 500+ incidents)"
 	@echo "    make clean     - Stop everything, drop database, remove volumes"
@@ -29,6 +29,7 @@ help:
 	@echo "    make db-migrate  - Run Alembic migrations"
 	@echo "    make demo-seed   - Load demo data (500+ incidents, 10 users)"
 	@echo "    make reset       - Drop DB, recreate, re-seed admin"
+	@echo "    make db-maintain - Run database maintenance (partition, archive)"
 	@echo ""
 	@echo "  Agent (C/C++):"
 	@echo "    make agent     - Configure + build agent"
@@ -38,6 +39,9 @@ help:
 	@echo "    make test-e2e  - Run Playwright E2E tests"
 	@echo "    make lint      - Lint server code"
 	@echo "    make format    - Auto-format server code"
+	@echo ""
+	@echo "  Production:"
+	@echo "    make deploy    - Deploy with production Docker Compose"
 	@echo ""
 
 # ================================================================
@@ -115,7 +119,7 @@ reset:
 	@echo "Stopping services..."
 	$(COMPOSE) down
 	@echo "Removing database volume..."
-	docker volume rm claude-dlp_pgdata 2>/dev/null || true
+	docker volume rm claude-dlp_pgdata 2>nul & echo.>nul
 	@echo "Restarting with clean database..."
 	$(COMPOSE) up -d postgres redis
 	@ping -n 6 127.0.0.1 >nul 2>&1 || sleep 5
@@ -187,6 +191,9 @@ db-migrate:
 db-revision:
 	$(PYTHON) -m alembic revision --autogenerate -m "$(msg)"
 
+db-maintain:
+	$(PYTHON) -m server.tasks.archive_job
+
 # ================================================================
 #  Proto
 # ================================================================
@@ -215,3 +222,9 @@ test:
 
 test-e2e:
 	cd console && npx playwright test
+
+# ================================================================
+#  Deploy (Production)
+# ================================================================
+deploy:
+	bash scripts/deploy.sh
