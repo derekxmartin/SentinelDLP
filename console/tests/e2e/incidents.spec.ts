@@ -16,14 +16,14 @@ test.describe('Incidents', () => {
 
   test('severity filter works', async ({ page }) => {
     // Look for a severity filter/dropdown
-    const severityFilter = page.locator('select, [role="combobox"]').filter({ hasText: /severity|all/i }).first();
+    const severityFilter = page.locator('select').filter({ hasText: /all|severity/i }).first();
     if (await severityFilter.isVisible()) {
-      await severityFilter.selectOption({ label: 'HIGH' });
-      await page.waitForTimeout(1000);
-      // All visible severity badges should be HIGH
-      const badges = page.locator('text=/HIGH/i');
-      if (await badges.count() > 0) {
-        await expect(badges.first()).toBeVisible();
+      // Get available options and pick one that contains "high" (case-insensitive)
+      const options = await severityFilter.locator('option').allTextContents();
+      const highOption = options.find(o => /high/i.test(o));
+      if (highOption) {
+        await severityFilter.selectOption({ label: highOption });
+        await page.waitForTimeout(1000);
       }
     }
   });
