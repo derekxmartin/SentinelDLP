@@ -113,7 +113,14 @@ async function request<T = unknown>(
     let detail = 'Request failed';
     try {
       const err = await resp.json();
-      detail = err.detail || JSON.stringify(err);
+      const raw = err.detail;
+      if (typeof raw === 'string') {
+        detail = raw;
+      } else if (Array.isArray(raw)) {
+        detail = raw.map((e: { msg?: string }) => e.msg || JSON.stringify(e)).join('; ');
+      } else {
+        detail = JSON.stringify(err);
+      }
     } catch {
       detail = await resp.text().catch(() => 'Request failed');
     }

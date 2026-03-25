@@ -18,12 +18,14 @@ import {
   ScanSearch,
   HardDrive,
   BookOpen,
+  BookMarked,
   Bell,
   Fingerprint,
   Globe,
   Settings,
   FileBarChart,
   AlertTriangle,
+  Scan,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
@@ -39,7 +41,9 @@ const NAV_ITEMS = [
   { to: '/detection', icon: ScanSearch, label: 'Detection' },
   { to: '/agents', icon: Monitor, label: 'Agents' },
   { to: '/discovers', icon: HardDrive, label: 'Discover' },
-  { to: '/identifiers', icon: BookOpen, label: 'Identifiers' },
+  { to: '/identifiers', icon: Scan, label: 'Identifiers' },
+  { to: '/dictionaries', icon: BookMarked, label: 'Dictionaries' },
+  { to: '/response-rules', icon: Shield, label: 'Response Rules' },
   { to: '/users', icon: Users, label: 'Users' },
   { to: '/reports', icon: FileBarChart, label: 'Reports' },
   { to: '/risk', icon: AlertTriangle, label: 'User Risk' },

@@ -37,6 +37,10 @@ import Reports from './pages/Reports';
 import UserRisk from './pages/UserRisk';
 import Policies from './pages/Policies';
 import PolicyEditor from './pages/PolicyEditor';
+import Identifiers from './pages/settings/Identifiers';
+import Dictionaries from './pages/settings/Dictionaries';
+import ResponseRules from './pages/settings/ResponseRules';
+import Users from './pages/settings/Users';
 
 function ProtectedLayout() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -83,8 +87,10 @@ function App() {
           <Route path="policies" element={<Policies />} />
           <Route path="policies/:id" element={<PolicyEditor />} />
           <Route path="detection" element={<Placeholder title="Detection" task="a future sprint" />} />
-          <Route path="identifiers" element={<Placeholder title="Data Identifiers" task="a future sprint" />} />
-          <Route path="users" element={<Placeholder title="Users" task="a future sprint" />} />
+          <Route path="identifiers" element={<Identifiers />} />
+          <Route path="dictionaries" element={<Dictionaries />} />
+          <Route path="response-rules" element={<ResponseRules />} />
+          <Route path="users" element={<Users />} />
           <Route path="reports" element={<Reports />} />
           <Route path="risk" element={<UserRisk />} />
           <Route path="fingerprints" element={<Fingerprints />} />
