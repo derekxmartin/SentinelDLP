@@ -5,7 +5,7 @@ test.describe('Auth flows', () => {
   test('login with valid credentials redirects to dashboard', async ({ page }) => {
     await login(page);
     await expect(page).toHaveURL('/');
-    await expect(page.locator('text=Dashboard')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   });
 
   test('login with invalid credentials shows error', async ({ page }) => {
@@ -39,6 +39,6 @@ test.describe('Auth flows', () => {
 
   test('login page shows AkesoDLP branding', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.locator('text=/AkesoDLP|Akeso/i')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /AkesoDLP/i })).toBeVisible();
   });
 });

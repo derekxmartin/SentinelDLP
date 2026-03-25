@@ -8,7 +8,7 @@ test.describe('Incidents', () => {
   });
 
   test('incident list page loads with data', async ({ page }) => {
-    await expect(page.locator('text=Incidents')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Incidents' })).toBeVisible();
     // Table should have at least one row (demo seed provides 500+)
     const rows = page.locator('table tbody tr, [role="row"]');
     await expect(rows.first()).toBeVisible({ timeout: 10_000 });
@@ -18,7 +18,7 @@ test.describe('Incidents', () => {
     // Look for a severity filter/dropdown
     const severityFilter = page.locator('select, [role="combobox"]').filter({ hasText: /severity|all/i }).first();
     if (await severityFilter.isVisible()) {
-      await severityFilter.selectOption({ label: /high/i });
+      await severityFilter.selectOption({ label: 'HIGH' });
       await page.waitForTimeout(1000);
       // All visible severity badges should be HIGH
       const badges = page.locator('text=/HIGH/i');

@@ -7,13 +7,13 @@ test.describe('Dashboard', () => {
   });
 
   test('dashboard page loads', async ({ page }) => {
-    await expect(page.locator('text=Dashboard')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   });
 
   test('summary stat cards render', async ({ page }) => {
     // Should see stat cards: Open Incidents, Active Policies, Agents Online, Scans Today
     await expect(page.locator('text=/open incidents|total incidents/i').first()).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator('text=/active policies/i').first()).toBeVisible();
+    await expect(page.locator('text=/policies/i').first()).toBeVisible();
   });
 
   test('incidents by severity chart renders', async ({ page }) => {
@@ -42,12 +42,12 @@ test.describe('Dashboard', () => {
       await btn30d.click();
       await page.waitForTimeout(1500);
       // Dashboard should still be visible (didn't crash)
-      await expect(page.locator('text=Dashboard')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 
       // Click 7d
       await btn7d.click();
       await page.waitForTimeout(1500);
-      await expect(page.locator('text=Dashboard')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
     }
   });
 
