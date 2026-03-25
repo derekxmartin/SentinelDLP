@@ -19,6 +19,7 @@ from server.models.notification import (
     NotificationType,
     NotificationSeverity,
 )
+from server.models.dead_letter import DeadLetterEntry
 
 __all__ = [
     "Base",
@@ -46,4 +47,5 @@ __all__ = [
     "Notification",
     "NotificationType",
     "NotificationSeverity",
+    "DeadLetterEntry",
 ]

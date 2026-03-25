@@ -41,6 +41,7 @@ import Identifiers from './pages/settings/Identifiers';
 import Dictionaries from './pages/settings/Dictionaries';
 import ResponseRules from './pages/settings/ResponseRules';
 import Users from './pages/settings/Users';
+import DeadLetterQueue from './pages/settings/DeadLetterQueue';
 
 function ProtectedLayout() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -95,6 +96,7 @@ function App() {
           <Route path="risk" element={<UserRisk />} />
           <Route path="fingerprints" element={<Fingerprints />} />
           <Route path="settings/network" element={<NetworkSettings />} />
+          <Route path="settings/dlq" element={<DeadLetterQueue />} />
         </Route>
       </Routes>
     </BrowserRouter>
