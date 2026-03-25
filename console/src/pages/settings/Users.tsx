@@ -210,7 +210,15 @@ export default function Users() {
     setSaving(true);
     setFormError('');
     try {
-      await api.post('/users', createForm);
+      const role = roles.find(r => r.name === createForm.role_name);
+      const payload = {
+        username: createForm.username,
+        email: createForm.email,
+        password: createForm.password,
+        full_name: createForm.full_name || null,
+        role_id: role?.id,
+      };
+      await api.post('/users', payload);
       setShowCreate(false);
       fetchUsers();
     } catch (err: unknown) {
@@ -234,7 +242,14 @@ export default function Users() {
     setSaving(true);
     setFormError('');
     try {
-      await api.put(`/users/${editUser.id}`, editForm);
+      const role = roles.find(r => r.name === editForm.role_name);
+      const payload = {
+        email: editForm.email,
+        full_name: editForm.full_name || null,
+        is_active: editForm.is_active,
+        role_id: role?.id,
+      };
+      await api.put(`/users/${editUser.id}`, payload);
       setEditUser(null);
       fetchUsers();
     } catch (err: unknown) {
