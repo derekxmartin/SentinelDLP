@@ -199,16 +199,19 @@ export default function Agents() {
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           style={{
-            backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+            backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: '0.5rem', padding: '0.5rem 0.75rem',
-            color: 'white', fontSize: '0.875rem',
+            color: 'white', fontSize: '0.875rem', appearance: 'none',
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M3 5l3 3 3-3'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center',
+            paddingRight: '2rem', cursor: 'pointer',
           }}
         >
-          <option value="">All statuses</option>
-          <option value="online">Online</option>
-          <option value="offline">Offline</option>
-          <option value="stale">Stale</option>
-          <option value="error">Error</option>
+          <option value="" style={{ backgroundColor: '#1e293b', color: '#94a3b8' }}>All statuses</option>
+          <option value="online" style={{ backgroundColor: '#1e293b', color: 'white' }}>Online</option>
+          <option value="offline" style={{ backgroundColor: '#1e293b', color: 'white' }}>Offline</option>
+          <option value="stale" style={{ backgroundColor: '#1e293b', color: 'white' }}>Stale</option>
+          <option value="error" style={{ backgroundColor: '#1e293b', color: 'white' }}>Error</option>
         </select>
       </div>
 
