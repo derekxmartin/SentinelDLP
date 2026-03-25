@@ -1,0 +1,42 @@
+[
+  {
+    "@timestamp": "2026-03-24T15:35:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:incident_updated",
+    "event": { "kind": "event", "category": "configuration", "action": "status_change", "outcome": "success" },
+    "host": { "name": "dlp-server-01" },
+    "user": { "name": "admin", "domain": "CONSOLE" },
+    "dlp": {
+      "incident_id": "inc-001",
+      "previous_status": "open",
+      "new_status": "investigating",
+      "change_reason": "Analyst reviewing USB exfiltration attempt"
+    }
+  },
+  {
+    "@timestamp": "2026-03-24T16:00:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:incident_updated",
+    "event": { "kind": "event", "category": "configuration", "action": "status_change", "outcome": "success" },
+    "host": { "name": "dlp-server-01" },
+    "user": { "name": "remediator_lee", "domain": "CONSOLE" },
+    "dlp": {
+      "incident_id": "inc-001",
+      "previous_status": "investigating",
+      "new_status": "resolved",
+      "change_reason": "User counseled, USB access revoked per policy"
+    }
+  },
+  {
+    "@timestamp": "2026-03-24T17:30:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:incident_updated",
+    "event": { "kind": "event", "category": "configuration", "action": "note_added", "outcome": "success" },
+    "host": { "name": "dlp-server-01" },
+    "user": { "name": "analyst_garcia", "domain": "CONSOLE" },
+    "dlp": {
+      "incident_id": "inc-002",
+      "note": "False positive — test data in staging environment. Closing."
+    }
+  }
+]

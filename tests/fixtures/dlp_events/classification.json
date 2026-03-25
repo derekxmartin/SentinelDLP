@@ -1,0 +1,68 @@
+[
+  {
+    "@timestamp": "2026-03-24T13:00:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:incident_created",
+    "event": { "kind": "alert", "category": "intrusion_detection", "action": "classify", "outcome": "success", "severity": 8 },
+    "host": { "name": "DESKTOP-NEMH3S1", "os": { "family": "windows" } },
+    "user": { "name": "jsmith", "domain": "CORP" },
+    "file": { "name": "report.docx", "path": "C:\\Users\\jsmith\\Documents\\report.docx", "size": 35840 },
+    "dlp": {
+      "policy": { "name": "PCI-DSS Credit Card Protection", "id": "pol-001" },
+      "classification": "HIGH",
+      "channel": "endpoint",
+      "source_type": "local_fs",
+      "match_count": 4,
+      "identifiers": ["credit-card-number"],
+      "data_classification": {
+        "labels": ["PCI", "Financial"],
+        "confidence": 0.95,
+        "analyzer": "data_identifier"
+      }
+    }
+  },
+  {
+    "@timestamp": "2026-03-24T13:30:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:incident_created",
+    "event": { "kind": "alert", "category": "intrusion_detection", "action": "classify", "outcome": "success", "severity": 9 },
+    "host": { "name": "LAPTOP-MED01", "os": { "family": "windows" } },
+    "user": { "name": "dr_williams", "domain": "HOSPITAL" },
+    "file": { "name": "discharge_summary.pdf", "path": "\\\\ehr-server\\patient_docs\\discharge_summary.pdf", "size": 256000 },
+    "dlp": {
+      "policy": { "name": "HIPAA PHI Protection", "id": "pol-002" },
+      "classification": "CRITICAL",
+      "channel": "discover",
+      "source_type": "file_share",
+      "match_count": 12,
+      "identifiers": ["ssn", "phi", "medical-record-number"],
+      "data_classification": {
+        "labels": ["HIPAA", "PHI", "PII"],
+        "confidence": 0.99,
+        "analyzer": "data_identifier"
+      }
+    }
+  },
+  {
+    "@timestamp": "2026-03-24T14:00:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:incident_created",
+    "event": { "kind": "alert", "category": "intrusion_detection", "action": "classify", "outcome": "success", "severity": 3 },
+    "host": { "name": "WS-DEV-07", "os": { "family": "windows" } },
+    "user": { "name": "dev_chen", "domain": "CORP" },
+    "file": { "name": "config.env", "path": "C:\\Projects\\webapp\\.env", "size": 512 },
+    "dlp": {
+      "policy": { "name": "Secrets Detection", "id": "pol-007" },
+      "classification": "LOW",
+      "channel": "endpoint",
+      "source_type": "clipboard",
+      "match_count": 1,
+      "identifiers": ["api-key"],
+      "data_classification": {
+        "labels": ["Secrets", "API-Key"],
+        "confidence": 0.72,
+        "analyzer": "keyword_dictionary"
+      }
+    }
+  }
+]

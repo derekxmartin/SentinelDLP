@@ -1,0 +1,74 @@
+[
+  {
+    "@timestamp": "2026-03-24T15:30:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:policy_violation",
+    "event": {
+      "kind": "alert",
+      "category": "intrusion_detection",
+      "action": "detect",
+      "outcome": "success",
+      "severity": 8
+    },
+    "host": { "name": "DESKTOP-NEMH3S1", "os": { "family": "windows" } },
+    "user": { "name": "jsmith", "domain": "CORP" },
+    "file": { "name": "payroll.xlsx", "path": "E:\\Documents\\payroll.xlsx", "size": 45056, "mime_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+    "dlp": {
+      "policy": { "name": "PCI-DSS Credit Card Protection", "id": "pol-001" },
+      "classification": "HIGH",
+      "channel": "endpoint",
+      "source_type": "usb",
+      "match_count": 2,
+      "identifiers": ["credit-card-number"],
+      "action_taken": "block"
+    }
+  },
+  {
+    "@timestamp": "2026-03-24T16:00:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:policy_violation",
+    "event": {
+      "kind": "alert",
+      "category": "intrusion_detection",
+      "action": "detect",
+      "outcome": "success",
+      "severity": 9
+    },
+    "host": { "name": "LAPTOP-MED01", "os": { "family": "windows" } },
+    "user": { "name": "nurse_johnson", "domain": "HOSPITAL" },
+    "file": { "name": "patient_records.docx", "path": "\\\\fileserver\\shared\\hr\\patient_records.docx", "size": 128000 },
+    "dlp": {
+      "policy": { "name": "HIPAA PHI Protection", "id": "pol-002" },
+      "classification": "CRITICAL",
+      "channel": "discover",
+      "source_type": "file_share",
+      "match_count": 5,
+      "identifiers": ["ssn", "phi"],
+      "action_taken": "quarantine"
+    }
+  },
+  {
+    "@timestamp": "2026-03-24T17:15:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:policy_violation",
+    "event": {
+      "kind": "alert",
+      "category": "intrusion_detection",
+      "action": "detect",
+      "outcome": "success",
+      "severity": 5
+    },
+    "host": { "name": "WS-FINANCE-03", "os": { "family": "windows" } },
+    "user": { "name": "analyst_wang", "domain": "CORP" },
+    "file": { "name": "draft_email.eml", "path": "smtp://analyst_wang@corp.com", "size": 2048 },
+    "dlp": {
+      "policy": { "name": "SOX Financial Controls", "id": "pol-003" },
+      "classification": "MEDIUM",
+      "channel": "network",
+      "source_type": "email",
+      "match_count": 1,
+      "identifiers": ["financial-data"],
+      "action_taken": "log"
+    }
+  }
+]

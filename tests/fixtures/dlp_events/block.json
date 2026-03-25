@@ -1,0 +1,71 @@
+[
+  {
+    "@timestamp": "2026-03-24T15:30:01.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:file_blocked",
+    "event": {
+      "kind": "alert",
+      "category": "intrusion_detection",
+      "action": "block",
+      "outcome": "success",
+      "severity": 8
+    },
+    "host": { "name": "DESKTOP-NEMH3S1", "os": { "family": "windows" } },
+    "user": { "name": "jsmith", "domain": "CORP" },
+    "file": { "name": "payroll.xlsx", "path": "E:\\Documents\\payroll.xlsx", "size": 45056 },
+    "dlp": {
+      "policy": { "name": "PCI-DSS Credit Card Protection", "id": "pol-001" },
+      "classification": "HIGH",
+      "channel": "endpoint",
+      "source_type": "usb",
+      "action_taken": "block",
+      "block_reason": "File write to removable media blocked — policy violation"
+    }
+  },
+  {
+    "@timestamp": "2026-03-24T16:45:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:file_blocked",
+    "event": {
+      "kind": "alert",
+      "category": "intrusion_detection",
+      "action": "block",
+      "outcome": "success",
+      "severity": 9
+    },
+    "host": { "name": "LAPTOP-MED01", "os": { "family": "windows" } },
+    "user": { "name": "nurse_johnson", "domain": "HOSPITAL" },
+    "file": { "name": "records.csv", "path": "attachment://records.csv", "size": 8192 },
+    "dlp": {
+      "policy": { "name": "HIPAA PHI Protection", "id": "pol-002" },
+      "classification": "CRITICAL",
+      "channel": "network",
+      "source_type": "email",
+      "action_taken": "block",
+      "block_reason": "Email with sensitive attachment blocked — SMTP 550"
+    }
+  },
+  {
+    "@timestamp": "2026-03-24T18:00:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:file_blocked",
+    "event": {
+      "kind": "alert",
+      "category": "intrusion_detection",
+      "action": "block",
+      "outcome": "success",
+      "severity": 8
+    },
+    "host": { "name": "WS-DEV-07", "os": { "family": "windows" } },
+    "user": { "name": "dev_chen", "domain": "CORP" },
+    "file": { "name": "source_code.zip", "path": "https://pastebin.com/upload", "size": 2048000 },
+    "dlp": {
+      "policy": { "name": "Source Code Protection", "id": "pol-004" },
+      "classification": "HIGH",
+      "channel": "network",
+      "source_type": "http_upload",
+      "action_taken": "block",
+      "block_reason": "HTTP POST blocked — 403 returned to client"
+    }
+  }
+]
