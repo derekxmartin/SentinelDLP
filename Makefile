@@ -130,9 +130,9 @@ reset:
 clean:
 	@echo "Stopping all services and removing volumes..."
 	$(COMPOSE) down -v --remove-orphans
-	rm -rf agent/build
-	rm -rf console/node_modules
-	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	-rmdir /s /q agent\build 2>nul || rm -rf agent/build 2>/dev/null || true
+	-rmdir /s /q console\node_modules 2>nul || rm -rf console/node_modules 2>/dev/null || true
+	-for /d /r . %%d in (__pycache__) do @rmdir /s /q "%%d" 2>nul || true
 	@echo "Clean complete."
 
 # ================================================================
