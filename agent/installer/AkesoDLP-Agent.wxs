@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AkesoDLP Agent MSI Installer (P11-T7)
+
+  Installs:
+    - Minifilter driver (akeso_dlp_filter.sys)
+    - Agent service (akeso-dlp-agent.exe)
+    - Default configuration (config.yaml)
+    - gRPC certificates (optional)
+
+  Properties:
+    SERVER_ADDRESS  — gRPC server address (default: localhost:50051)
+    SIEM_ENDPOINT   — SIEM ingest URL (optional)
+    SIEM_API_KEY    — SIEM API key (optional)
+
+  Silent install:
+    msiexec /i AkesoDLP-Agent.msi /qn SERVER_ADDRESS="server:50051"
+
+  Silent uninstall:
+    msiexec /x AkesoDLP-Agent.msi /qn
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+
+  <Package
+    Name="AkesoDLP Agent"
+    Manufacturer="Akeso Security"
+    Version="0.1.0"
+    UpgradeCode="A1B2C3D4-E5F6-7890-ABCD-EF1234567890">
+
+    <MajorUpgrade
+      DowngradeErrorMessage="A newer version of AkesoDLP Agent is already installed." />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- Properties configurable via command line -->
+    <Property Id="SERVER_ADDRESS" Value="localhost:50051" />
+    <Property Id="SIEM_ENDPOINT" Value="" />
+    <Property Id="SIEM_API_KEY" Value="" />
+
+    <!-- Install directory -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="AkesoDLP">
+        <Directory Id="BinFolder" Name="bin" />
+        <Directory Id="ConfigFolder" Name="config" />
+        <Directory Id="CertsFolder" Name="certs" />
+        <Directory Id="DriverFolder" Name="driver" />
+      </Directory>
+    </StandardDirectory>
+
+    <!-- Data directories (preserved on uninstall) -->
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="DATAFOLDER" Name="AkesoDLP">
+        <Directory Id="CacheFolder" Name="cache" />
+        <Directory Id="QueueFolder" Name="queue" />
+        <Directory Id="RecoveryFolder" Name="recovery" />
+        <Directory Id="QuarantineFolder" Name="Quarantine" />
+      </Directory>
+    </StandardDirectory>
+
+    <!-- Agent executable -->
+    <ComponentGroup Id="AgentComponents" Directory="BinFolder">
+      <Component Id="AgentExe" Guid="11111111-1111-1111-1111-111111111111">
+        <File Source="$(var.BuildDir)\akeso-dlp-agent.exe" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Driver -->
+    <ComponentGroup Id="DriverComponents" Directory="DriverFolder">
+      <Component Id="DriverSys" Guid="22222222-2222-2222-2222-222222222222">
+        <File Source="$(var.DriverDir)\akeso_dlp_filter.sys" KeyPath="yes" />
+      </Component>
+      <Component Id="DriverInf" Guid="22222222-2222-2222-2222-222222222223">
+        <File Source="$(var.DriverDir)\akeso_dlp_filter.inf" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Default config (generated from properties) -->
+    <ComponentGroup Id="ConfigComponents" Directory="ConfigFolder">
+      <Component Id="ConfigYaml" Guid="33333333-3333-3333-3333-333333333333">
+        <File Id="ConfigFile" Source="config.yaml.template" Name="config.yaml" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Service installation -->
+    <ComponentGroup Id="ServiceComponents" Directory="BinFolder">
+      <Component Id="AgentService" Guid="44444444-4444-4444-4444-444444444444">
+        <ServiceInstall
+          Id="AkesoDLPAgentService"
+          Name="AkesoDLPAgent"
+          DisplayName="AkesoDLP Agent"
+          Description="AkesoDLP Data Loss Prevention Agent"
+          Type="ownProcess"
+          Start="auto"
+          ErrorControl="normal"
+          Account="LocalSystem">
+          <ServiceConfig
+            DelayedAutoStart="yes"
+            OnInstall="yes"
+            OnReinstall="yes" />
+        </ServiceInstall>
+        <ServiceControl
+          Id="StartAkesoDLPAgent"
+          Name="AkesoDLPAgent"
+          Start="install"
+          Stop="both"
+          Remove="uninstall"
+          Wait="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Driver installation custom actions -->
+    <CustomAction Id="InstallDriver"
+      Directory="DriverFolder"
+      ExeCommand='[SystemFolder]fltmc.exe load AkesoDLPFilter'
+      Execute="deferred"
+      Impersonate="no"
+      Return="ignore" />
+
+    <CustomAction Id="UnloadDriver"
+      Directory="DriverFolder"
+      ExeCommand='[SystemFolder]fltmc.exe unload AkesoDLPFilter'
+      Execute="deferred"
+      Impersonate="no"
+      Return="ignore" />
+
+    <InstallExecuteSequence>
+      <Custom Action="InstallDriver" After="InstallFiles">NOT REMOVE</Custom>
+      <Custom Action="UnloadDriver" Before="RemoveFiles">REMOVE="ALL"</Custom>
+    </InstallExecuteSequence>
+
+    <!-- Feature tree -->
+    <Feature Id="Complete" Title="AkesoDLP Agent" Level="1">
+      <Feature Id="Agent" Title="Agent Service" Level="1">
+        <ComponentGroupRef Id="AgentComponents" />
+        <ComponentGroupRef Id="ServiceComponents" />
+        <ComponentGroupRef Id="ConfigComponents" />
+      </Feature>
+      <Feature Id="Driver" Title="Minifilter Driver" Level="1">
+        <ComponentGroupRef Id="DriverComponents" />
+      </Feature>
+    </Feature>
+
+  </Package>
+</Wix>

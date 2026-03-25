@@ -1,5 +1,5 @@
 .PHONY: server console agent agent-build up down clean test lint \
-       install dev demo demo-seed reset test-e2e help
+       install dev demo demo-seed reset test-e2e help deploy db-maintain
 
 PYTHON ?= python3
 COMPOSE = docker compose
@@ -215,3 +215,15 @@ test:
 
 test-e2e:
 	cd console && npx playwright test
+
+# ================================================================
+#  Deploy (Production)
+# ================================================================
+deploy:
+	bash scripts/deploy.sh
+
+# ================================================================
+#  Database Maintenance
+# ================================================================
+db-maintain:
+	$(PYTHON) -m server.tasks.archive_job
