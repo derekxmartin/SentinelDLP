@@ -32,7 +32,6 @@ import IncidentSnapshot from './pages/IncidentSnapshot';
 import Login from './pages/Login';
 import MFAVerify from './pages/MFAVerify';
 import NetworkSettings from './pages/NetworkSettings';
-import Placeholder from './pages/Placeholder';
 import Reports from './pages/Reports';
 import UserRisk from './pages/UserRisk';
 import Policies from './pages/Policies';
@@ -87,7 +86,6 @@ function App() {
           <Route path="discovers" element={<Discovers />} />
           <Route path="policies" element={<Policies />} />
           <Route path="policies/:id" element={<PolicyEditor />} />
-          <Route path="detection" element={<Placeholder title="Detection" task="a future sprint" />} />
           <Route path="identifiers" element={<Identifiers />} />
           <Route path="dictionaries" element={<Dictionaries />} />
           <Route path="response-rules" element={<ResponseRules />} />
