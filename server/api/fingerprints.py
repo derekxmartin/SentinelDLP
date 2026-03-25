@@ -12,13 +12,12 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from server.api.dependencies import RequirePermission
 from server.detection.analyzers.fingerprint_analyzer import (
     FingerprintIndex,
     FingerprintRecord,
-    MIN_TEXT_LENGTH,
 )
 
 logger = logging.getLogger(__name__)

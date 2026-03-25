@@ -14,6 +14,7 @@ from server.schemas.base import (
 
 # --- Incident ---
 
+
 class IncidentUpdate(BaseModel):
     status: IncidentStatusEnum | None = None
     severity: SeverityEnum | None = None
@@ -52,6 +53,7 @@ class IncidentListResponse(PaginatedResponse):
 
 # --- Incident Note ---
 
+
 class IncidentNoteCreate(BaseModel):
     content: str = Field(min_length=1)
 
@@ -66,6 +68,7 @@ class IncidentNoteResponse(CamelModel):
 
 # --- Incident History ---
 
+
 class IncidentHistoryResponse(CamelModel):
     id: uuid.UUID
     incident_id: uuid.UUID
@@ -77,6 +80,7 @@ class IncidentHistoryResponse(CamelModel):
 
 
 # --- Smart Response ---
+
 
 class SmartResponseRequest(BaseModel):
     action: str

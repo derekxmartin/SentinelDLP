@@ -96,10 +96,35 @@ class FileInspector:
 
     # Extensions treated as plain text
     _TEXT_EXTENSIONS: set[str] = {
-        ".txt", ".log", ".md", ".csv", ".tsv", ".json", ".xml",
-        ".yaml", ".yml", ".ini", ".cfg", ".conf", ".py", ".js",
-        ".ts", ".java", ".c", ".cpp", ".h", ".hpp", ".cs", ".go",
-        ".rs", ".rb", ".php", ".sh", ".bat", ".ps1", ".sql",
+        ".txt",
+        ".log",
+        ".md",
+        ".csv",
+        ".tsv",
+        ".json",
+        ".xml",
+        ".yaml",
+        ".yml",
+        ".ini",
+        ".cfg",
+        ".conf",
+        ".py",
+        ".js",
+        ".ts",
+        ".java",
+        ".c",
+        ".cpp",
+        ".h",
+        ".hpp",
+        ".cs",
+        ".go",
+        ".rs",
+        ".rb",
+        ".php",
+        ".sh",
+        ".bat",
+        ".ps1",
+        ".sql",
         ".rtf",
     }
 
@@ -171,9 +196,7 @@ class FileInspector:
 
         return msg
 
-    def _extract_pdf(
-        self, content: bytes, filename: str, msg: ParsedMessage
-    ) -> None:
+    def _extract_pdf(self, content: bytes, filename: str, msg: ParsedMessage) -> None:
         """Extract text from PDF using pdfplumber."""
         import pdfplumber
 
@@ -205,9 +228,7 @@ class FileInspector:
                         },
                     )
 
-    def _extract_docx(
-        self, content: bytes, filename: str, msg: ParsedMessage
-    ) -> None:
+    def _extract_docx(self, content: bytes, filename: str, msg: ParsedMessage) -> None:
         """Extract text from DOCX using python-docx."""
         from docx import Document
 
@@ -243,9 +264,7 @@ class FileInspector:
                     },
                 )
 
-    def _extract_xlsx(
-        self, content: bytes, filename: str, msg: ParsedMessage
-    ) -> None:
+    def _extract_xlsx(self, content: bytes, filename: str, msg: ParsedMessage) -> None:
         """Extract text from XLSX using openpyxl."""
         from openpyxl import load_workbook
 
@@ -272,9 +291,7 @@ class FileInspector:
 
         wb.close()
 
-    def _extract_pptx(
-        self, content: bytes, filename: str, msg: ParsedMessage
-    ) -> None:
+    def _extract_pptx(self, content: bytes, filename: str, msg: ParsedMessage) -> None:
         """Extract text from PPTX using python-pptx."""
         from pptx import Presentation
 
@@ -304,9 +321,7 @@ class FileInspector:
                     },
                 )
 
-    def _extract_eml(
-        self, content: bytes, filename: str, msg: ParsedMessage
-    ) -> None:
+    def _extract_eml(self, content: bytes, filename: str, msg: ParsedMessage) -> None:
         """Extract components from EML using email stdlib.
 
         Decomposes into: envelope (from/to), subject, body, attachments.
@@ -372,9 +387,7 @@ class FileInspector:
                 att_bytes = att_content
                 # Try to extract text from the attachment recursively
                 sub_msg = self.inspect(att_bytes, att_filename)
-                att_text = "\n".join(
-                    c.content for c in sub_msg.components if c.content
-                )
+                att_text = "\n".join(c.content for c in sub_msg.components if c.content)
             else:
                 att_bytes = b""
                 att_text = ""
@@ -391,9 +404,7 @@ class FileInspector:
                 },
             )
 
-    def _extract_html(
-        self, content: bytes, filename: str, msg: ParsedMessage
-    ) -> None:
+    def _extract_html(self, content: bytes, filename: str, msg: ParsedMessage) -> None:
         """Extract text from HTML by stripping tags."""
         encoding = self._detect_encoding(content)
         text = content.decode(encoding, errors="replace")
@@ -413,9 +424,7 @@ class FileInspector:
                 },
             )
 
-    def _extract_text(
-        self, content: bytes, filename: str, msg: ParsedMessage
-    ) -> None:
+    def _extract_text(self, content: bytes, filename: str, msg: ParsedMessage) -> None:
         """Extract plain text with encoding detection."""
         encoding = self._detect_encoding(content)
         text = content.decode(encoding, errors="replace")

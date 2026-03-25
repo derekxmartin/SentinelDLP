@@ -63,11 +63,11 @@ async def create_user(
 ):
     """Create a new user."""
     # Check uniqueness
-    existing = await db.execute(
-        select(User).where(User.username == body.username)
-    )
+    existing = await db.execute(select(User).where(User.username == body.username))
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail=f"Username '{body.username}' already exists")
+        raise HTTPException(
+            status_code=409, detail=f"Username '{body.username}' already exists"
+        )
 
     # Verify role exists
     role = await db.execute(select(Role).where(Role.id == body.role_id))
@@ -87,11 +87,7 @@ async def create_user(
     await db.commit()
 
     # Reload with role
-    stmt = (
-        select(User)
-        .where(User.id == new_user.id)
-        .options(selectinload(User.role))
-    )
+    stmt = select(User).where(User.id == new_user.id).options(selectinload(User.role))
     result = await db.execute(stmt)
     u = result.scalar_one()
     return UserResponse(
@@ -115,11 +111,7 @@ async def get_user(
     db: AsyncSession = Depends(get_db),
 ):
     """Get a user by ID."""
-    stmt = (
-        select(User)
-        .where(User.id == user_id)
-        .options(selectinload(User.role))
-    )
+    stmt = select(User).where(User.id == user_id).options(selectinload(User.role))
     result = await db.execute(stmt)
     u = result.scalar_one_or_none()
     if not u:
@@ -147,11 +139,7 @@ async def update_user(
     db: AsyncSession = Depends(get_db),
 ):
     """Update user fields (email, name, active status, role)."""
-    stmt = (
-        select(User)
-        .where(User.id == user_id)
-        .options(selectinload(User.role))
-    )
+    stmt = select(User).where(User.id == user_id).options(selectinload(User.role))
     result = await db.execute(stmt)
     u = result.scalar_one_or_none()
     if not u:
@@ -165,11 +153,7 @@ async def update_user(
     await db.refresh(u)
 
     # Reload role relationship
-    stmt = (
-        select(User)
-        .where(User.id == u.id)
-        .options(selectinload(User.role))
-    )
+    stmt = select(User).where(User.id == u.id).options(selectinload(User.role))
     result = await db.execute(stmt)
     u = result.scalar_one()
 

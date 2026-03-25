@@ -107,9 +107,12 @@ async def create_policy(
         # Could be: JSON string, list of dicts, or list of Pydantic models
         if isinstance(thresholds, str):
             import json
+
             thresholds = json.loads(thresholds)
         data["severity_thresholds"] = [
-            t if isinstance(t, dict) else {"threshold": t.threshold, "severity": t.severity}
+            t
+            if isinstance(t, dict)
+            else {"threshold": t.threshold, "severity": t.severity}
             for t in thresholds
         ]
 
@@ -156,9 +159,12 @@ async def update_policy(
     if thresholds is not None:
         if isinstance(thresholds, str):
             import json
+
             thresholds = json.loads(thresholds)
         data["severity_thresholds"] = [
-            t if isinstance(t, dict) else {"threshold": t.threshold, "severity": t.severity}
+            t
+            if isinstance(t, dict)
+            else {"threshold": t.threshold, "severity": t.severity}
             for t in thresholds
         ]
 

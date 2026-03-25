@@ -21,7 +21,6 @@ from server.api.dependencies import CurrentUser, RequirePermission
 from server.database import get_db
 from server.schemas.notification import (
     NotificationListResponse,
-    NotificationResponse,
     UnreadCountResponse,
 )
 from server.services import notification_service
@@ -41,7 +40,11 @@ async def list_notifications(
 ):
     """List the current user's notifications."""
     notifications, total = await notification_service.list_notifications(
-        db, user.id, page=page, page_size=page_size, unread_only=unread_only,
+        db,
+        user.id,
+        page=page,
+        page_size=page_size,
+        unread_only=unread_only,
     )
     return NotificationListResponse(
         items=notifications,
@@ -97,7 +100,9 @@ async def delete_notification(
     db: AsyncSession = Depends(get_db),
 ):
     """Delete a notification."""
-    deleted = await notification_service.delete_notification(db, notification_id, user.id)
+    deleted = await notification_service.delete_notification(
+        db, notification_id, user.id
+    )
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

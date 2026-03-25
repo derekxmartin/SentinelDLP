@@ -168,8 +168,14 @@ def _build_default_engine() -> DetectionEngine:
     analyzer = DataIdentifierAnalyzer(
         name="built_in_data_identifiers",
         identifiers=[
-            cc_config, ssn_config, phone_config, email_config,
-            iban_config, ipv4_config, dob_config, aba_config,
+            cc_config,
+            ssn_config,
+            phone_config,
+            email_config,
+            iban_config,
+            ipv4_config,
+            dob_config,
+            aba_config,
         ],
     )
     engine.register(analyzer)

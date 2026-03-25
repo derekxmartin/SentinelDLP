@@ -97,7 +97,12 @@ async def list_incidents(
 
     # Paginate
     offset = (page - 1) * page_size
-    stmt = base.options(*_INCIDENT_LOAD_OPTIONS).order_by(order).offset(offset).limit(page_size)
+    stmt = (
+        base.options(*_INCIDENT_LOAD_OPTIONS)
+        .order_by(order)
+        .offset(offset)
+        .limit(page_size)
+    )
     result = await db.execute(stmt)
     incidents = list(result.scalars().all())
 
@@ -124,8 +129,20 @@ async def update_incident(
         old_value = getattr(incident, key, None)
 
         # Convert enums to string for comparison
-        old_str = old_value.value if hasattr(old_value, "value") else str(old_value) if old_value is not None else None
-        new_str = value.value if hasattr(value, "value") else str(value) if not isinstance(value, dict) else None
+        old_str = (
+            old_value.value
+            if hasattr(old_value, "value")
+            else str(old_value)
+            if old_value is not None
+            else None
+        )
+        new_str = (
+            value.value
+            if hasattr(value, "value")
+            else str(value)
+            if not isinstance(value, dict)
+            else None
+        )
 
         if old_str != new_str:
             setattr(incident, key, value)
@@ -181,7 +198,9 @@ async def list_notes(db: AsyncSession, incident_id: uuid.UUID) -> list[IncidentN
 # ---------------------------------------------------------------------------
 
 
-async def list_history(db: AsyncSession, incident_id: uuid.UUID) -> list[IncidentHistory]:
+async def list_history(
+    db: AsyncSession, incident_id: uuid.UUID
+) -> list[IncidentHistory]:
     """List all history entries for an incident, newest first."""
     stmt = (
         select(IncidentHistory)

@@ -23,7 +23,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
-SETTINGS_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "network_settings.json"
+SETTINGS_FILE = (
+    Path(__file__).resolve().parent.parent.parent / "data" / "network_settings.json"
+)
 
 
 class NetworkMode(str, Enum):

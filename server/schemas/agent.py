@@ -8,6 +8,7 @@ from server.schemas.base import AgentStatusEnum, CamelModel, PaginatedResponse
 
 # --- Agent Group ---
 
+
 class AgentGroupCreate(BaseModel):
     name: str = Field(max_length=255)
     description: str | None = None
@@ -20,6 +21,7 @@ class AgentGroupResponse(CamelModel):
 
 
 # --- Agent ---
+
 
 class AgentResponse(CamelModel):
     id: uuid.UUID

@@ -9,7 +9,7 @@ import uuid
 from enum import Enum as PyEnum
 
 from sqlalchemy import Boolean, Enum, ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from server.models.base import Base, TimestampMixin, UUIDMixin
@@ -35,16 +35,22 @@ class Notification(Base, UUIDMixin, TimestampMixin):
 
     # Recipient
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False, index=True,
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
 
     # Classification
     type: Mapped[NotificationType] = mapped_column(
-        Enum(NotificationType), nullable=False, index=True,
+        Enum(NotificationType),
+        nullable=False,
+        index=True,
     )
     severity: Mapped[NotificationSeverity] = mapped_column(
-        Enum(NotificationSeverity), default=NotificationSeverity.INFO, nullable=False,
+        Enum(NotificationSeverity),
+        default=NotificationSeverity.INFO,
+        nullable=False,
     )
 
     # Content
@@ -52,11 +58,15 @@ class Notification(Base, UUIDMixin, TimestampMixin):
     message: Mapped[str] = mapped_column(Text, nullable=False)
 
     # Resource link (click to navigate)
-    resource_type: Mapped[str | None] = mapped_column(String(50))  # "incident", "policy", "agent"
+    resource_type: Mapped[str | None] = mapped_column(
+        String(50)
+    )  # "incident", "policy", "agent"
     resource_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
 
     # State
-    is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    is_read: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, index=True
+    )
 
     # Relationships
     user: Mapped["User"] = relationship()  # noqa: F821

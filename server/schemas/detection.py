@@ -8,6 +8,7 @@ from server.schemas.base import CamelModel, SeverityEnum
 
 # --- Data Identifier ---
 
+
 class DataIdentifierCreate(BaseModel):
     name: str = Field(max_length=255)
     description: str | None = None
@@ -28,6 +29,7 @@ class DataIdentifierResponse(CamelModel):
 
 # --- Keyword Dictionary ---
 
+
 class KeywordDictionaryCreate(BaseModel):
     name: str = Field(max_length=255)
     description: str | None = None
@@ -46,6 +48,7 @@ class KeywordDictionaryResponse(CamelModel):
 
 
 # --- Detect API ---
+
 
 class DetectRequest(BaseModel):
     content: str
@@ -79,6 +82,7 @@ class DetectResponse(CamelModel):
 
 
 # --- Fingerprint ---
+
 
 class FingerprintCreate(BaseModel):
     name: str = Field(max_length=255)

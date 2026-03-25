@@ -5,7 +5,6 @@ Async SQLAlchemy queries for managing discover scans.
 
 from __future__ import annotations
 
-import math
 from datetime import datetime, timezone
 
 from sqlalchemy import func, select
@@ -70,7 +69,9 @@ async def create_discover(db: AsyncSession, data: dict) -> DiscoverScan:
     return scan
 
 
-async def update_discover(db: AsyncSession, scan: DiscoverScan, data: dict) -> DiscoverScan:
+async def update_discover(
+    db: AsyncSession, scan: DiscoverScan, data: dict
+) -> DiscoverScan:
     """Update discover scan fields."""
     for key, value in data.items():
         if hasattr(scan, key):

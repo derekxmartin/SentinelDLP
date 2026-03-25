@@ -4,111 +4,107 @@
 # source: akesodlp.proto
 # Protobuf Python Version: 6.31.1
 """Generated protocol buffer code."""
+
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pool as _descriptor_pool
 from google.protobuf import runtime_version as _runtime_version
 from google.protobuf import symbol_database as _symbol_database
 from google.protobuf.internal import builder as _builder
+
 _runtime_version.ValidateProtobufRuntimeVersion(
-    _runtime_version.Domain.PUBLIC,
-    6,
-    31,
-    1,
-    '',
-    'akesodlp.proto'
+    _runtime_version.Domain.PUBLIC, 6, 31, 1, "", "akesodlp.proto"
 )
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
 
-from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
-
-
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0e\x61kesodlp.proto\x12\x08\x61kesodlp\x1a\x1fgoogle/protobuf/timestamp.proto\"\xad\x01\n\x0fRegisterRequest\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x12\n\nos_version\x18\x02 \x01(\t\x12\x15\n\ragent_version\x18\x03 \x01(\t\x12\x16\n\x0e\x64river_version\x18\x04 \x01(\t\x12\x12\n\nip_address\x18\x05 \x01(\t\x12\x31\n\x0c\x63\x61pabilities\x18\x06 \x01(\x0b\x32\x1b.akesodlp.AgentCapabilities\"\x8d\x01\n\x11\x41gentCapabilities\x12\x13\n\x0busb_monitor\x18\x01 \x01(\x08\x12\x1d\n\x15network_share_monitor\x18\x02 \x01(\x08\x12\x19\n\x11\x63lipboard_monitor\x18\x03 \x01(\x08\x12\x17\n\x0f\x62rowser_monitor\x18\x04 \x01(\x08\x12\x10\n\x08\x64iscover\x18\x05 \x01(\x08\"j\n\x10RegisterResponse\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x0f\n\x07success\x18\x02 \x01(\x08\x12\x0f\n\x07message\x18\x03 \x01(\t\x12\"\n\x1aheartbeat_interval_seconds\x18\x04 \x01(\x03\"\xbb\x01\n\x10HeartbeatRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x16\n\x0epolicy_version\x18\x02 \x01(\x05\x12%\n\x06status\x18\x03 \x01(\x0b\x32\x15.akesodlp.AgentStatus\x12\'\n\x07metrics\x18\x04 \x01(\x0b\x32\x16.akesodlp.AgentMetrics\x12-\n\ttimestamp\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"w\n\x0b\x41gentStatus\x12\x15\n\rdriver_loaded\x18\x01 \x01(\x08\x12\x1e\n\x16\x64\x65tection_engine_ready\x18\x02 \x01(\x08\x12\x19\n\x11pending_incidents\x18\x03 \x01(\x05\x12\x16\n\x0euptime_seconds\x18\x04 \x01(\x03\"\xa5\x01\n\x0c\x41gentMetrics\x12\x15\n\rfiles_scanned\x18\x01 \x01(\x03\x12\x15\n\rfiles_blocked\x18\x02 \x01(\x03\x12\x1a\n\x12incidents_reported\x18\x03 \x01(\x03\x12\x14\n\x0cttd_requests\x18\x04 \x01(\x03\x12\x19\n\x11\x63pu_usage_percent\x18\x05 \x01(\x01\x12\x1a\n\x12memory_usage_bytes\x18\x06 \x01(\x03\"\x8e\x01\n\x11HeartbeatResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x1f\n\x17policy_update_available\x18\x02 \x01(\x08\x12\x1d\n\x15latest_policy_version\x18\x03 \x01(\x05\x12(\n\x08\x63ommands\x18\x04 \x03(\x0b\x32\x16.akesodlp.AgentCommand\"\x93\x01\n\x0c\x41gentCommand\x12\x14\n\x0c\x63ommand_type\x18\x01 \x01(\t\x12:\n\nparameters\x18\x02 \x03(\x0b\x32&.akesodlp.AgentCommand.ParametersEntry\x1a\x31\n\x0fParametersEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"?\n\x12GetPoliciesRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x17\n\x0f\x63urrent_version\x18\x02 \x01(\x05\"[\n\x13GetPoliciesResponse\x12\x16\n\x0epolicy_version\x18\x01 \x01(\x05\x12,\n\x08policies\x18\x02 \x03(\x0b\x32\x1a.akesodlp.PolicyDefinition\"\xe7\x02\n\x10PolicyDefinition\x12\x11\n\tpolicy_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12$\n\x08severity\x18\x04 \x01(\x0e\x32\x12.akesodlp.Severity\x12\x0e\n\x06status\x18\x05 \x01(\t\x12\x14\n\x0cttd_fallback\x18\x06 \x01(\t\x12\x38\n\x13severity_thresholds\x18\x07 \x03(\x0b\x32\x1b.akesodlp.SeverityThreshold\x12\x33\n\x0f\x64\x65tection_rules\x18\x08 \x03(\x0b\x32\x1a.akesodlp.DetectionRuleDef\x12\x30\n\nexceptions\x18\t \x03(\x0b\x32\x1c.akesodlp.PolicyExceptionDef\x12\x30\n\rresponse_rule\x18\n \x01(\x0b\x32\x19.akesodlp.ResponseRuleDef\"L\n\x11SeverityThreshold\x12\x11\n\tthreshold\x18\x01 \x01(\x05\x12$\n\x08severity\x18\x02 \x01(\x0e\x32\x12.akesodlp.Severity\"t\n\x10\x44\x65tectionRuleDef\x12\x0f\n\x07rule_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x11\n\trule_type\x18\x03 \x01(\t\x12.\n\nconditions\x18\x04 \x03(\x0b\x32\x1a.akesodlp.RuleConditionDef\"k\n\x10RuleConditionDef\x12\x16\n\x0e\x63ondition_type\x18\x01 \x01(\t\x12\x11\n\tcomponent\x18\x02 \x01(\t\x12\x13\n\x0b\x63onfig_json\x18\x03 \x01(\t\x12\x17\n\x0fmatch_count_min\x18\x04 \x01(\x05\"\x8f\x01\n\x12PolicyExceptionDef\x12\x14\n\x0c\x65xception_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\r\n\x05scope\x18\x03 \x01(\t\x12\x16\n\x0e\x65xception_type\x18\x04 \x01(\t\x12.\n\nconditions\x18\x05 \x03(\x0b\x32\x1a.akesodlp.RuleConditionDef\"^\n\x0fResponseRuleDef\x12\x0f\n\x07rule_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12,\n\x07\x61\x63tions\x18\x03 \x03(\x0b\x32\x1b.akesodlp.ResponseActionDef\"L\n\x11ResponseActionDef\x12\x13\n\x0b\x61\x63tion_type\x18\x01 \x01(\t\x12\x13\n\x0b\x63onfig_json\x18\x02 \x01(\t\x12\r\n\x05order\x18\x03 \x01(\x05\"A\n\x14PolicyUpdatesRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x17\n\x0f\x63urrent_version\x18\x02 \x01(\x05\"\x93\x01\n\x0cPolicyUpdate\x12/\n\x0bupdate_type\x18\x01 \x01(\x0e\x32\x1a.akesodlp.PolicyUpdateType\x12\x13\n\x0bnew_version\x18\x02 \x01(\x05\x12*\n\x06policy\x18\x03 \x01(\x0b\x32\x1a.akesodlp.PolicyDefinition\x12\x11\n\tpolicy_id\x18\x04 \x01(\t\"U\n\x15ReportIncidentRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12*\n\x08incident\x18\x02 \x01(\x0b\x32\x18.akesodlp.IncidentReport\"\xb9\x03\n\x0eIncidentReport\x12\x11\n\tpolicy_id\x18\x01 \x01(\t\x12\x13\n\x0bpolicy_name\x18\x02 \x01(\t\x12$\n\x08severity\x18\x03 \x01(\x0e\x32\x12.akesodlp.Severity\x12\"\n\x07\x63hannel\x18\x04 \x01(\x0e\x32\x11.akesodlp.Channel\x12\x13\n\x0bsource_type\x18\x05 \x01(\t\x12\x11\n\tfile_path\x18\x06 \x01(\t\x12\x11\n\tfile_name\x18\x07 \x01(\t\x12\x11\n\tfile_size\x18\x08 \x01(\x03\x12\x11\n\tfile_type\x18\t \x01(\t\x12\x0c\n\x04user\x18\n \x01(\t\x12\x11\n\tsource_ip\x18\x0b \x01(\t\x12\x13\n\x0b\x64\x65stination\x18\x0c \x01(\t\x12\x13\n\x0bmatch_count\x18\r \x01(\x05\x12&\n\x07matches\x18\x0e \x03(\x0b\x32\x15.akesodlp.MatchDetail\x12\x14\n\x0c\x61\x63tion_taken\x18\x0f \x01(\t\x12\x1a\n\x12user_justification\x18\x10 \x01(\t\x12/\n\x0b\x64\x65tected_at\x18\x11 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"l\n\x0bMatchDetail\x12\x12\n\nidentifier\x18\x01 \x01(\t\x12\x0f\n\x07pattern\x18\x02 \x01(\t\x12\x16\n\x0ematched_values\x18\x03 \x03(\t\x12\r\n\x05\x63ount\x18\x04 \x01(\x05\x12\x11\n\tcomponent\x18\x05 \x01(\t\"O\n\x16ReportIncidentResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x13\n\x0bincident_id\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\"\xfb\x02\n\x14\x44\x65tectContentRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x12\n\nrequest_id\x18\x02 \x01(\t\x12\x14\n\x0c\x66ile_content\x18\x03 \x01(\x0c\x12\x11\n\tfile_name\x18\x04 \x01(\t\x12\x11\n\tfile_type\x18\x05 \x01(\t\x12\x11\n\tfile_size\x18\x06 \x01(\x03\x12\x18\n\x10\x66ile_hash_sha256\x18\x07 \x01(\t\x12\x17\n\x0f\x63ontent_excerpt\x18\x08 \x01(\x0c\x12\x12\n\npolicy_ids\x18\t \x03(\t\x12\x17\n\x0ftimeout_seconds\x18\n \x01(\x05\x12\x17\n\x0f\x66\x61llback_action\x18\x0b \x01(\t\x12\x0c\n\x04user\x18\x0c \x01(\t\x12\x11\n\tsource_ip\x18\r \x01(\t\x12\"\n\x07\x63hannel\x18\x0e \x01(\x0e\x32\x11.akesodlp.Channel\x12\x30\n\x0crequested_at\x18\x0f \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\xd7\x01\n\x15\x44\x65tectContentResponse\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12%\n\x07verdict\x18\x02 \x01(\x0e\x32\x14.akesodlp.TTDVerdict\x12$\n\x08severity\x18\x03 \x01(\x0e\x32\x12.akesodlp.Severity\x12\x31\n\x0epolicy_results\x18\x04 \x03(\x0b\x32\x19.akesodlp.TTDPolicyResult\x12\x19\n\x11total_match_count\x18\x05 \x01(\x05\x12\x0f\n\x07message\x18\x06 \x01(\t\"\xad\x01\n\x0fTTDPolicyResult\x12\x11\n\tpolicy_id\x18\x01 \x01(\t\x12\x13\n\x0bpolicy_name\x18\x02 \x01(\t\x12\x0f\n\x07matched\x18\x03 \x01(\x08\x12$\n\x08severity\x18\x04 \x01(\x0e\x32\x12.akesodlp.Severity\x12&\n\x07matches\x18\x05 \x03(\x0b\x32\x15.akesodlp.MatchDetail\x12\x13\n\x0bmatch_count\x18\x06 \x01(\x05\"+\n\x17GetDiscoverScansRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\"D\n\x18GetDiscoverScansResponse\x12(\n\x05scans\x18\x01 \x03(\x0b\x32\x19.akesodlp.DiscoverScanDef\"\x8c\x01\n\x0f\x44iscoverScanDef\x12\x13\n\x0b\x64iscover_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x11\n\tscan_path\x18\x03 \x01(\t\x12\x11\n\trecursive\x18\x04 \x01(\x08\x12\x17\n\x0f\x66ile_extensions\x18\x05 \x03(\t\x12\x17\n\x0fpath_exclusions\x18\x06 \x03(\t\"\xeb\x01\n\x1cReportDiscoverResultsRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64iscover_id\x18\x02 \x01(\t\x12\x16\n\x0e\x66iles_examined\x18\x03 \x01(\x03\x12\x15\n\rfiles_scanned\x18\x04 \x01(\x03\x12\x18\n\x10violations_found\x18\x05 \x01(\x03\x12\x19\n\x11\x66iles_quarantined\x18\x06 \x01(\x03\x12\x13\n\x0b\x64uration_ms\x18\x07 \x01(\x03\x12+\n\x08\x66indings\x18\x08 \x03(\x0b\x32\x19.akesodlp.DiscoverFinding\"\xc4\x01\n\x0f\x44iscoverFinding\x12\x11\n\tfile_path\x18\x01 \x01(\t\x12\x11\n\tfile_name\x18\x02 \x01(\t\x12\x11\n\tfile_size\x18\x03 \x01(\x03\x12\x12\n\nfile_owner\x18\x04 \x01(\t\x12\x13\n\x0bpolicy_name\x18\x05 \x01(\t\x12$\n\x08severity\x18\x06 \x01(\x0e\x32\x12.akesodlp.Severity\x12\x13\n\x0bmatch_count\x18\x07 \x01(\x05\x12\x14\n\x0c\x61\x63tion_taken\x18\x08 \x01(\t\"A\n\x1dReportDiscoverResultsResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t*\x82\x01\n\x10PolicyUpdateType\x12\"\n\x1ePOLICY_UPDATE_TYPE_UNSPECIFIED\x10\x00\x12\x0e\n\nPOLICY_ADD\x10\x01\x12\x11\n\rPOLICY_MODIFY\x10\x02\x12\x11\n\rPOLICY_REMOVE\x10\x03\x12\x14\n\x10POLICY_FULL_SYNC\x10\x04*T\n\nTTDVerdict\x12\x1b\n\x17TTD_VERDICT_UNSPECIFIED\x10\x00\x12\r\n\tTTD_ALLOW\x10\x01\x12\r\n\tTTD_BLOCK\x10\x02\x12\x0b\n\x07TTD_LOG\x10\x03*\x88\x01\n\x08Severity\x12\x18\n\x14SEVERITY_UNSPECIFIED\x10\x00\x12\x11\n\rSEVERITY_INFO\x10\x01\x12\x10\n\x0cSEVERITY_LOW\x10\x02\x12\x13\n\x0fSEVERITY_MEDIUM\x10\x03\x12\x11\n\rSEVERITY_HIGH\x10\x04\x12\x15\n\x11SEVERITY_CRITICAL\x10\x05*\xc3\x01\n\x07\x43hannel\x12\x17\n\x13\x43HANNEL_UNSPECIFIED\x10\x00\x12\x0f\n\x0b\x43HANNEL_USB\x10\x01\x12\x19\n\x15\x43HANNEL_NETWORK_SHARE\x10\x02\x12\x15\n\x11\x43HANNEL_CLIPBOARD\x10\x03\x12\x1a\n\x16\x43HANNEL_BROWSER_UPLOAD\x10\x04\x12\x11\n\rCHANNEL_EMAIL\x10\x05\x12\x17\n\x13\x43HANNEL_HTTP_UPLOAD\x10\x06\x12\x14\n\x10\x43HANNEL_DISCOVER\x10\x07\x32\x9d\x05\n\x0f\x41kesoDLPService\x12\x41\n\x08Register\x12\x19.akesodlp.RegisterRequest\x1a\x1a.akesodlp.RegisterResponse\x12\x44\n\tHeartbeat\x12\x1a.akesodlp.HeartbeatRequest\x1a\x1b.akesodlp.HeartbeatResponse\x12J\n\x0bGetPolicies\x12\x1c.akesodlp.GetPoliciesRequest\x1a\x1d.akesodlp.GetPoliciesResponse\x12I\n\rPolicyUpdates\x12\x1e.akesodlp.PolicyUpdatesRequest\x1a\x16.akesodlp.PolicyUpdate0\x01\x12S\n\x0eReportIncident\x12\x1f.akesodlp.ReportIncidentRequest\x1a .akesodlp.ReportIncidentResponse\x12P\n\rDetectContent\x12\x1e.akesodlp.DetectContentRequest\x1a\x1f.akesodlp.DetectContentResponse\x12Y\n\x10GetDiscoverScans\x12!.akesodlp.GetDiscoverScansRequest\x1a\".akesodlp.GetDiscoverScansResponse\x12h\n\x15ReportDiscoverResults\x12&.akesodlp.ReportDiscoverResultsRequest\x1a\'.akesodlp.ReportDiscoverResultsResponseB\x10Z\x0e\x61kesodlp/protob\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
+    b'\n\x0e\x61kesodlp.proto\x12\x08\x61kesodlp\x1a\x1fgoogle/protobuf/timestamp.proto"\xad\x01\n\x0fRegisterRequest\x12\x10\n\x08hostname\x18\x01 \x01(\t\x12\x12\n\nos_version\x18\x02 \x01(\t\x12\x15\n\ragent_version\x18\x03 \x01(\t\x12\x16\n\x0e\x64river_version\x18\x04 \x01(\t\x12\x12\n\nip_address\x18\x05 \x01(\t\x12\x31\n\x0c\x63\x61pabilities\x18\x06 \x01(\x0b\x32\x1b.akesodlp.AgentCapabilities"\x8d\x01\n\x11\x41gentCapabilities\x12\x13\n\x0busb_monitor\x18\x01 \x01(\x08\x12\x1d\n\x15network_share_monitor\x18\x02 \x01(\x08\x12\x19\n\x11\x63lipboard_monitor\x18\x03 \x01(\x08\x12\x17\n\x0f\x62rowser_monitor\x18\x04 \x01(\x08\x12\x10\n\x08\x64iscover\x18\x05 \x01(\x08"j\n\x10RegisterResponse\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x0f\n\x07success\x18\x02 \x01(\x08\x12\x0f\n\x07message\x18\x03 \x01(\t\x12"\n\x1aheartbeat_interval_seconds\x18\x04 \x01(\x03"\xbb\x01\n\x10HeartbeatRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x16\n\x0epolicy_version\x18\x02 \x01(\x05\x12%\n\x06status\x18\x03 \x01(\x0b\x32\x15.akesodlp.AgentStatus\x12\'\n\x07metrics\x18\x04 \x01(\x0b\x32\x16.akesodlp.AgentMetrics\x12-\n\ttimestamp\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.Timestamp"w\n\x0b\x41gentStatus\x12\x15\n\rdriver_loaded\x18\x01 \x01(\x08\x12\x1e\n\x16\x64\x65tection_engine_ready\x18\x02 \x01(\x08\x12\x19\n\x11pending_incidents\x18\x03 \x01(\x05\x12\x16\n\x0euptime_seconds\x18\x04 \x01(\x03"\xa5\x01\n\x0c\x41gentMetrics\x12\x15\n\rfiles_scanned\x18\x01 \x01(\x03\x12\x15\n\rfiles_blocked\x18\x02 \x01(\x03\x12\x1a\n\x12incidents_reported\x18\x03 \x01(\x03\x12\x14\n\x0cttd_requests\x18\x04 \x01(\x03\x12\x19\n\x11\x63pu_usage_percent\x18\x05 \x01(\x01\x12\x1a\n\x12memory_usage_bytes\x18\x06 \x01(\x03"\x8e\x01\n\x11HeartbeatResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x1f\n\x17policy_update_available\x18\x02 \x01(\x08\x12\x1d\n\x15latest_policy_version\x18\x03 \x01(\x05\x12(\n\x08\x63ommands\x18\x04 \x03(\x0b\x32\x16.akesodlp.AgentCommand"\x93\x01\n\x0c\x41gentCommand\x12\x14\n\x0c\x63ommand_type\x18\x01 \x01(\t\x12:\n\nparameters\x18\x02 \x03(\x0b\x32&.akesodlp.AgentCommand.ParametersEntry\x1a\x31\n\x0fParametersEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01"?\n\x12GetPoliciesRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x17\n\x0f\x63urrent_version\x18\x02 \x01(\x05"[\n\x13GetPoliciesResponse\x12\x16\n\x0epolicy_version\x18\x01 \x01(\x05\x12,\n\x08policies\x18\x02 \x03(\x0b\x32\x1a.akesodlp.PolicyDefinition"\xe7\x02\n\x10PolicyDefinition\x12\x11\n\tpolicy_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12$\n\x08severity\x18\x04 \x01(\x0e\x32\x12.akesodlp.Severity\x12\x0e\n\x06status\x18\x05 \x01(\t\x12\x14\n\x0cttd_fallback\x18\x06 \x01(\t\x12\x38\n\x13severity_thresholds\x18\x07 \x03(\x0b\x32\x1b.akesodlp.SeverityThreshold\x12\x33\n\x0f\x64\x65tection_rules\x18\x08 \x03(\x0b\x32\x1a.akesodlp.DetectionRuleDef\x12\x30\n\nexceptions\x18\t \x03(\x0b\x32\x1c.akesodlp.PolicyExceptionDef\x12\x30\n\rresponse_rule\x18\n \x01(\x0b\x32\x19.akesodlp.ResponseRuleDef"L\n\x11SeverityThreshold\x12\x11\n\tthreshold\x18\x01 \x01(\x05\x12$\n\x08severity\x18\x02 \x01(\x0e\x32\x12.akesodlp.Severity"t\n\x10\x44\x65tectionRuleDef\x12\x0f\n\x07rule_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x11\n\trule_type\x18\x03 \x01(\t\x12.\n\nconditions\x18\x04 \x03(\x0b\x32\x1a.akesodlp.RuleConditionDef"k\n\x10RuleConditionDef\x12\x16\n\x0e\x63ondition_type\x18\x01 \x01(\t\x12\x11\n\tcomponent\x18\x02 \x01(\t\x12\x13\n\x0b\x63onfig_json\x18\x03 \x01(\t\x12\x17\n\x0fmatch_count_min\x18\x04 \x01(\x05"\x8f\x01\n\x12PolicyExceptionDef\x12\x14\n\x0c\x65xception_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\r\n\x05scope\x18\x03 \x01(\t\x12\x16\n\x0e\x65xception_type\x18\x04 \x01(\t\x12.\n\nconditions\x18\x05 \x03(\x0b\x32\x1a.akesodlp.RuleConditionDef"^\n\x0fResponseRuleDef\x12\x0f\n\x07rule_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12,\n\x07\x61\x63tions\x18\x03 \x03(\x0b\x32\x1b.akesodlp.ResponseActionDef"L\n\x11ResponseActionDef\x12\x13\n\x0b\x61\x63tion_type\x18\x01 \x01(\t\x12\x13\n\x0b\x63onfig_json\x18\x02 \x01(\t\x12\r\n\x05order\x18\x03 \x01(\x05"A\n\x14PolicyUpdatesRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x17\n\x0f\x63urrent_version\x18\x02 \x01(\x05"\x93\x01\n\x0cPolicyUpdate\x12/\n\x0bupdate_type\x18\x01 \x01(\x0e\x32\x1a.akesodlp.PolicyUpdateType\x12\x13\n\x0bnew_version\x18\x02 \x01(\x05\x12*\n\x06policy\x18\x03 \x01(\x0b\x32\x1a.akesodlp.PolicyDefinition\x12\x11\n\tpolicy_id\x18\x04 \x01(\t"U\n\x15ReportIncidentRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12*\n\x08incident\x18\x02 \x01(\x0b\x32\x18.akesodlp.IncidentReport"\xb9\x03\n\x0eIncidentReport\x12\x11\n\tpolicy_id\x18\x01 \x01(\t\x12\x13\n\x0bpolicy_name\x18\x02 \x01(\t\x12$\n\x08severity\x18\x03 \x01(\x0e\x32\x12.akesodlp.Severity\x12"\n\x07\x63hannel\x18\x04 \x01(\x0e\x32\x11.akesodlp.Channel\x12\x13\n\x0bsource_type\x18\x05 \x01(\t\x12\x11\n\tfile_path\x18\x06 \x01(\t\x12\x11\n\tfile_name\x18\x07 \x01(\t\x12\x11\n\tfile_size\x18\x08 \x01(\x03\x12\x11\n\tfile_type\x18\t \x01(\t\x12\x0c\n\x04user\x18\n \x01(\t\x12\x11\n\tsource_ip\x18\x0b \x01(\t\x12\x13\n\x0b\x64\x65stination\x18\x0c \x01(\t\x12\x13\n\x0bmatch_count\x18\r \x01(\x05\x12&\n\x07matches\x18\x0e \x03(\x0b\x32\x15.akesodlp.MatchDetail\x12\x14\n\x0c\x61\x63tion_taken\x18\x0f \x01(\t\x12\x1a\n\x12user_justification\x18\x10 \x01(\t\x12/\n\x0b\x64\x65tected_at\x18\x11 \x01(\x0b\x32\x1a.google.protobuf.Timestamp"l\n\x0bMatchDetail\x12\x12\n\nidentifier\x18\x01 \x01(\t\x12\x0f\n\x07pattern\x18\x02 \x01(\t\x12\x16\n\x0ematched_values\x18\x03 \x03(\t\x12\r\n\x05\x63ount\x18\x04 \x01(\x05\x12\x11\n\tcomponent\x18\x05 \x01(\t"O\n\x16ReportIncidentResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x13\n\x0bincident_id\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t"\xfb\x02\n\x14\x44\x65tectContentRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x12\n\nrequest_id\x18\x02 \x01(\t\x12\x14\n\x0c\x66ile_content\x18\x03 \x01(\x0c\x12\x11\n\tfile_name\x18\x04 \x01(\t\x12\x11\n\tfile_type\x18\x05 \x01(\t\x12\x11\n\tfile_size\x18\x06 \x01(\x03\x12\x18\n\x10\x66ile_hash_sha256\x18\x07 \x01(\t\x12\x17\n\x0f\x63ontent_excerpt\x18\x08 \x01(\x0c\x12\x12\n\npolicy_ids\x18\t \x03(\t\x12\x17\n\x0ftimeout_seconds\x18\n \x01(\x05\x12\x17\n\x0f\x66\x61llback_action\x18\x0b \x01(\t\x12\x0c\n\x04user\x18\x0c \x01(\t\x12\x11\n\tsource_ip\x18\r \x01(\t\x12"\n\x07\x63hannel\x18\x0e \x01(\x0e\x32\x11.akesodlp.Channel\x12\x30\n\x0crequested_at\x18\x0f \x01(\x0b\x32\x1a.google.protobuf.Timestamp"\xd7\x01\n\x15\x44\x65tectContentResponse\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12%\n\x07verdict\x18\x02 \x01(\x0e\x32\x14.akesodlp.TTDVerdict\x12$\n\x08severity\x18\x03 \x01(\x0e\x32\x12.akesodlp.Severity\x12\x31\n\x0epolicy_results\x18\x04 \x03(\x0b\x32\x19.akesodlp.TTDPolicyResult\x12\x19\n\x11total_match_count\x18\x05 \x01(\x05\x12\x0f\n\x07message\x18\x06 \x01(\t"\xad\x01\n\x0fTTDPolicyResult\x12\x11\n\tpolicy_id\x18\x01 \x01(\t\x12\x13\n\x0bpolicy_name\x18\x02 \x01(\t\x12\x0f\n\x07matched\x18\x03 \x01(\x08\x12$\n\x08severity\x18\x04 \x01(\x0e\x32\x12.akesodlp.Severity\x12&\n\x07matches\x18\x05 \x03(\x0b\x32\x15.akesodlp.MatchDetail\x12\x13\n\x0bmatch_count\x18\x06 \x01(\x05"+\n\x17GetDiscoverScansRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t"D\n\x18GetDiscoverScansResponse\x12(\n\x05scans\x18\x01 \x03(\x0b\x32\x19.akesodlp.DiscoverScanDef"\x8c\x01\n\x0f\x44iscoverScanDef\x12\x13\n\x0b\x64iscover_id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x11\n\tscan_path\x18\x03 \x01(\t\x12\x11\n\trecursive\x18\x04 \x01(\x08\x12\x17\n\x0f\x66ile_extensions\x18\x05 \x03(\t\x12\x17\n\x0fpath_exclusions\x18\x06 \x03(\t"\xeb\x01\n\x1cReportDiscoverResultsRequest\x12\x10\n\x08\x61gent_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64iscover_id\x18\x02 \x01(\t\x12\x16\n\x0e\x66iles_examined\x18\x03 \x01(\x03\x12\x15\n\rfiles_scanned\x18\x04 \x01(\x03\x12\x18\n\x10violations_found\x18\x05 \x01(\x03\x12\x19\n\x11\x66iles_quarantined\x18\x06 \x01(\x03\x12\x13\n\x0b\x64uration_ms\x18\x07 \x01(\x03\x12+\n\x08\x66indings\x18\x08 \x03(\x0b\x32\x19.akesodlp.DiscoverFinding"\xc4\x01\n\x0f\x44iscoverFinding\x12\x11\n\tfile_path\x18\x01 \x01(\t\x12\x11\n\tfile_name\x18\x02 \x01(\t\x12\x11\n\tfile_size\x18\x03 \x01(\x03\x12\x12\n\nfile_owner\x18\x04 \x01(\t\x12\x13\n\x0bpolicy_name\x18\x05 \x01(\t\x12$\n\x08severity\x18\x06 \x01(\x0e\x32\x12.akesodlp.Severity\x12\x13\n\x0bmatch_count\x18\x07 \x01(\x05\x12\x14\n\x0c\x61\x63tion_taken\x18\x08 \x01(\t"A\n\x1dReportDiscoverResultsResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t*\x82\x01\n\x10PolicyUpdateType\x12"\n\x1ePOLICY_UPDATE_TYPE_UNSPECIFIED\x10\x00\x12\x0e\n\nPOLICY_ADD\x10\x01\x12\x11\n\rPOLICY_MODIFY\x10\x02\x12\x11\n\rPOLICY_REMOVE\x10\x03\x12\x14\n\x10POLICY_FULL_SYNC\x10\x04*T\n\nTTDVerdict\x12\x1b\n\x17TTD_VERDICT_UNSPECIFIED\x10\x00\x12\r\n\tTTD_ALLOW\x10\x01\x12\r\n\tTTD_BLOCK\x10\x02\x12\x0b\n\x07TTD_LOG\x10\x03*\x88\x01\n\x08Severity\x12\x18\n\x14SEVERITY_UNSPECIFIED\x10\x00\x12\x11\n\rSEVERITY_INFO\x10\x01\x12\x10\n\x0cSEVERITY_LOW\x10\x02\x12\x13\n\x0fSEVERITY_MEDIUM\x10\x03\x12\x11\n\rSEVERITY_HIGH\x10\x04\x12\x15\n\x11SEVERITY_CRITICAL\x10\x05*\xc3\x01\n\x07\x43hannel\x12\x17\n\x13\x43HANNEL_UNSPECIFIED\x10\x00\x12\x0f\n\x0b\x43HANNEL_USB\x10\x01\x12\x19\n\x15\x43HANNEL_NETWORK_SHARE\x10\x02\x12\x15\n\x11\x43HANNEL_CLIPBOARD\x10\x03\x12\x1a\n\x16\x43HANNEL_BROWSER_UPLOAD\x10\x04\x12\x11\n\rCHANNEL_EMAIL\x10\x05\x12\x17\n\x13\x43HANNEL_HTTP_UPLOAD\x10\x06\x12\x14\n\x10\x43HANNEL_DISCOVER\x10\x07\x32\x9d\x05\n\x0f\x41kesoDLPService\x12\x41\n\x08Register\x12\x19.akesodlp.RegisterRequest\x1a\x1a.akesodlp.RegisterResponse\x12\x44\n\tHeartbeat\x12\x1a.akesodlp.HeartbeatRequest\x1a\x1b.akesodlp.HeartbeatResponse\x12J\n\x0bGetPolicies\x12\x1c.akesodlp.GetPoliciesRequest\x1a\x1d.akesodlp.GetPoliciesResponse\x12I\n\rPolicyUpdates\x12\x1e.akesodlp.PolicyUpdatesRequest\x1a\x16.akesodlp.PolicyUpdate0\x01\x12S\n\x0eReportIncident\x12\x1f.akesodlp.ReportIncidentRequest\x1a .akesodlp.ReportIncidentResponse\x12P\n\rDetectContent\x12\x1e.akesodlp.DetectContentRequest\x1a\x1f.akesodlp.DetectContentResponse\x12Y\n\x10GetDiscoverScans\x12!.akesodlp.GetDiscoverScansRequest\x1a".akesodlp.GetDiscoverScansResponse\x12h\n\x15ReportDiscoverResults\x12&.akesodlp.ReportDiscoverResultsRequest\x1a\'.akesodlp.ReportDiscoverResultsResponseB\x10Z\x0e\x61kesodlp/protob\x06proto3'
+)
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
-_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'akesodlp_pb2', _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, "akesodlp_pb2", _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
-  _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z\016akesodlp/proto'
-  _globals['_AGENTCOMMAND_PARAMETERSENTRY']._loaded_options = None
-  _globals['_AGENTCOMMAND_PARAMETERSENTRY']._serialized_options = b'8\001'
-  _globals['_POLICYUPDATETYPE']._serialized_start=4886
-  _globals['_POLICYUPDATETYPE']._serialized_end=5016
-  _globals['_TTDVERDICT']._serialized_start=5018
-  _globals['_TTDVERDICT']._serialized_end=5102
-  _globals['_SEVERITY']._serialized_start=5105
-  _globals['_SEVERITY']._serialized_end=5241
-  _globals['_CHANNEL']._serialized_start=5244
-  _globals['_CHANNEL']._serialized_end=5439
-  _globals['_REGISTERREQUEST']._serialized_start=62
-  _globals['_REGISTERREQUEST']._serialized_end=235
-  _globals['_AGENTCAPABILITIES']._serialized_start=238
-  _globals['_AGENTCAPABILITIES']._serialized_end=379
-  _globals['_REGISTERRESPONSE']._serialized_start=381
-  _globals['_REGISTERRESPONSE']._serialized_end=487
-  _globals['_HEARTBEATREQUEST']._serialized_start=490
-  _globals['_HEARTBEATREQUEST']._serialized_end=677
-  _globals['_AGENTSTATUS']._serialized_start=679
-  _globals['_AGENTSTATUS']._serialized_end=798
-  _globals['_AGENTMETRICS']._serialized_start=801
-  _globals['_AGENTMETRICS']._serialized_end=966
-  _globals['_HEARTBEATRESPONSE']._serialized_start=969
-  _globals['_HEARTBEATRESPONSE']._serialized_end=1111
-  _globals['_AGENTCOMMAND']._serialized_start=1114
-  _globals['_AGENTCOMMAND']._serialized_end=1261
-  _globals['_AGENTCOMMAND_PARAMETERSENTRY']._serialized_start=1212
-  _globals['_AGENTCOMMAND_PARAMETERSENTRY']._serialized_end=1261
-  _globals['_GETPOLICIESREQUEST']._serialized_start=1263
-  _globals['_GETPOLICIESREQUEST']._serialized_end=1326
-  _globals['_GETPOLICIESRESPONSE']._serialized_start=1328
-  _globals['_GETPOLICIESRESPONSE']._serialized_end=1419
-  _globals['_POLICYDEFINITION']._serialized_start=1422
-  _globals['_POLICYDEFINITION']._serialized_end=1781
-  _globals['_SEVERITYTHRESHOLD']._serialized_start=1783
-  _globals['_SEVERITYTHRESHOLD']._serialized_end=1859
-  _globals['_DETECTIONRULEDEF']._serialized_start=1861
-  _globals['_DETECTIONRULEDEF']._serialized_end=1977
-  _globals['_RULECONDITIONDEF']._serialized_start=1979
-  _globals['_RULECONDITIONDEF']._serialized_end=2086
-  _globals['_POLICYEXCEPTIONDEF']._serialized_start=2089
-  _globals['_POLICYEXCEPTIONDEF']._serialized_end=2232
-  _globals['_RESPONSERULEDEF']._serialized_start=2234
-  _globals['_RESPONSERULEDEF']._serialized_end=2328
-  _globals['_RESPONSEACTIONDEF']._serialized_start=2330
-  _globals['_RESPONSEACTIONDEF']._serialized_end=2406
-  _globals['_POLICYUPDATESREQUEST']._serialized_start=2408
-  _globals['_POLICYUPDATESREQUEST']._serialized_end=2473
-  _globals['_POLICYUPDATE']._serialized_start=2476
-  _globals['_POLICYUPDATE']._serialized_end=2623
-  _globals['_REPORTINCIDENTREQUEST']._serialized_start=2625
-  _globals['_REPORTINCIDENTREQUEST']._serialized_end=2710
-  _globals['_INCIDENTREPORT']._serialized_start=2713
-  _globals['_INCIDENTREPORT']._serialized_end=3154
-  _globals['_MATCHDETAIL']._serialized_start=3156
-  _globals['_MATCHDETAIL']._serialized_end=3264
-  _globals['_REPORTINCIDENTRESPONSE']._serialized_start=3266
-  _globals['_REPORTINCIDENTRESPONSE']._serialized_end=3345
-  _globals['_DETECTCONTENTREQUEST']._serialized_start=3348
-  _globals['_DETECTCONTENTREQUEST']._serialized_end=3727
-  _globals['_DETECTCONTENTRESPONSE']._serialized_start=3730
-  _globals['_DETECTCONTENTRESPONSE']._serialized_end=3945
-  _globals['_TTDPOLICYRESULT']._serialized_start=3948
-  _globals['_TTDPOLICYRESULT']._serialized_end=4121
-  _globals['_GETDISCOVERSCANSREQUEST']._serialized_start=4123
-  _globals['_GETDISCOVERSCANSREQUEST']._serialized_end=4166
-  _globals['_GETDISCOVERSCANSRESPONSE']._serialized_start=4168
-  _globals['_GETDISCOVERSCANSRESPONSE']._serialized_end=4236
-  _globals['_DISCOVERSCANDEF']._serialized_start=4239
-  _globals['_DISCOVERSCANDEF']._serialized_end=4379
-  _globals['_REPORTDISCOVERRESULTSREQUEST']._serialized_start=4382
-  _globals['_REPORTDISCOVERRESULTSREQUEST']._serialized_end=4617
-  _globals['_DISCOVERFINDING']._serialized_start=4620
-  _globals['_DISCOVERFINDING']._serialized_end=4816
-  _globals['_REPORTDISCOVERRESULTSRESPONSE']._serialized_start=4818
-  _globals['_REPORTDISCOVERRESULTSRESPONSE']._serialized_end=4883
-  _globals['_AKESODLPSERVICE']._serialized_start=5442
-  _globals['_AKESODLPSERVICE']._serialized_end=6111
+    _globals["DESCRIPTOR"]._loaded_options = None
+    _globals["DESCRIPTOR"]._serialized_options = b"Z\016akesodlp/proto"
+    _globals["_AGENTCOMMAND_PARAMETERSENTRY"]._loaded_options = None
+    _globals["_AGENTCOMMAND_PARAMETERSENTRY"]._serialized_options = b"8\001"
+    _globals["_POLICYUPDATETYPE"]._serialized_start = 4886
+    _globals["_POLICYUPDATETYPE"]._serialized_end = 5016
+    _globals["_TTDVERDICT"]._serialized_start = 5018
+    _globals["_TTDVERDICT"]._serialized_end = 5102
+    _globals["_SEVERITY"]._serialized_start = 5105
+    _globals["_SEVERITY"]._serialized_end = 5241
+    _globals["_CHANNEL"]._serialized_start = 5244
+    _globals["_CHANNEL"]._serialized_end = 5439
+    _globals["_REGISTERREQUEST"]._serialized_start = 62
+    _globals["_REGISTERREQUEST"]._serialized_end = 235
+    _globals["_AGENTCAPABILITIES"]._serialized_start = 238
+    _globals["_AGENTCAPABILITIES"]._serialized_end = 379
+    _globals["_REGISTERRESPONSE"]._serialized_start = 381
+    _globals["_REGISTERRESPONSE"]._serialized_end = 487
+    _globals["_HEARTBEATREQUEST"]._serialized_start = 490
+    _globals["_HEARTBEATREQUEST"]._serialized_end = 677
+    _globals["_AGENTSTATUS"]._serialized_start = 679
+    _globals["_AGENTSTATUS"]._serialized_end = 798
+    _globals["_AGENTMETRICS"]._serialized_start = 801
+    _globals["_AGENTMETRICS"]._serialized_end = 966
+    _globals["_HEARTBEATRESPONSE"]._serialized_start = 969
+    _globals["_HEARTBEATRESPONSE"]._serialized_end = 1111
+    _globals["_AGENTCOMMAND"]._serialized_start = 1114
+    _globals["_AGENTCOMMAND"]._serialized_end = 1261
+    _globals["_AGENTCOMMAND_PARAMETERSENTRY"]._serialized_start = 1212
+    _globals["_AGENTCOMMAND_PARAMETERSENTRY"]._serialized_end = 1261
+    _globals["_GETPOLICIESREQUEST"]._serialized_start = 1263
+    _globals["_GETPOLICIESREQUEST"]._serialized_end = 1326
+    _globals["_GETPOLICIESRESPONSE"]._serialized_start = 1328
+    _globals["_GETPOLICIESRESPONSE"]._serialized_end = 1419
+    _globals["_POLICYDEFINITION"]._serialized_start = 1422
+    _globals["_POLICYDEFINITION"]._serialized_end = 1781
+    _globals["_SEVERITYTHRESHOLD"]._serialized_start = 1783
+    _globals["_SEVERITYTHRESHOLD"]._serialized_end = 1859
+    _globals["_DETECTIONRULEDEF"]._serialized_start = 1861
+    _globals["_DETECTIONRULEDEF"]._serialized_end = 1977
+    _globals["_RULECONDITIONDEF"]._serialized_start = 1979
+    _globals["_RULECONDITIONDEF"]._serialized_end = 2086
+    _globals["_POLICYEXCEPTIONDEF"]._serialized_start = 2089
+    _globals["_POLICYEXCEPTIONDEF"]._serialized_end = 2232
+    _globals["_RESPONSERULEDEF"]._serialized_start = 2234
+    _globals["_RESPONSERULEDEF"]._serialized_end = 2328
+    _globals["_RESPONSEACTIONDEF"]._serialized_start = 2330
+    _globals["_RESPONSEACTIONDEF"]._serialized_end = 2406
+    _globals["_POLICYUPDATESREQUEST"]._serialized_start = 2408
+    _globals["_POLICYUPDATESREQUEST"]._serialized_end = 2473
+    _globals["_POLICYUPDATE"]._serialized_start = 2476
+    _globals["_POLICYUPDATE"]._serialized_end = 2623
+    _globals["_REPORTINCIDENTREQUEST"]._serialized_start = 2625
+    _globals["_REPORTINCIDENTREQUEST"]._serialized_end = 2710
+    _globals["_INCIDENTREPORT"]._serialized_start = 2713
+    _globals["_INCIDENTREPORT"]._serialized_end = 3154
+    _globals["_MATCHDETAIL"]._serialized_start = 3156
+    _globals["_MATCHDETAIL"]._serialized_end = 3264
+    _globals["_REPORTINCIDENTRESPONSE"]._serialized_start = 3266
+    _globals["_REPORTINCIDENTRESPONSE"]._serialized_end = 3345
+    _globals["_DETECTCONTENTREQUEST"]._serialized_start = 3348
+    _globals["_DETECTCONTENTREQUEST"]._serialized_end = 3727
+    _globals["_DETECTCONTENTRESPONSE"]._serialized_start = 3730
+    _globals["_DETECTCONTENTRESPONSE"]._serialized_end = 3945
+    _globals["_TTDPOLICYRESULT"]._serialized_start = 3948
+    _globals["_TTDPOLICYRESULT"]._serialized_end = 4121
+    _globals["_GETDISCOVERSCANSREQUEST"]._serialized_start = 4123
+    _globals["_GETDISCOVERSCANSREQUEST"]._serialized_end = 4166
+    _globals["_GETDISCOVERSCANSRESPONSE"]._serialized_start = 4168
+    _globals["_GETDISCOVERSCANSRESPONSE"]._serialized_end = 4236
+    _globals["_DISCOVERSCANDEF"]._serialized_start = 4239
+    _globals["_DISCOVERSCANDEF"]._serialized_end = 4379
+    _globals["_REPORTDISCOVERRESULTSREQUEST"]._serialized_start = 4382
+    _globals["_REPORTDISCOVERRESULTSREQUEST"]._serialized_end = 4617
+    _globals["_DISCOVERFINDING"]._serialized_start = 4620
+    _globals["_DISCOVERFINDING"]._serialized_end = 4816
+    _globals["_REPORTDISCOVERRESULTSRESPONSE"]._serialized_start = 4818
+    _globals["_REPORTDISCOVERRESULTSRESPONSE"]._serialized_end = 4883
+    _globals["_AKESODLPSERVICE"]._serialized_start = 5442
+    _globals["_AKESODLPSERVICE"]._serialized_end = 6111
 # @@protoc_insertion_point(module_scope)

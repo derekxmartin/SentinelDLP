@@ -57,17 +57,17 @@ class Severity(str, Enum):
 class ConditionOperator(str, Enum):
     """Operators for rule conditions."""
 
-    MATCHES = "matches"           # analyzer produced matches
-    NOT_MATCHES = "not_matches"   # analyzer produced NO matches
-    COUNT_GTE = "count_gte"       # match count >= threshold
-    COUNT_LTE = "count_lte"       # match count <= threshold
+    MATCHES = "matches"  # analyzer produced matches
+    NOT_MATCHES = "not_matches"  # analyzer produced NO matches
+    COUNT_GTE = "count_gte"  # match count >= threshold
+    COUNT_LTE = "count_lte"  # match count <= threshold
 
 
 class ExceptionScope(str, Enum):
     """How an exception applies."""
 
-    ENTIRE_MESSAGE = "entire_message"   # Exclude entire message
-    COMPONENT = "component"             # MCO: remove matched component only
+    ENTIRE_MESSAGE = "entire_message"  # Exclude entire message
+    COMPONENT = "component"  # MCO: remove matched component only
 
 
 class GroupMatchMode(str, Enum):
@@ -110,10 +110,7 @@ class RuleCondition:
         # Filter by component types if specified
         if self.component_types:
             ct_set = set(self.component_types)
-            matches = [
-                m for m in matches
-                if m.component.component_type in ct_set
-            ]
+            matches = [m for m in matches if m.component.component_type in ct_set]
 
         count = len(matches)
 
@@ -199,9 +196,7 @@ class SenderRecipientGroup:
                 # Extract domain from email
                 if "@" in value_lower:
                     domain = value_lower.split("@", 1)[1]
-                    if domain == member_lower or domain.endswith(
-                        "." + member_lower
-                    ):
+                    if domain == member_lower or domain.endswith("." + member_lower):
                         return True
                 elif value_lower == member_lower:
                     return True
@@ -237,9 +232,7 @@ class PolicyException:
     # Custom condition function: (message, detection) → bool
     condition: Callable[[ParsedMessage, DetectionResult], bool] | None = None
 
-    def applies(
-        self, message: ParsedMessage, detection: DetectionResult
-    ) -> bool:
+    def applies(self, message: ParsedMessage, detection: DetectionResult) -> bool:
         """Check if this exception applies to the message."""
         # Custom condition takes priority
         if self.condition is not None:
@@ -437,9 +430,7 @@ class PolicyEvaluator:
             ValueError: If a policy with the same name already exists.
         """
         if any(p.name == policy.name for p in self._policies):
-            raise ValueError(
-                f"Policy with name {policy.name!r} already registered"
-            )
+            raise ValueError(f"Policy with name {policy.name!r} already registered")
         self._policies.append(policy)
         logger.debug("Registered policy: %s", policy.name)
 
@@ -530,9 +521,7 @@ class PolicyEvaluator:
         for rule in policy.detection_rules:
             if rule.evaluate(detection):
                 matched_rules.append(rule.name)
-                contributing_analyzers.update(
-                    rule.matched_analyzers(detection)
-                )
+                contributing_analyzers.update(rule.matched_analyzers(detection))
 
         if not matched_rules:
             # No detection rule matched — no violation
@@ -542,17 +531,14 @@ class PolicyEvaluator:
 
         # Step 2: Group constraints (AND with detection)
         if policy.groups:
-            group_matched = any(
-                g.matches_message(message) for g in policy.groups
-            )
+            group_matched = any(g.matches_message(message) for g in policy.groups)
             if not group_matched:
                 # Group constraint not satisfied — no violation
                 return violation
 
         # Step 3: Collect matches from contributing analyzers
         relevant_matches = [
-            m for m in detection.matches
-            if m.analyzer_name in contributing_analyzers
+            m for m in detection.matches if m.analyzer_name in contributing_analyzers
         ]
 
         # Step 4: Exception evaluation
@@ -583,15 +569,11 @@ class PolicyEvaluator:
         violation.match_count = len(relevant_matches)
 
         # Step 6: Severity calculation
-        violation.severity = self._calculate_severity(
-            policy, len(relevant_matches)
-        )
+        violation.severity = self._calculate_severity(policy, len(relevant_matches))
 
         return violation
 
-    def _calculate_severity(
-        self, policy: Policy, match_count: int
-    ) -> Severity:
+    def _calculate_severity(self, policy: Policy, match_count: int) -> Severity:
         """Calculate severity based on match count and severity levels.
 
         Severity levels are checked from highest min_matches to lowest.

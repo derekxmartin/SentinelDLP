@@ -31,21 +31,24 @@ class DiscoverScan(Base, UUIDMixin, TimestampMixin):
 
     # Assignment
     agent_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("agents.id", ondelete="SET NULL"),
+        UUID(as_uuid=True),
+        ForeignKey("agents.id", ondelete="SET NULL"),
         index=True,
     )
 
     # Status
     status: Mapped[DiscoverStatus] = mapped_column(
-        Enum(DiscoverStatus), default=DiscoverStatus.PENDING,
-        nullable=False, index=True,
+        Enum(DiscoverStatus),
+        default=DiscoverStatus.PENDING,
+        nullable=False,
+        index=True,
     )
 
     # Scan configuration
     scan_path: Mapped[str] = mapped_column(String(1024), nullable=False)
     recursive: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    file_extensions: Mapped[list | None] = mapped_column(JSONB)   # [".txt", ".csv"]
-    path_exclusions: Mapped[list | None] = mapped_column(JSONB)   # ["C:\\Windows"]
+    file_extensions: Mapped[list | None] = mapped_column(JSONB)  # [".txt", ".csv"]
+    path_exclusions: Mapped[list | None] = mapped_column(JSONB)  # ["C:\\Windows"]
 
     # Timing
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -57,7 +60,9 @@ class DiscoverScan(Base, UUIDMixin, TimestampMixin):
     violations_found: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     files_quarantined: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     duration_ms: Mapped[int | None] = mapped_column(Integer)
-    findings: Mapped[list | None] = mapped_column(JSONB)  # [{file_path, policy_name, severity, ...}]
+    findings: Mapped[list | None] = mapped_column(
+        JSONB
+    )  # [{file_path, policy_name, severity, ...}]
 
     # Relationships
     agent: Mapped["Agent"] = relationship(lazy="selectin")  # noqa: F821

@@ -354,9 +354,7 @@ async def change_password(
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not auth_service.verify_password(
-        body.current_password, db_user.password_hash
-    ):
+    if not auth_service.verify_password(body.current_password, db_user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Current password is incorrect",
@@ -381,8 +379,7 @@ async def list_roles(
     """List all roles (requires authentication)."""
     roles = await auth_service.get_roles(db)
     return [
-        RoleResponse(id=r.id, name=r.name, description=r.description)
-        for r in roles
+        RoleResponse(id=r.id, name=r.name, description=r.description) for r in roles
     ]
 
 

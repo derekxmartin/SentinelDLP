@@ -12,16 +12,11 @@ from __future__ import annotations
 import csv
 import io
 import logging
-from dataclasses import asdict
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 from server.services.report_generator import (
-    AggregationBucket,
     DetailReport,
-    IncidentRecord,
     SummaryReport,
-    TrendDelta,
     TrendReport,
 )
 
@@ -42,26 +37,40 @@ def export_detail_csv(report: DetailReport) -> str:
     writer = csv.writer(output)
 
     # Header
-    writer.writerow([
-        "ID", "Policy", "Severity", "Status", "Channel",
-        "Source Type", "User", "File Name", "Action Taken",
-        "Match Count", "Created At",
-    ])
+    writer.writerow(
+        [
+            "ID",
+            "Policy",
+            "Severity",
+            "Status",
+            "Channel",
+            "Source Type",
+            "User",
+            "File Name",
+            "Action Taken",
+            "Match Count",
+            "Created At",
+        ]
+    )
 
     for inc in report.incidents:
-        writer.writerow([
-            inc.id,
-            inc.policy_name,
-            inc.severity,
-            inc.status,
-            inc.channel,
-            inc.source_type,
-            inc.user or "",
-            inc.file_name or "",
-            inc.action_taken,
-            inc.match_count,
-            inc.created_at.isoformat() if isinstance(inc.created_at, datetime) else str(inc.created_at),
-        ])
+        writer.writerow(
+            [
+                inc.id,
+                inc.policy_name,
+                inc.severity,
+                inc.status,
+                inc.channel,
+                inc.source_type,
+                inc.user or "",
+                inc.file_name or "",
+                inc.action_taken,
+                inc.match_count,
+                inc.created_at.isoformat()
+                if isinstance(inc.created_at, datetime)
+                else str(inc.created_at),
+            ]
+        )
 
     return output.getvalue()
 
@@ -78,7 +87,9 @@ def export_summary_csv(report: SummaryReport) -> str:
 
     # Overview section
     writer.writerow(["Summary Report"])
-    writer.writerow(["Period", f"{report.start_date.date()} to {report.end_date.date()}"])
+    writer.writerow(
+        ["Period", f"{report.start_date.date()} to {report.end_date.date()}"]
+    )
     writer.writerow(["Total Incidents", report.total_incidents])
     writer.writerow([])
 
@@ -109,25 +120,31 @@ def export_trend_csv(report: TrendReport) -> str:
     writer = csv.writer(output)
 
     writer.writerow(["Trend Report"])
-    writer.writerow([
-        "Current Period",
-        f"{report.current_period.start_date.date()} to {report.current_period.end_date.date()}",
-    ])
-    writer.writerow([
-        "Previous Period",
-        f"{report.previous_period.start_date.date()} to {report.previous_period.end_date.date()}",
-    ])
+    writer.writerow(
+        [
+            "Current Period",
+            f"{report.current_period.start_date.date()} to {report.current_period.end_date.date()}",
+        ]
+    )
+    writer.writerow(
+        [
+            "Previous Period",
+            f"{report.previous_period.start_date.date()} to {report.previous_period.end_date.date()}",
+        ]
+    )
     writer.writerow([])
 
     writer.writerow(["Metric", "Current", "Previous", "Delta", "Change %"])
     for d in report.deltas:
-        writer.writerow([
-            d.metric.replace("_", " ").title(),
-            d.current_value,
-            d.previous_value,
-            f"{'+' if d.delta > 0 else ''}{d.delta}",
-            f"{'+' if d.delta_percent > 0 else ''}{d.delta_percent}%",
-        ])
+        writer.writerow(
+            [
+                d.metric.replace("_", " ").title(),
+                d.current_value,
+                d.previous_value,
+                f"{'+' if d.delta > 0 else ''}{d.delta}",
+                f"{'+' if d.delta_percent > 0 else ''}{d.delta_percent}%",
+            ]
+        )
 
     return output.getvalue()
 
@@ -189,40 +206,55 @@ def _export_detail_pdf_reportlab(report: DetailReport) -> bytes:
 
     # Title
     elements.append(Paragraph("Incident Detail Report", styles["Title"]))
-    elements.append(Paragraph(
-        f"Period: {report.start_date.date()} to {report.end_date.date()} "
-        f"| Total: {report.total_incidents}",
-        styles["Normal"],
-    ))
+    elements.append(
+        Paragraph(
+            f"Period: {report.start_date.date()} to {report.end_date.date()} "
+            f"| Total: {report.total_incidents}",
+            styles["Normal"],
+        )
+    )
     elements.append(Spacer(1, 0.25 * inch))
 
     # Table
     headers = ["Policy", "Severity", "Status", "Channel", "User", "Action", "Date"]
     data = [headers]
     for inc in report.incidents[:500]:  # Cap at 500 rows for PDF
-        data.append([
-            inc.policy_name[:30],
-            inc.severity,
-            inc.status,
-            inc.channel,
-            (inc.user or "")[:20],
-            inc.action_taken,
-            inc.created_at.strftime("%Y-%m-%d %H:%M") if isinstance(inc.created_at, datetime) else str(inc.created_at),
-        ])
+        data.append(
+            [
+                inc.policy_name[:30],
+                inc.severity,
+                inc.status,
+                inc.channel,
+                (inc.user or "")[:20],
+                inc.action_taken,
+                inc.created_at.strftime("%Y-%m-%d %H:%M")
+                if isinstance(inc.created_at, datetime)
+                else str(inc.created_at),
+            ]
+        )
 
     table = Table(data, repeatRows=1)
-    table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("FONTSIZE", (0, 0), (-1, 0), 9),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f1f5f9")]),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 6),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-    ]))
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("FONTSIZE", (0, 0), (-1, 0), 9),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                (
+                    "ROWBACKGROUNDS",
+                    (0, 1),
+                    (-1, -1),
+                    [colors.white, colors.HexColor("#f1f5f9")],
+                ),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+            ]
+        )
+    )
     elements.append(table)
 
     doc.build(elements)
@@ -249,11 +281,13 @@ def _export_summary_pdf_reportlab(report: SummaryReport) -> bytes:
     elements = []
 
     elements.append(Paragraph("Incident Summary Report", styles["Title"]))
-    elements.append(Paragraph(
-        f"Period: {report.start_date.date()} to {report.end_date.date()} "
-        f"| Total Incidents: {report.total_incidents}",
-        styles["Normal"],
-    ))
+    elements.append(
+        Paragraph(
+            f"Period: {report.start_date.date()} to {report.end_date.date()} "
+            f"| Total Incidents: {report.total_incidents}",
+            styles["Normal"],
+        )
+    )
     elements.append(Spacer(1, 0.3 * inch))
 
     sections = [
@@ -274,14 +308,23 @@ def _export_summary_pdf_reportlab(report: SummaryReport) -> bytes:
             data.append([b.key, str(b.count), f"{b.percentage}%"])
 
         table = Table(data, colWidths=[3 * inch, 1.5 * inch, 1 * inch])
-        table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            ("FONTSIZE", (0, 0), (-1, -1), 9),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f1f5f9")]),
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-        ]))
+        table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    (
+                        "ROWBACKGROUNDS",
+                        (0, 1),
+                        (-1, -1),
+                        [colors.white, colors.HexColor("#f1f5f9")],
+                    ),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                ]
+            )
+        )
         elements.append(table)
         elements.append(Spacer(1, 0.2 * inch))
 

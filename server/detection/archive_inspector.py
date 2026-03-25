@@ -90,9 +90,7 @@ def _validate_member_path(name: str) -> None:
             raise PathTraversalError(f"Path traversal in archive: {name!r}")
         # Check Windows reserved names (just the filename part)
         if _WINDOWS_RESERVED.match(part):
-            raise PathTraversalError(
-                f"Reserved Windows name in archive: {name!r}"
-            )
+            raise PathTraversalError(f"Reserved Windows name in archive: {name!r}")
 
 
 @dataclass
@@ -129,9 +127,7 @@ class _ExtractionState:
 
     def check_files(self, limits: ArchiveLimits) -> None:
         if self.total_files >= limits.max_files:
-            raise MaxFilesError(
-                f"Total file count would exceed {limits.max_files}"
-            )
+            raise MaxFilesError(f"Total file count would exceed {limits.max_files}")
 
     def add(self, size: int) -> None:
         self.total_bytes += size
@@ -322,9 +318,7 @@ class ArchiveInspector:
             state.errors.append(f"Failed to extract {filename}: {exc}")
             logger.error("Archive extraction failed for %s: %s", filename, exc)
 
-    def _extract_zip(
-        self, content, filename, msg, state, depth, path_prefix
-    ) -> None:
+    def _extract_zip(self, content, filename, msg, state, depth, path_prefix) -> None:
         with zipfile.ZipFile(io.BytesIO(content)) as zf:
             for info in zf.infolist():
                 if info.is_dir():
@@ -351,15 +345,11 @@ class ArchiveInspector:
                     data, entry_name, msg, state, depth + 1, entry_path + "/"
                 )
 
-    def _extract_tar(
-        self, content, filename, msg, state, depth, path_prefix
-    ) -> None:
+    def _extract_tar(self, content, filename, msg, state, depth, path_prefix) -> None:
         with tarfile.open(fileobj=io.BytesIO(content)) as tf:
             for member in tf.getmembers():
                 if member.issym() or member.islnk():
-                    state.errors.append(
-                        f"Skipping symlink/hardlink: {member.name}"
-                    )
+                    state.errors.append(f"Skipping symlink/hardlink: {member.name}")
                     continue
                 if not member.isfile():
                     continue
@@ -387,9 +377,7 @@ class ArchiveInspector:
                     data, entry_name, msg, state, depth + 1, entry_path + "/"
                 )
 
-    def _extract_gzip(
-        self, content, filename, msg, state, depth, path_prefix
-    ) -> None:
+    def _extract_gzip(self, content, filename, msg, state, depth, path_prefix) -> None:
         decompressed = gzip.decompress(content)
         _check_ratio(len(content), len(decompressed), self.limits)
         state.check_size(len(decompressed), self.limits)
@@ -408,9 +396,7 @@ class ArchiveInspector:
             decompressed, inner_name, msg, state, depth + 1, entry_path
         )
 
-    def _extract_bzip2(
-        self, content, filename, msg, state, depth, path_prefix
-    ) -> None:
+    def _extract_bzip2(self, content, filename, msg, state, depth, path_prefix) -> None:
         import bz2
 
         decompressed = bz2.decompress(content)
@@ -428,9 +414,7 @@ class ArchiveInspector:
             decompressed, inner_name, msg, state, depth + 1, entry_path
         )
 
-    def _extract_7z(
-        self, content, filename, msg, state, depth, path_prefix
-    ) -> None:
+    def _extract_7z(self, content, filename, msg, state, depth, path_prefix) -> None:
         import tempfile
         import shutil
         from pathlib import Path
@@ -469,9 +453,7 @@ class ArchiveInspector:
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
 
-    def _extract_rar(
-        self, content, filename, msg, state, depth, path_prefix
-    ) -> None:
+    def _extract_rar(self, content, filename, msg, state, depth, path_prefix) -> None:
         import rarfile
 
         with rarfile.RarFile(io.BytesIO(content)) as rf:

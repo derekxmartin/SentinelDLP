@@ -18,9 +18,7 @@ def generate_secret() -> str:
     return pyotp.random_base32()
 
 
-def get_provisioning_uri(
-    secret: str, username: str, issuer: str = "AkesoDLP"
-) -> str:
+def get_provisioning_uri(secret: str, username: str, issuer: str = "AkesoDLP") -> str:
     """Generate an otpauth:// URI for QR code enrollment."""
     totp = pyotp.TOTP(secret)
     return totp.provisioning_uri(name=username, issuer_name=issuer)

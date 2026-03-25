@@ -19,20 +19,17 @@ Similarity = 1 - (hamming_distance / 64).  Default threshold: 0.40.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import re
 import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Sequence
 
 from server.detection.analyzers import BaseAnalyzer
 from server.detection.models import (
     ComponentType,
     Match,
-    MessageComponent,
     ParsedMessage,
 )
 
@@ -51,7 +48,11 @@ DEFAULT_SIMILARITY_THRESHOLD = 0.40
 MIN_TEXT_LENGTH = 50
 
 # Storage file for the fingerprint index
-DEFAULT_INDEX_PATH = Path(__file__).resolve().parent.parent.parent.parent / "data" / "fingerprint_index.json"
+DEFAULT_INDEX_PATH = (
+    Path(__file__).resolve().parent.parent.parent.parent
+    / "data"
+    / "fingerprint_index.json"
+)
 
 
 def _normalize_text(text: str) -> str:
@@ -162,7 +163,9 @@ class FingerprintIndex:
                 for item in data.get("fingerprints", []):
                     rec = FingerprintRecord(**item)
                     self._records[rec.id] = rec
-                logger.info("Loaded %d fingerprints from %s", len(self._records), self._path)
+                logger.info(
+                    "Loaded %d fingerprints from %s", len(self._records), self._path
+                )
             except (json.JSONDecodeError, TypeError, KeyError) as e:
                 logger.warning("Failed to load fingerprint index: %s", e)
 

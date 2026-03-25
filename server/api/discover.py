@@ -65,8 +65,12 @@ async def list_discovers(
 ):
     """List discover scans with pagination and optional filters."""
     scans, total = await discover_service.list_discovers(
-        db, page=page, page_size=page_size,
-        status_filter=status_filter, agent_id=agent_id, search=search,
+        db,
+        page=page,
+        page_size=page_size,
+        status_filter=status_filter,
+        agent_id=agent_id,
+        search=search,
     )
     return DiscoverListResponse(
         items=scans,
@@ -155,6 +159,7 @@ async def trigger_discover(
 
     # Queue command for agent delivery via next heartbeat
     from server.command_queue import get_command_queue, AgentCommand
+
     params = {
         "discover_id": str(discover_id),
         "scan_path": scan.scan_path or "",

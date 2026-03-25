@@ -17,7 +17,6 @@ This script adds demo data on top of the existing seed.
 
 import asyncio
 import random
-import uuid
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -35,15 +34,60 @@ from sqlalchemy import select
 # =============================================================================
 
 DEMO_USERS = [
-    {"username": "jsmith", "full_name": "John Smith", "email": "jsmith@akeso.local", "role": "Analyst"},
-    {"username": "agarcia", "full_name": "Ana Garcia", "email": "agarcia@akeso.local", "role": "Analyst"},
-    {"username": "mchen", "full_name": "Michael Chen", "email": "mchen@akeso.local", "role": "Analyst"},
-    {"username": "sjohnson", "full_name": "Sarah Johnson", "email": "sjohnson@akeso.local", "role": "Remediator"},
-    {"username": "bwilson", "full_name": "Brian Wilson", "email": "bwilson@akeso.local", "role": "Remediator"},
-    {"username": "klee", "full_name": "Karen Lee", "email": "klee@akeso.local", "role": "Analyst"},
-    {"username": "rpatel", "full_name": "Raj Patel", "email": "rpatel@akeso.local", "role": "Analyst"},
-    {"username": "tnguyen", "full_name": "Tina Nguyen", "email": "tnguyen@akeso.local", "role": "Analyst"},
-    {"username": "dmartin", "full_name": "Derek Martin", "email": "dmartin@akeso.local", "role": "Admin"},
+    {
+        "username": "jsmith",
+        "full_name": "John Smith",
+        "email": "jsmith@akeso.local",
+        "role": "Analyst",
+    },
+    {
+        "username": "agarcia",
+        "full_name": "Ana Garcia",
+        "email": "agarcia@akeso.local",
+        "role": "Analyst",
+    },
+    {
+        "username": "mchen",
+        "full_name": "Michael Chen",
+        "email": "mchen@akeso.local",
+        "role": "Analyst",
+    },
+    {
+        "username": "sjohnson",
+        "full_name": "Sarah Johnson",
+        "email": "sjohnson@akeso.local",
+        "role": "Remediator",
+    },
+    {
+        "username": "bwilson",
+        "full_name": "Brian Wilson",
+        "email": "bwilson@akeso.local",
+        "role": "Remediator",
+    },
+    {
+        "username": "klee",
+        "full_name": "Karen Lee",
+        "email": "klee@akeso.local",
+        "role": "Analyst",
+    },
+    {
+        "username": "rpatel",
+        "full_name": "Raj Patel",
+        "email": "rpatel@akeso.local",
+        "role": "Analyst",
+    },
+    {
+        "username": "tnguyen",
+        "full_name": "Tina Nguyen",
+        "email": "tnguyen@akeso.local",
+        "role": "Analyst",
+    },
+    {
+        "username": "dmartin",
+        "full_name": "Derek Martin",
+        "email": "dmartin@akeso.local",
+        "role": "Admin",
+    },
 ]
 
 
@@ -59,7 +103,13 @@ DEMO_AGENTS = [
         "driver_version": "0.1.0",
         "ip_address": "10.0.1.101",
         "status": AgentStatus.ONLINE,
-        "capabilities": {"usb_monitor": True, "clipboard_monitor": True, "browser_monitor": True, "network_share_monitor": True, "discover": True},
+        "capabilities": {
+            "usb_monitor": True,
+            "clipboard_monitor": True,
+            "browser_monitor": True,
+            "network_share_monitor": True,
+            "discover": True,
+        },
     },
     {
         "hostname": "WS-HR-02",
@@ -68,7 +118,13 @@ DEMO_AGENTS = [
         "driver_version": "0.1.0",
         "ip_address": "10.0.1.102",
         "status": AgentStatus.ONLINE,
-        "capabilities": {"usb_monitor": True, "clipboard_monitor": True, "browser_monitor": True, "network_share_monitor": True, "discover": True},
+        "capabilities": {
+            "usb_monitor": True,
+            "clipboard_monitor": True,
+            "browser_monitor": True,
+            "network_share_monitor": True,
+            "discover": True,
+        },
     },
     {
         "hostname": "WS-ENGINEERING-03",
@@ -77,7 +133,13 @@ DEMO_AGENTS = [
         "driver_version": "0.1.0",
         "ip_address": "10.0.2.201",
         "status": AgentStatus.ONLINE,
-        "capabilities": {"usb_monitor": True, "clipboard_monitor": True, "browser_monitor": True, "network_share_monitor": False, "discover": True},
+        "capabilities": {
+            "usb_monitor": True,
+            "clipboard_monitor": True,
+            "browser_monitor": True,
+            "network_share_monitor": False,
+            "discover": True,
+        },
     },
     {
         "hostname": "WS-EXEC-04",
@@ -86,7 +148,13 @@ DEMO_AGENTS = [
         "driver_version": "0.1.0",
         "ip_address": "10.0.3.50",
         "status": AgentStatus.STALE,
-        "capabilities": {"usb_monitor": True, "clipboard_monitor": True, "browser_monitor": True, "network_share_monitor": True, "discover": False},
+        "capabilities": {
+            "usb_monitor": True,
+            "clipboard_monitor": True,
+            "browser_monitor": True,
+            "network_share_monitor": True,
+            "discover": False,
+        },
     },
     {
         "hostname": "WS-REMOTE-05",
@@ -95,7 +163,13 @@ DEMO_AGENTS = [
         "driver_version": "0.1.0",
         "ip_address": "192.168.1.55",
         "status": AgentStatus.OFFLINE,
-        "capabilities": {"usb_monitor": True, "clipboard_monitor": True, "browser_monitor": True, "network_share_monitor": False, "discover": False},
+        "capabilities": {
+            "usb_monitor": True,
+            "clipboard_monitor": True,
+            "browser_monitor": True,
+            "network_share_monitor": False,
+            "discover": False,
+        },
     },
 ]
 
@@ -153,38 +227,78 @@ ACTION_MAP = {
 }
 
 FILE_NAMES = [
-    "customer_records.xlsx", "payroll_q4.csv", "financial_report.pdf",
-    "employee_ssn_list.xlsx", "credit_card_data.csv", "patient_records.pdf",
-    "merger_plans.docx", "source_code.zip", "api_keys.txt", "passwords.csv",
-    "board_minutes.pdf", "salary_data.xlsx", "tax_returns.pdf",
-    "client_contracts.docx", "marketing_budget.xlsx", "hr_terminations.xlsx",
-    "trade_secrets.pdf", "design_specs.docx", "audit_findings.pdf",
-    "insurance_claims.csv", "medical_records.pdf", "bank_statements.pdf",
-    "passport_scans.zip", "drivers_licenses.pdf", "investment_portfolio.xlsx",
+    "customer_records.xlsx",
+    "payroll_q4.csv",
+    "financial_report.pdf",
+    "employee_ssn_list.xlsx",
+    "credit_card_data.csv",
+    "patient_records.pdf",
+    "merger_plans.docx",
+    "source_code.zip",
+    "api_keys.txt",
+    "passwords.csv",
+    "board_minutes.pdf",
+    "salary_data.xlsx",
+    "tax_returns.pdf",
+    "client_contracts.docx",
+    "marketing_budget.xlsx",
+    "hr_terminations.xlsx",
+    "trade_secrets.pdf",
+    "design_specs.docx",
+    "audit_findings.pdf",
+    "insurance_claims.csv",
+    "medical_records.pdf",
+    "bank_statements.pdf",
+    "passport_scans.zip",
+    "drivers_licenses.pdf",
+    "investment_portfolio.xlsx",
 ]
 
 DESTINATIONS = [
-    "USB Drive E:", "USB Drive F:", "personal@gmail.com", "partner@external.com",
-    "\\\\fileserver\\shared", "\\\\nas01\\public", "https://dropbox.com/upload",
-    "https://drive.google.com", "https://wetransfer.com", "https://pastebin.com",
-    "clipboard", "https://slack-files.com", "https://github.com",
+    "USB Drive E:",
+    "USB Drive F:",
+    "personal@gmail.com",
+    "partner@external.com",
+    "\\\\fileserver\\shared",
+    "\\\\nas01\\public",
+    "https://dropbox.com/upload",
+    "https://drive.google.com",
+    "https://wetransfer.com",
+    "https://pastebin.com",
+    "clipboard",
+    "https://slack-files.com",
+    "https://github.com",
 ]
 
 ENDPOINT_USERS = [
-    "CORP\\jsmith", "CORP\\agarcia", "CORP\\mchen", "CORP\\sjohnson",
-    "CORP\\bwilson", "CORP\\klee", "CORP\\rpatel", "CORP\\tnguyen",
-    "CORP\\dmartin", "CORP\\admin",
+    "CORP\\jsmith",
+    "CORP\\agarcia",
+    "CORP\\mchen",
+    "CORP\\sjohnson",
+    "CORP\\bwilson",
+    "CORP\\klee",
+    "CORP\\rpatel",
+    "CORP\\tnguyen",
+    "CORP\\dmartin",
+    "CORP\\admin",
 ]
 
 SOURCE_IPS = [
-    "10.0.1.101", "10.0.1.102", "10.0.2.201", "10.0.3.50",
-    "192.168.1.55", "10.0.1.110", "10.0.2.215", "10.0.1.130",
+    "10.0.1.101",
+    "10.0.1.102",
+    "10.0.2.201",
+    "10.0.3.50",
+    "192.168.1.55",
+    "10.0.1.110",
+    "10.0.2.215",
+    "10.0.1.130",
 ]
 
 
 # =============================================================================
 # Weighted random helpers
 # =============================================================================
+
 
 def weighted_choice(options: dict):
     items = list(options.keys())
@@ -203,6 +317,7 @@ def weighted_channel():
 # Main seed
 # =============================================================================
 
+
 async def demo_seed():
     print("AkesoDLP Demo Seed Script")
     print("=" * 50)
@@ -216,6 +331,7 @@ async def demo_seed():
 
         # --- Look up existing roles ---
         from server.models import Role, User
+
         result = await session.execute(select(Role))
         roles = {r.name: r for r in result.scalars().all()}
         if not roles:
@@ -243,10 +359,18 @@ async def demo_seed():
         print("\nCreating demo agents...")
         agents = []
         group_assignments = [
-            "Finance & HR", "Finance & HR", "Engineering", "Executive", "Remote Workers"
+            "Finance & HR",
+            "Finance & HR",
+            "Engineering",
+            "Executive",
+            "Remote Workers",
         ]
         for i, agent_def in enumerate(DEMO_AGENTS):
-            heartbeat_offset = random.randint(0, 300) if agent_def["status"] == AgentStatus.ONLINE else random.randint(3600, 86400)
+            heartbeat_offset = (
+                random.randint(0, 300)
+                if agent_def["status"] == AgentStatus.ONLINE
+                else random.randint(3600, 86400)
+            )
             agent = Agent(
                 hostname=agent_def["hostname"],
                 os_version=agent_def["os_version"],
@@ -266,7 +390,9 @@ async def demo_seed():
 
         # --- Demo Users ---
         print("\nCreating demo users...")
-        password_hash = bcrypt.hashpw(b"DemoUser2026!", bcrypt.gensalt(rounds=12)).decode()
+        password_hash = bcrypt.hashpw(
+            b"DemoUser2026!", bcrypt.gensalt(rounds=12)
+        ).decode()
         for u in DEMO_USERS:
             # Check if user already exists
             existing = await session.execute(
@@ -296,6 +422,7 @@ async def demo_seed():
 
         # --- Look up policies ---
         from server.models import Policy
+
         result = await session.execute(select(Policy))
         policies = list(result.scalars().all())
         policy_map = {p.name: p for p in policies}
@@ -313,7 +440,9 @@ async def demo_seed():
             hours = random.uniform(7, 22)  # Business-ish hours
             incident_time = now - timedelta(days=days_ago, hours=random.uniform(0, 4))
             incident_time = incident_time.replace(
-                hour=int(hours), minute=random.randint(0, 59), second=random.randint(0, 59)
+                hour=int(hours),
+                minute=random.randint(0, 59),
+                second=random.randint(0, 59),
             )
 
             # Pick attributes
@@ -344,7 +473,9 @@ async def demo_seed():
                 file_path=f"C:\\Users\\{user.split(chr(92))[-1]}\\Documents\\{file_name}",
                 file_name=file_name,
                 file_size=random.randint(1024, 50 * 1024 * 1024),
-                file_type=file_name.rsplit(".", 1)[-1] if "." in file_name else "unknown",
+                file_type=file_name.rsplit(".", 1)[-1]
+                if "." in file_name
+                else "unknown",
                 user=user,
                 source_ip=source_ip,
                 destination=destination,
@@ -366,8 +497,14 @@ async def demo_seed():
         severity_counts = {}
         channel_counts = {}
         for inc in incidents:
-            sev = inc.severity.value if hasattr(inc.severity, "value") else str(inc.severity)
-            ch = inc.channel.value if hasattr(inc.channel, "value") else str(inc.channel)
+            sev = (
+                inc.severity.value
+                if hasattr(inc.severity, "value")
+                else str(inc.severity)
+            )
+            ch = (
+                inc.channel.value if hasattr(inc.channel, "value") else str(inc.channel)
+            )
             severity_counts[sev] = severity_counts.get(sev, 0) + 1
             channel_counts[ch] = channel_counts.get(ch, 0) + 1
 
@@ -380,7 +517,7 @@ async def demo_seed():
     print(f"  Incidents: {len(incidents)}")
     print(f"  Severity breakdown: {severity_counts}")
     print(f"  Channel breakdown: {channel_counts}")
-    print(f"  Demo user password: DemoUser2026!")
+    print("  Demo user password: DemoUser2026!")
 
 
 if __name__ == "__main__":

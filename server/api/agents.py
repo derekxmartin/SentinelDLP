@@ -18,7 +18,7 @@ import logging
 import math
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -50,18 +50,34 @@ async def agent_stats(
 ):
     """Get agent summary statistics."""
     total = (await db.execute(select(func.count()).select_from(Agent))).scalar() or 0
-    online = (await db.execute(
-        select(func.count()).select_from(Agent).where(Agent.status == AgentStatus.ONLINE)
-    )).scalar() or 0
-    offline = (await db.execute(
-        select(func.count()).select_from(Agent).where(Agent.status == AgentStatus.OFFLINE)
-    )).scalar() or 0
-    stale = (await db.execute(
-        select(func.count()).select_from(Agent).where(Agent.status == AgentStatus.STALE)
-    )).scalar() or 0
-    error = (await db.execute(
-        select(func.count()).select_from(Agent).where(Agent.status == AgentStatus.ERROR)
-    )).scalar() or 0
+    online = (
+        await db.execute(
+            select(func.count())
+            .select_from(Agent)
+            .where(Agent.status == AgentStatus.ONLINE)
+        )
+    ).scalar() or 0
+    offline = (
+        await db.execute(
+            select(func.count())
+            .select_from(Agent)
+            .where(Agent.status == AgentStatus.OFFLINE)
+        )
+    ).scalar() or 0
+    stale = (
+        await db.execute(
+            select(func.count())
+            .select_from(Agent)
+            .where(Agent.status == AgentStatus.STALE)
+        )
+    ).scalar() or 0
+    error = (
+        await db.execute(
+            select(func.count())
+            .select_from(Agent)
+            .where(Agent.status == AgentStatus.ERROR)
+        )
+    ).scalar() or 0
 
     return {
         "total": total,
@@ -191,9 +207,7 @@ async def get_agent(
 ):
     """Get agent detail."""
     result = await db.execute(
-        select(Agent)
-        .options(selectinload(Agent.group))
-        .where(Agent.id == agent_id)
+        select(Agent).options(selectinload(Agent.group)).where(Agent.id == agent_id)
     )
     agent = result.scalar_one_or_none()
     if not agent:
@@ -210,9 +224,7 @@ async def update_agent(
 ):
     """Update agent fields (group assignment, etc.)."""
     result = await db.execute(
-        select(Agent)
-        .options(selectinload(Agent.group))
-        .where(Agent.id == agent_id)
+        select(Agent).options(selectinload(Agent.group)).where(Agent.id == agent_id)
     )
     agent = result.scalar_one_or_none()
     if not agent:

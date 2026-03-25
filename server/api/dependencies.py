@@ -138,9 +138,7 @@ class RateLimiter:
         now = time.monotonic()
 
         # Prune old attempts
-        bucket.attempts = [
-            t for t in bucket.attempts if now - t < self.window_seconds
-        ]
+        bucket.attempts = [t for t in bucket.attempts if now - t < self.window_seconds]
 
         if len(bucket.attempts) >= self.max_attempts:
             raise HTTPException(

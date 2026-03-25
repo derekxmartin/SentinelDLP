@@ -79,18 +79,23 @@ def _build_default_engine() -> DetectionEngine:
     identifiers = [
         DataIdentifierConfig(
             name="Credit Card Number",
-            patterns=[r"\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b"],
-            validator="luhn", confidence=0.95,
+            patterns=[
+                r"\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b"
+            ],
+            validator="luhn",
+            confidence=0.95,
         ),
         DataIdentifierConfig(
             name="US SSN",
             patterns=[r"\b\d{3}-\d{2}-\d{4}\b"],
-            validator="ssn_area", confidence=0.9,
+            validator="ssn_area",
+            confidence=0.9,
         ),
         DataIdentifierConfig(
             name="Email Address",
             patterns=[r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,63}\b"],
-            validator="email_domain", confidence=0.85,
+            validator="email_domain",
+            confidence=0.85,
         ),
     ]
 
@@ -177,6 +182,7 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
 
                 # Deliver any pending commands for this agent
                 from server.command_queue import get_command_queue
+
                 pending_cmds = get_command_queue().drain(str(agent_id))
                 proto_cmds = [
                     pb2.AgentCommand(
@@ -208,39 +214,65 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
         for rule in policy.detection_rules:
             conditions = []
             for c in rule.conditions:
-                config_json = json.dumps(c.config) if isinstance(c.config, dict) else str(c.config or "{}")
-                conditions.append(pb2.RuleConditionDef(
-                    condition_type=c.condition_type.value if hasattr(c.condition_type, "value") else str(c.condition_type),
-                    component=c.component.value if hasattr(c.component, "value") else str(c.component),
-                    config_json=config_json,
-                    match_count_min=c.match_count_min,
-                ))
-            rules.append(pb2.DetectionRuleDef(
-                rule_id=str(rule.id),
-                name=rule.name,
-                rule_type=rule.rule_type,
-                conditions=conditions,
-            ))
+                config_json = (
+                    json.dumps(c.config)
+                    if isinstance(c.config, dict)
+                    else str(c.config or "{}")
+                )
+                conditions.append(
+                    pb2.RuleConditionDef(
+                        condition_type=c.condition_type.value
+                        if hasattr(c.condition_type, "value")
+                        else str(c.condition_type),
+                        component=c.component.value
+                        if hasattr(c.component, "value")
+                        else str(c.component),
+                        config_json=config_json,
+                        match_count_min=c.match_count_min,
+                    )
+                )
+            rules.append(
+                pb2.DetectionRuleDef(
+                    rule_id=str(rule.id),
+                    name=rule.name,
+                    rule_type=rule.rule_type,
+                    conditions=conditions,
+                )
+            )
 
         # Exceptions
         exceptions = []
         for exc in policy.exceptions:
             exc_conditions = []
             for c in exc.conditions:
-                config_json = json.dumps(c.config) if isinstance(c.config, dict) else str(c.config or "{}")
-                exc_conditions.append(pb2.RuleConditionDef(
-                    condition_type=c.condition_type.value if hasattr(c.condition_type, "value") else str(c.condition_type),
-                    component=c.component.value if hasattr(c.component, "value") else str(c.component),
-                    config_json=config_json,
-                    match_count_min=c.match_count_min,
-                ))
-            exceptions.append(pb2.PolicyExceptionDef(
-                exception_id=str(exc.id),
-                name=exc.name,
-                scope=exc.scope.value if hasattr(exc.scope, "value") else str(exc.scope),
-                exception_type=exc.exception_type,
-                conditions=exc_conditions,
-            ))
+                config_json = (
+                    json.dumps(c.config)
+                    if isinstance(c.config, dict)
+                    else str(c.config or "{}")
+                )
+                exc_conditions.append(
+                    pb2.RuleConditionDef(
+                        condition_type=c.condition_type.value
+                        if hasattr(c.condition_type, "value")
+                        else str(c.condition_type),
+                        component=c.component.value
+                        if hasattr(c.component, "value")
+                        else str(c.component),
+                        config_json=config_json,
+                        match_count_min=c.match_count_min,
+                    )
+                )
+            exceptions.append(
+                pb2.PolicyExceptionDef(
+                    exception_id=str(exc.id),
+                    name=exc.name,
+                    scope=exc.scope.value
+                    if hasattr(exc.scope, "value")
+                    else str(exc.scope),
+                    exception_type=exc.exception_type,
+                    conditions=exc_conditions,
+                )
+            )
 
         # Response rule
         response_rule = None
@@ -248,11 +280,15 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
             rr = policy.response_rule
             actions = []
             for a in getattr(rr, "actions", []):
-                actions.append(pb2.ResponseActionDef(
-                    action_type=a.action_type.value if hasattr(a.action_type, "value") else str(a.action_type),
-                    config_json=json.dumps(a.config) if a.config else "{}",
-                    order=a.order,
-                ))
+                actions.append(
+                    pb2.ResponseActionDef(
+                        action_type=a.action_type.value
+                        if hasattr(a.action_type, "value")
+                        else str(a.action_type),
+                        config_json=json.dumps(a.config) if a.config else "{}",
+                        order=a.order,
+                    )
+                )
             response_rule = pb2.ResponseRuleDef(
                 rule_id=str(rr.id),
                 name=rr.name,
@@ -266,10 +302,14 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
             if isinstance(raw, str):
                 raw = json.loads(raw)
             for t in raw:
-                thresholds.append(pb2.SeverityThreshold(
-                    threshold=t["threshold"],
-                    severity=_SEVERITY_TO_PROTO.get(t["severity"], pb2.SEVERITY_MEDIUM),
-                ))
+                thresholds.append(
+                    pb2.SeverityThreshold(
+                        threshold=t["threshold"],
+                        severity=_SEVERITY_TO_PROTO.get(
+                            t["severity"], pb2.SEVERITY_MEDIUM
+                        ),
+                    )
+                )
 
         return pb2.PolicyDefinition(
             policy_id=str(policy.id),
@@ -318,7 +358,9 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
             if request.current_version < current_ver:
                 logger.info(
                     "PolicyUpdates: agent %s at v%d, server at v%d — sending full sync",
-                    request.agent_id, request.current_version, current_ver,
+                    request.agent_id,
+                    request.current_version,
+                    current_ver,
                 )
                 async with async_session() as db:
                     policies = await agent_service.get_active_policies(db)
@@ -366,7 +408,9 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
         except asyncio.CancelledError:
             pass
         except Exception:
-            logger.exception("PolicyUpdates: stream error for agent %s", request.agent_id)
+            logger.exception(
+                "PolicyUpdates: stream error for agent %s", request.agent_id
+            )
         finally:
             await bus.unsubscribe(queue)
             logger.debug("PolicyUpdates: agent %s disconnected", request.agent_id)
@@ -379,13 +423,15 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
             inc = request.incident
             matches = []
             for m in inc.matches:
-                matches.append({
-                    "identifier": m.identifier,
-                    "pattern": m.pattern,
-                    "matched_values": list(m.matched_values),
-                    "count": m.count,
-                    "component": m.component,
-                })
+                matches.append(
+                    {
+                        "identifier": m.identifier,
+                        "pattern": m.pattern,
+                        "matched_values": list(m.matched_values),
+                        "count": m.count,
+                        "component": m.component,
+                    }
+                )
 
             async with async_session() as db:
                 incident = await agent_service.create_incident_from_report(
@@ -441,7 +487,9 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
                     message = ParsedMessage()
                     if request.file_content:
                         try:
-                            text = request.file_content.decode("utf-8", errors="replace")
+                            text = request.file_content.decode(
+                                "utf-8", errors="replace"
+                            )
                             message.add_component(ComponentType.BODY, text)
                         except Exception:
                             pass
@@ -491,13 +539,15 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
             # Build match details
             match_details = []
             for m in result.matches:
-                match_details.append(pb2.MatchDetail(
-                    identifier=m.rule_name,
-                    pattern=m.metadata.get("identifier", ""),
-                    matched_values=[m.matched_text],
-                    count=1,
-                    component=m.component.component_type.value,
-                ))
+                match_details.append(
+                    pb2.MatchDetail(
+                        identifier=m.rule_name,
+                        pattern=m.metadata.get("identifier", ""),
+                        matched_values=[m.matched_text],
+                        count=1,
+                        component=m.component.component_type.value,
+                    )
+                )
 
             return pb2.DetectContentResponse(
                 request_id=request.request_id,
@@ -517,7 +567,6 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
                 message=str(exc),
             )
 
-
     # --- GetDiscoverScans ---
 
     async def GetDiscoverScans(self, request, context):
@@ -527,12 +576,16 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
             async with async_session() as db:
                 from server.services import discover_service
                 from server.models.discover import DiscoverStatus
+
                 scans, _ = await discover_service.list_discovers(
-                    db, status_filter=DiscoverStatus.RUNNING.value, agent_id=agent_id,
+                    db,
+                    status_filter=DiscoverStatus.RUNNING.value,
+                    agent_id=agent_id,
                 )
                 # Also include unassigned running scans (agent_id is null)
                 unassigned, _ = await discover_service.list_discovers(
-                    db, status_filter=DiscoverStatus.RUNNING.value,
+                    db,
+                    status_filter=DiscoverStatus.RUNNING.value,
                 )
 
                 seen_ids = set()
@@ -542,14 +595,18 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
                     if sid in seen_ids:
                         continue
                     seen_ids.add(sid)
-                    proto_scans.append(pb2.DiscoverScanDef(
-                        discover_id=sid,
-                        name=scan.name or "",
-                        scan_path=scan.scan_path or "",
-                        recursive=scan.recursive if scan.recursive is not None else True,
-                        file_extensions=scan.file_extensions or [],
-                        path_exclusions=scan.path_exclusions or [],
-                    ))
+                    proto_scans.append(
+                        pb2.DiscoverScanDef(
+                            discover_id=sid,
+                            name=scan.name or "",
+                            scan_path=scan.scan_path or "",
+                            recursive=scan.recursive
+                            if scan.recursive is not None
+                            else True,
+                            file_extensions=scan.file_extensions or [],
+                            path_exclusions=scan.path_exclusions or [],
+                        )
+                    )
 
                 return pb2.GetDiscoverScansResponse(scans=proto_scans)
         except Exception as exc:
@@ -566,40 +623,48 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
             discover_id = uuid.UUID(request.discover_id)
             async with async_session() as db:
                 from server.services import discover_service
+
                 scan = await discover_service.get_discover(db, discover_id)
                 if scan is None:
                     context.set_code(grpc.StatusCode.NOT_FOUND)
                     context.set_details("Discover scan not found")
                     return pb2.ReportDiscoverResultsResponse(
-                        success=False, message="Scan not found",
+                        success=False,
+                        message="Scan not found",
                     )
 
                 # Convert findings to JSON-serializable list
                 findings_json = []
                 for f in request.findings:
-                    findings_json.append({
-                        "file_path": f.file_path,
-                        "file_name": f.file_name,
-                        "file_size": f.file_size,
-                        "file_owner": f.file_owner,
-                        "policy_name": f.policy_name,
-                        "severity": pb2.Severity.Name(f.severity),
-                        "match_count": f.match_count,
-                        "action_taken": f.action_taken,
-                    })
+                    findings_json.append(
+                        {
+                            "file_path": f.file_path,
+                            "file_name": f.file_name,
+                            "file_size": f.file_size,
+                            "file_owner": f.file_owner,
+                            "policy_name": f.policy_name,
+                            "severity": pb2.Severity.Name(f.severity),
+                            "match_count": f.match_count,
+                            "action_taken": f.action_taken,
+                        }
+                    )
 
                 # Assign agent_id if not already set
                 if not scan.agent_id:
                     scan.agent_id = request.agent_id
 
-                await discover_service.complete_discover(db, scan, {
-                    "files_examined": request.files_examined,
-                    "files_scanned": request.files_scanned,
-                    "violations_found": request.violations_found,
-                    "files_quarantined": request.files_quarantined,
-                    "duration_ms": request.duration_ms,
-                    "findings": findings_json,
-                })
+                await discover_service.complete_discover(
+                    db,
+                    scan,
+                    {
+                        "files_examined": request.files_examined,
+                        "files_scanned": request.files_scanned,
+                        "violations_found": request.violations_found,
+                        "files_quarantined": request.files_quarantined,
+                        "duration_ms": request.duration_ms,
+                        "findings": findings_json,
+                    },
+                )
                 await db.commit()
 
                 return pb2.ReportDiscoverResultsResponse(
@@ -611,7 +676,8 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(str(exc))
             return pb2.ReportDiscoverResultsResponse(
-                success=False, message=str(exc),
+                success=False,
+                message=str(exc),
             )
 
 
@@ -638,10 +704,9 @@ async def serve(
         The running gRPC server instance.
     """
     from server.grpc_rate_limiter import RateLimitInterceptor
+
     server = grpc.aio.server(interceptors=[RateLimitInterceptor()])
-    pb2_grpc.add_AkesoDLPServiceServicer_to_server(
-        AkesoDLPServicer(), server
-    )
+    pb2_grpc.add_AkesoDLPServiceServicer_to_server(AkesoDLPServicer(), server)
 
     if server_cert and server_key and ca_cert:
         # mTLS

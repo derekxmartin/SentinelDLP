@@ -30,18 +30,22 @@ async def lifespan(app: FastAPI):
     # Ensure new tables exist (non-destructive — skips existing tables)
     from server.database import engine
     from server.models import Base
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
     # Initialize policy event bus Redis bridge
     import logging
+
     _logger = logging.getLogger(__name__)
     try:
         from server.policy_events import init_redis_bridge
+
         await init_redis_bridge()
     except Exception as exc:
         _logger.warning(
-            "Redis bridge failed to start: %s — policy push will use in-process only", exc,
+            "Redis bridge failed to start: %s — policy push will use in-process only",
+            exc,
         )
 
     # Launch gRPC server alongside FastAPI
@@ -54,11 +58,13 @@ async def lifespan(app: FastAPI):
         _logger.warning(
             "gRPC server failed to start (port %s): %s — "
             "API will run without agent gRPC. Kill the stale process to restore.",
-            settings.grpc_port, exc,
+            settings.grpc_port,
+            exc,
         )
     yield
     # Shutdown
     from server.policy_events import shutdown_redis_bridge
+
     await shutdown_redis_bridge()
     if grpc_server is not None:
         await grpc_server.stop(grace=5)

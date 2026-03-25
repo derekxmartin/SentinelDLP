@@ -40,6 +40,8 @@ class ResponseAction(Base, UUIDMixin, TimestampMixin):
     order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     response_rule_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("response_rules.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("response_rules.id", ondelete="CASCADE"),
+        nullable=False,
     )
     response_rule: Mapped["ResponseRule"] = relationship(back_populates="actions")

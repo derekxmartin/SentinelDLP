@@ -19,9 +19,8 @@ All events include:
 
 from __future__ import annotations
 
-import json
 import logging
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
@@ -78,10 +77,8 @@ def build_ecs_event(
         # Required fields
         "source_type": "akeso_dlp",
         "event_type": event_type.value,
-
         # ECS timestamp
         "@timestamp": ts_str,
-
         # ECS event fields
         "event": {
             "kind": "alert",
@@ -93,12 +90,10 @@ def build_ecs_event(
             "module": "akeso_dlp",
             "dataset": "dlp.incidents",
         },
-
         # ECS source fields
         "source": {
             "type": incident.source_type,
         },
-
         # DLP-specific fields (Section 3.11)
         "dlp": {
             "policy": {
@@ -109,7 +104,6 @@ def build_ecs_event(
             "action": incident.action_taken,
             "match_count": incident.match_count,
         },
-
         # ECS observer (the DLP system)
         "observer": {
             "vendor": "AkesoDLP",

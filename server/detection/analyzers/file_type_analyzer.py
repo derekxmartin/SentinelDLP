@@ -52,19 +52,34 @@ MIME_TYPE_DB: dict[str, tuple[FileCategory, str]] = {
     "application/pdf": (FileCategory.DOCUMENT, "PDF"),
     "application/msword": (FileCategory.DOCUMENT, "Microsoft Word (DOC)"),
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": (
-        FileCategory.DOCUMENT, "Microsoft Word (DOCX)",
+        FileCategory.DOCUMENT,
+        "Microsoft Word (DOCX)",
     ),
     "application/vnd.ms-excel": (FileCategory.DOCUMENT, "Microsoft Excel (XLS)"),
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": (
-        FileCategory.DOCUMENT, "Microsoft Excel (XLSX)",
+        FileCategory.DOCUMENT,
+        "Microsoft Excel (XLSX)",
     ),
-    "application/vnd.ms-powerpoint": (FileCategory.DOCUMENT, "Microsoft PowerPoint (PPT)"),
+    "application/vnd.ms-powerpoint": (
+        FileCategory.DOCUMENT,
+        "Microsoft PowerPoint (PPT)",
+    ),
     "application/vnd.openxmlformats-officedocument.presentationml.presentation": (
-        FileCategory.DOCUMENT, "Microsoft PowerPoint (PPTX)",
+        FileCategory.DOCUMENT,
+        "Microsoft PowerPoint (PPTX)",
     ),
-    "application/vnd.oasis.opendocument.text": (FileCategory.DOCUMENT, "OpenDocument Text (ODT)"),
-    "application/vnd.oasis.opendocument.spreadsheet": (FileCategory.DOCUMENT, "OpenDocument Spreadsheet (ODS)"),
-    "application/vnd.oasis.opendocument.presentation": (FileCategory.DOCUMENT, "OpenDocument Presentation (ODP)"),
+    "application/vnd.oasis.opendocument.text": (
+        FileCategory.DOCUMENT,
+        "OpenDocument Text (ODT)",
+    ),
+    "application/vnd.oasis.opendocument.spreadsheet": (
+        FileCategory.DOCUMENT,
+        "OpenDocument Spreadsheet (ODS)",
+    ),
+    "application/vnd.oasis.opendocument.presentation": (
+        FileCategory.DOCUMENT,
+        "OpenDocument Presentation (ODP)",
+    ),
     "application/rtf": (FileCategory.DOCUMENT, "Rich Text Format (RTF)"),
     "text/plain": (FileCategory.DOCUMENT, "Plain Text"),
     "text/csv": (FileCategory.DOCUMENT, "CSV"),
@@ -80,7 +95,10 @@ MIME_TYPE_DB: dict[str, tuple[FileCategory, str]] = {
     "application/x-executable": (FileCategory.EXECUTABLE, "Linux Executable (ELF)"),
     "application/x-mach-binary": (FileCategory.EXECUTABLE, "macOS Executable (Mach-O)"),
     "application/x-sharedlib": (FileCategory.EXECUTABLE, "Shared Library (SO)"),
-    "application/vnd.microsoft.portable-executable": (FileCategory.EXECUTABLE, "Portable Executable (PE)"),
+    "application/vnd.microsoft.portable-executable": (
+        FileCategory.EXECUTABLE,
+        "Portable Executable (PE)",
+    ),
     "application/x-msdownload": (FileCategory.EXECUTABLE, "Windows Executable (EXE)"),
     "application/java-archive": (FileCategory.EXECUTABLE, "Java Archive (JAR)"),
     "application/x-java-applet": (FileCategory.EXECUTABLE, "Java Applet"),
@@ -322,7 +340,8 @@ class FileTypeAnalyzer(BaseAnalyzer):
                             analyzer_name=self.name,
                             rule_name=rule.name,
                             component=component,
-                            matched_text=file_info.filename or f"[{file_info.type_name}]",
+                            matched_text=file_info.filename
+                            or f"[{file_info.type_name}]",
                             start_offset=0,
                             end_offset=0,
                             confidence=rule.confidence,

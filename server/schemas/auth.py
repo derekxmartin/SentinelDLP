@@ -8,6 +8,7 @@ from server.schemas.base import CamelModel
 
 # --- Login ---
 
+
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -32,6 +33,7 @@ class TokenRefreshResponse(CamelModel):
 
 # --- MFA Enrollment ---
 
+
 class MFAEnrollResponse(CamelModel):
     secret: str
     qr_uri: str
@@ -46,6 +48,7 @@ class MFADisableRequest(BaseModel):
 
 
 # --- User ---
+
 
 class UserCreate(BaseModel):
     username: str = Field(min_length=3, max_length=100)
@@ -82,6 +85,7 @@ class PasswordChangeRequest(BaseModel):
 
 # --- Role ---
 
+
 class RoleResponse(CamelModel):
     id: uuid.UUID
     name: str
@@ -89,6 +93,7 @@ class RoleResponse(CamelModel):
 
 
 # --- Current User ---
+
 
 class MeResponse(CamelModel):
     id: uuid.UUID
