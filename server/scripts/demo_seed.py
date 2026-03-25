@@ -26,7 +26,7 @@ from server.database import async_session, engine
 from server.models import Base
 from server.models.agent import Agent, AgentGroup, AgentStatus
 from server.models.incident import Channel, Incident, IncidentStatus
-from server.models.base import Severity
+from server.models.policy import Severity
 from sqlalchemy import select
 
 
