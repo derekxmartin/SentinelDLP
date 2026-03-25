@@ -1,0 +1,73 @@
+[
+  {
+    "@timestamp": "2026-03-24T14:00:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:policy_violation",
+    "event": { "kind": "alert", "category": "intrusion_detection", "action": "detect", "outcome": "success", "severity": 8 },
+    "host": { "name": "DESKTOP-NEMH3S1", "os": { "family": "windows" } },
+    "user": { "name": "jsmith", "domain": "CORP" },
+    "file": { "name": "customer_data.csv", "path": "E:\\customer_data.csv", "size": 2048000 },
+    "dlp": {
+      "policy": { "name": "PII Protection — SSN", "id": "pol-005" },
+      "classification": "HIGH",
+      "channel": "endpoint",
+      "source_type": "usb",
+      "match_count": 150,
+      "identifiers": ["ssn"],
+      "action_taken": "block",
+      "removable_media": {
+        "device_type": "USB Mass Storage",
+        "volume_label": "KINGSTON",
+        "drive_letter": "E:",
+        "serial_number": "AA00000000000489"
+      }
+    }
+  },
+  {
+    "@timestamp": "2026-03-24T14:30:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:policy_violation",
+    "event": { "kind": "alert", "category": "intrusion_detection", "action": "detect", "outcome": "success", "severity": 5 },
+    "host": { "name": "WS-FINANCE-03", "os": { "family": "windows" } },
+    "user": { "name": "accountant_patel", "domain": "CORP" },
+    "file": { "name": "tax_returns.pdf", "path": "F:\\Backup\\tax_returns.pdf", "size": 512000 },
+    "dlp": {
+      "policy": { "name": "SOX Financial Controls", "id": "pol-003" },
+      "classification": "MEDIUM",
+      "channel": "endpoint",
+      "source_type": "usb",
+      "match_count": 3,
+      "identifiers": ["financial-data", "ssn"],
+      "action_taken": "log",
+      "removable_media": {
+        "device_type": "USB Mass Storage",
+        "volume_label": "BACKUP_DRIVE",
+        "drive_letter": "F:",
+        "serial_number": "BB11111111111234"
+      }
+    }
+  },
+  {
+    "@timestamp": "2026-03-24T15:00:00.000Z",
+    "source_type": "akeso_dlp",
+    "event_type": "dlp:file_blocked",
+    "event": { "kind": "alert", "category": "intrusion_detection", "action": "block", "outcome": "success", "severity": 9 },
+    "host": { "name": "LAPTOP-EXEC-01", "os": { "family": "windows" } },
+    "user": { "name": "cfo_martinez", "domain": "CORP" },
+    "file": { "name": "board_presentation.pptx", "path": "G:\\board_presentation.pptx", "size": 8192000 },
+    "dlp": {
+      "policy": { "name": "Executive Confidential", "id": "pol-006" },
+      "classification": "CRITICAL",
+      "channel": "endpoint",
+      "source_type": "usb",
+      "action_taken": "block",
+      "block_reason": "Executive confidential content blocked from removable media",
+      "removable_media": {
+        "device_type": "USB Mass Storage",
+        "volume_label": "SANDISK",
+        "drive_letter": "G:",
+        "serial_number": "CC22222222222567"
+      }
+    }
+  }
+]
