@@ -80,10 +80,10 @@ class TestFullLifecycle:
             pytest.skip("No incident available")
         resp = client.patch(
             f"/api/incidents/{incident_id}",
-            json={"status": "investigating"},
+            json={"status": "in_progress"},
         )
         assert resp.status_code == 200, resp.text
-        assert resp.json()["status"] == "investigating"
+        assert resp.json()["status"] == "in_progress"
 
     def test_08_resolve_incident(self, client: httpx.Client):
         """Remediator resolves the incident."""
