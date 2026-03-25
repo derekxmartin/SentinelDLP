@@ -22,6 +22,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AuthGuard from './components/AuthGuard';
 import CommandPalette from './components/CommandPalette';
 import Layout from './components/Layout';
+import Agents from './pages/Agents';
+import AgentDetail from './pages/AgentDetail';
 import Dashboard from './pages/Dashboard';
 import Discovers from './pages/Discovers';
 import Fingerprints from './pages/Fingerprints';
@@ -75,6 +77,8 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="incidents" element={<Incidents />} />
           <Route path="incidents/:id" element={<IncidentSnapshot />} />
+          <Route path="agents" element={<Agents />} />
+          <Route path="agents/:id" element={<AgentDetail />} />
           <Route path="discovers" element={<Discovers />} />
           <Route path="policies" element={<Policies />} />
           <Route path="policies/:id" element={<PolicyEditor />} />
