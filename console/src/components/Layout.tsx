@@ -40,6 +40,8 @@ const NAV_ITEMS = [
   { to: '/agents', icon: Monitor, label: 'Agents' },
   { to: '/discovers', icon: HardDrive, label: 'Discover' },
   { to: '/identifiers', icon: BookOpen, label: 'Identifiers' },
+  { to: '/dictionaries', icon: BookOpen, label: 'Dictionaries' },
+  { to: '/response-rules', icon: Shield, label: 'Response Rules' },
   { to: '/users', icon: Users, label: 'Users' },
   { to: '/reports', icon: FileBarChart, label: 'Reports' },
   { to: '/risk', icon: AlertTriangle, label: 'User Risk' },
