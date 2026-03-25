@@ -34,8 +34,8 @@
 
     <!-- Properties configurable via command line -->
     <Property Id="SERVER_ADDRESS" Value="localhost:50051" />
-    <Property Id="SIEM_ENDPOINT" Value="" />
-    <Property Id="SIEM_API_KEY" Value="" />
+    <Property Id="SIEM_ENDPOINT" Secure="yes" />
+    <Property Id="SIEM_API_KEY" Secure="yes" Hidden="yes" />
 
     <!-- Install directory -->
     <StandardDirectory Id="ProgramFiles64Folder">
@@ -92,12 +92,7 @@
           Type="ownProcess"
           Start="auto"
           ErrorControl="normal"
-          Account="LocalSystem">
-          <ServiceConfig
-            DelayedAutoStart="yes"
-            OnInstall="yes"
-            OnReinstall="yes" />
-        </ServiceInstall>
+          Account="LocalSystem" />
         <ServiceControl
           Id="StartAkesoDLPAgent"
           Name="AkesoDLPAgent"
@@ -124,8 +119,8 @@
       Return="ignore" />
 
     <InstallExecuteSequence>
-      <Custom Action="InstallDriver" After="InstallFiles">NOT REMOVE</Custom>
-      <Custom Action="UnloadDriver" Before="RemoveFiles">REMOVE="ALL"</Custom>
+      <Custom Action="InstallDriver" After="InstallFiles" Condition="NOT REMOVE" />
+      <Custom Action="UnloadDriver" Before="RemoveFiles" Condition="REMOVE=&quot;ALL&quot;" />
     </InstallExecuteSequence>
 
     <!-- Feature tree -->
