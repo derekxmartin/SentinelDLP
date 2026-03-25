@@ -41,7 +41,9 @@ async def list_dictionaries(
     return list(result.scalars().all())
 
 
-@router.post("", response_model=KeywordDictionaryResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=KeywordDictionaryResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_dictionary(
     body: KeywordDictionaryCreate,
     user=Depends(RequirePermission("policies:write")),
@@ -52,7 +54,9 @@ async def create_dictionary(
         select(KeywordDictionary).where(KeywordDictionary.name == body.name)
     )
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail=f"Dictionary '{body.name}' already exists")
+        raise HTTPException(
+            status_code=409, detail=f"Dictionary '{body.name}' already exists"
+        )
 
     dictionary = KeywordDictionary(
         name=body.name,

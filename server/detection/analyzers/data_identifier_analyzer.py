@@ -104,9 +104,7 @@ class DataIdentifierAnalyzer(BaseAnalyzer):
             self._validators.update(custom_validators)
 
         # Compile patterns and validate config
-        self._identifiers: list[
-            tuple[DataIdentifierConfig, list[re2.Pattern]]
-        ] = []
+        self._identifiers: list[tuple[DataIdentifierConfig, list[re2.Pattern]]] = []
 
         for ident in identifiers:
             # Validate that the validator exists
@@ -160,9 +158,7 @@ class DataIdentifierAnalyzer(BaseAnalyzer):
 
         for ident, compiled_patterns in self._identifiers:
             validator_fn = (
-                self._validators.get(ident.validator)
-                if ident.validator
-                else None
+                self._validators.get(ident.validator) if ident.validator else None
             )
 
             for component in components:

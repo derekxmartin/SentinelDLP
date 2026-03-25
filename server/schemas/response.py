@@ -8,6 +8,7 @@ from server.schemas.base import ActionTypeEnum, CamelModel
 
 # --- Response Action ---
 
+
 class ResponseActionCreate(BaseModel):
     action_type: ActionTypeEnum
     config: dict | None = None
@@ -22,6 +23,7 @@ class ResponseActionResponse(CamelModel):
 
 
 # --- Response Rule ---
+
 
 class ResponseRuleCreate(BaseModel):
     name: str = Field(max_length=255)

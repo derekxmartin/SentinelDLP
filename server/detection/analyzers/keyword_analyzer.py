@@ -127,7 +127,9 @@ class KeywordAnalyzer(BaseAnalyzer):
         """
         super().__init__(name=name, target_components=target_components)
         self._dictionaries = dictionaries
-        self._automatons: list[tuple[KeywordDictionaryConfig, ahocorasick.Automaton]] = []
+        self._automatons: list[
+            tuple[KeywordDictionaryConfig, ahocorasick.Automaton]
+        ] = []
 
         for d in dictionaries:
             automaton = self._build_automaton(d)
@@ -189,9 +191,7 @@ class KeywordAnalyzer(BaseAnalyzer):
 
                 # Proximity matches
                 if config.proximity_rules:
-                    prox_matches = self._match_proximity(
-                        config, component
-                    )
+                    prox_matches = self._match_proximity(config, component)
                     matches.extend(prox_matches)
 
         logger.debug(
@@ -211,11 +211,7 @@ class KeywordAnalyzer(BaseAnalyzer):
         """Find keyword matches in a single component."""
         matches: list[Match] = []
         text = component.content
-        search_text = (
-            text.lower()
-            if config.case_mode == CaseMode.INSENSITIVE
-            else text
-        )
+        search_text = text.lower() if config.case_mode == CaseMode.INSENSITIVE else text
 
         for end_idx, (original_keyword, length) in automaton.iter(search_text):
             start_idx = end_idx - length + 1
@@ -268,21 +264,23 @@ class KeywordAnalyzer(BaseAnalyzer):
             return matches
 
         # Build list of (word_index, word_text_lower)
-        words_lower = [
-            text[s:e].lower() for s, e in word_spans
-        ]
+        words_lower = [text[s:e].lower() for s, e in word_spans]
 
         for rule in config.proximity_rules:
-            kw_a = rule.keyword_a.lower() if rule.case_mode == CaseMode.INSENSITIVE else rule.keyword_a
-            kw_b = rule.keyword_b.lower() if rule.case_mode == CaseMode.INSENSITIVE else rule.keyword_b
+            kw_a = (
+                rule.keyword_a.lower()
+                if rule.case_mode == CaseMode.INSENSITIVE
+                else rule.keyword_a
+            )
+            kw_b = (
+                rule.keyword_b.lower()
+                if rule.case_mode == CaseMode.INSENSITIVE
+                else rule.keyword_b
+            )
 
             # Find word indices where each keyword appears
-            a_indices = [
-                i for i, w in enumerate(words_lower) if w == kw_a
-            ]
-            b_indices = [
-                i for i, w in enumerate(words_lower) if w == kw_b
-            ]
+            a_indices = [i for i, w in enumerate(words_lower) if w == kw_a]
+            b_indices = [i for i, w in enumerate(words_lower) if w == kw_b]
 
             # Check all pairs for proximity
             for ai in a_indices:

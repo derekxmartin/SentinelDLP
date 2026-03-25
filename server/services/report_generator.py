@@ -13,7 +13,6 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -131,9 +130,7 @@ def generate_summary(
     Returns:
         SummaryReport with aggregations.
     """
-    filtered = [
-        i for i in incidents if start_date <= i.created_at <= end_date
-    ]
+    filtered = [i for i in incidents if start_date <= i.created_at <= end_date]
     total = len(filtered)
 
     return SummaryReport(
@@ -207,9 +204,11 @@ def generate_trend(
     deltas = []
 
     # Total incidents delta
-    deltas.append(_compute_delta(
-        "total_incidents", current.total_incidents, previous.total_incidents
-    ))
+    deltas.append(
+        _compute_delta(
+            "total_incidents", current.total_incidents, previous.total_incidents
+        )
+    )
 
     # Per-severity deltas
     severity_order = ["critical", "high", "medium", "low", "info"]

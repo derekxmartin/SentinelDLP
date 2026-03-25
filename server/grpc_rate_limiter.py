@@ -17,7 +17,6 @@ import logging
 import os
 import time
 import threading
-from collections import defaultdict
 from dataclasses import dataclass, field
 
 import grpc
@@ -29,9 +28,11 @@ logger = logging.getLogger(__name__)
 # Token bucket
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class TokenBucket:
     """Thread-safe token bucket rate limiter."""
+
     capacity: float
     refill_rate: float  # tokens per second
     tokens: float = field(init=False)
@@ -62,10 +63,18 @@ class TokenBucket:
 
 # Method-specific limits (requests per minute)
 _METHOD_LIMITS: dict[str, int] = {
-    "/akesodlp.AkesoDLPService/Heartbeat": int(os.getenv("DLP_GRPC_RATE_HEARTBEAT", "60")),
-    "/akesodlp.AkesoDLPService/DetectContent": int(os.getenv("DLP_GRPC_RATE_DETECT", "120")),
-    "/akesodlp.AkesoDLPService/ReportIncident": int(os.getenv("DLP_GRPC_RATE_INCIDENT", "60")),
-    "/akesodlp.AkesoDLPService/ReportDiscoverResults": int(os.getenv("DLP_GRPC_RATE_INCIDENT", "60")),
+    "/akesodlp.AkesoDLPService/Heartbeat": int(
+        os.getenv("DLP_GRPC_RATE_HEARTBEAT", "60")
+    ),
+    "/akesodlp.AkesoDLPService/DetectContent": int(
+        os.getenv("DLP_GRPC_RATE_DETECT", "120")
+    ),
+    "/akesodlp.AkesoDLPService/ReportIncident": int(
+        os.getenv("DLP_GRPC_RATE_INCIDENT", "60")
+    ),
+    "/akesodlp.AkesoDLPService/ReportDiscoverResults": int(
+        os.getenv("DLP_GRPC_RATE_INCIDENT", "60")
+    ),
 }
 _DEFAULT_LIMIT = int(os.getenv("DLP_GRPC_RATE_DEFAULT", "120"))
 
@@ -107,8 +116,7 @@ class RateLimitRegistry:
         with self._lock:
             self._last_cleanup = time.monotonic()
             stale = [
-                k for k, b in self._buckets.items()
-                if b.tokens >= b.capacity - 0.1
+                k for k, b in self._buckets.items() if b.tokens >= b.capacity - 0.1
             ]
             for k in stale:
                 del self._buckets[k]
@@ -123,6 +131,7 @@ _registry = RateLimitRegistry()
 # ---------------------------------------------------------------------------
 # gRPC server interceptor
 # ---------------------------------------------------------------------------
+
 
 def _extract_agent_id(request_or_message) -> str:
     """Best-effort extraction of agent_id from the request proto."""
@@ -167,7 +176,9 @@ class RateLimitInterceptor(grpc.aio.ServerInterceptor):
             agent_id = _extract_agent_id(request)
             if not _registry.allow(agent_id, method):
                 logger.warning(
-                    "Rate limit exceeded: agent=%s method=%s", agent_id, method,
+                    "Rate limit exceeded: agent=%s method=%s",
+                    agent_id,
+                    method,
                 )
                 await context.abort(
                     grpc.StatusCode.RESOURCE_EXHAUSTED,
@@ -175,6 +186,7 @@ class RateLimitInterceptor(grpc.aio.ServerInterceptor):
                     f"Try again shortly.",
                 )
             return await original_handler(request, context)
+
         return wrapper
 
     def _make_rate_limited_stream(self, original_handler, method):
@@ -182,7 +194,9 @@ class RateLimitInterceptor(grpc.aio.ServerInterceptor):
             agent_id = _extract_agent_id(request)
             if not _registry.allow(agent_id, method):
                 logger.warning(
-                    "Rate limit exceeded: agent=%s method=%s", agent_id, method,
+                    "Rate limit exceeded: agent=%s method=%s",
+                    agent_id,
+                    method,
                 )
                 await context.abort(
                     grpc.StatusCode.RESOURCE_EXHAUSTED,
@@ -191,4 +205,5 @@ class RateLimitInterceptor(grpc.aio.ServerInterceptor):
                 )
             async for response in original_handler(request, context):
                 yield response
+
         return wrapper

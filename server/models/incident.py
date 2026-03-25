@@ -37,14 +37,18 @@ class Incident(Base, UUIDMixin, TimestampMixin):
     policy_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
 
     # Severity & status
-    severity: Mapped[Severity] = mapped_column(Enum(Severity), nullable=False, index=True)
+    severity: Mapped[Severity] = mapped_column(
+        Enum(Severity), nullable=False, index=True
+    )
     status: Mapped[IncidentStatus] = mapped_column(
         Enum(IncidentStatus), default=IncidentStatus.NEW, nullable=False, index=True
     )
 
     # Source
     channel: Mapped[Channel] = mapped_column(Enum(Channel), nullable=False, index=True)
-    source_type: Mapped[str] = mapped_column(String(50), nullable=False)  # "endpoint", "network", "discover"
+    source_type: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # "endpoint", "network", "discover"
 
     # Context
     file_path: Mapped[str | None] = mapped_column(String(1024))
@@ -58,8 +62,12 @@ class Incident(Base, UUIDMixin, TimestampMixin):
     # Detection details
     match_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     matched_content: Mapped[dict | None] = mapped_column(JSONB)  # highlighted matches
-    data_identifiers: Mapped[dict | None] = mapped_column(JSONB)  # matched identifier names + counts
-    action_taken: Mapped[str] = mapped_column(String(50), nullable=False)  # block, notify, log, quarantine
+    data_identifiers: Mapped[dict | None] = mapped_column(
+        JSONB
+    )  # matched identifier names + counts
+    action_taken: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # block, notify, log, quarantine
     user_justification: Mapped[str | None] = mapped_column(Text)
 
     # Agent reference
@@ -83,7 +91,9 @@ class IncidentNote(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "incident_notes"
 
     incident_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("incidents.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
     )
     author_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
@@ -97,7 +107,10 @@ class IncidentHistory(Base, UUIDMixin):
     __tablename__ = "incident_history"
 
     incident_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("incidents.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     actor_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")

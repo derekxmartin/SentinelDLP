@@ -12,13 +12,11 @@ Usage:
 """
 
 import asyncio
-import uuid
 
 import bcrypt
 
-from server.database import async_session, engine
+from server.database import async_session
 from server.models import (
-    Base,
     Role,
     User,
     DataIdentifier,
@@ -37,8 +35,14 @@ from server.models import (
 
 ROLES = [
     {"name": "Admin", "description": "Full access to all features and settings"},
-    {"name": "Analyst", "description": "Read incidents, update status/notes, view policies, run detections"},
-    {"name": "Remediator", "description": "Analyst permissions plus modify policy status and execute Smart Response"},
+    {
+        "name": "Analyst",
+        "description": "Read incidents, update status/notes, view policies, run detections",
+    },
+    {
+        "name": "Remediator",
+        "description": "Analyst permissions plus modify policy status and execute Smart Response",
+    },
 ]
 
 
@@ -52,10 +56,10 @@ DATA_IDENTIFIERS = [
         "description": "Detects credit card numbers with Luhn checksum validation",
         "config": {
             "patterns": [
-                r"4[0-9]{12}(?:[0-9]{3})?",          # Visa
-                r"5[1-5][0-9]{14}",                    # Mastercard
-                r"3[47][0-9]{13}",                     # Amex
-                r"6(?:011|5[0-9]{2})[0-9]{12}",        # Discover
+                r"4[0-9]{12}(?:[0-9]{3})?",  # Visa
+                r"5[1-5][0-9]{14}",  # Mastercard
+                r"3[47][0-9]{13}",  # Amex
+                r"6(?:011|5[0-9]{2})[0-9]{12}",  # Discover
             ],
             "validator": "luhn",
             "example": "4532015112830366",
@@ -111,10 +115,10 @@ DATA_IDENTIFIERS = [
         "description": "Detects US driver's license numbers (multi-state patterns)",
         "config": {
             "patterns": [
-                r"\b[A-Z]\d{7}\b",         # CA, NY, etc.
-                r"\b[A-Z]\d{12}\b",        # FL
-                r"\b\d{9}\b",              # TX, OH, etc.
-                r"\b[A-Z]{2}\d{6}\b",      # WA
+                r"\b[A-Z]\d{7}\b",  # CA, NY, etc.
+                r"\b[A-Z]\d{12}\b",  # FL
+                r"\b\d{9}\b",  # TX, OH, etc.
+                r"\b[A-Z]{2}\d{6}\b",  # WA
             ],
             "validator": "drivers_license_format",
             "example": "D1234567",
@@ -168,7 +172,14 @@ POLICY_TEMPLATES = [
             {
                 "name": "Credit Card Numbers",
                 "conditions": [
-                    {"condition_type": "data_identifier", "component": "generic", "config": {"identifier_name": "Credit Card Number (Visa/MC/Amex/Discover)", "min_matches": 1}},
+                    {
+                        "condition_type": "data_identifier",
+                        "component": "generic",
+                        "config": {
+                            "identifier_name": "Credit Card Number (Visa/MC/Amex/Discover)",
+                            "min_matches": 1,
+                        },
+                    },
                 ],
             },
         ],
@@ -182,8 +193,32 @@ POLICY_TEMPLATES = [
             {
                 "name": "SSN in Medical Context",
                 "conditions": [
-                    {"condition_type": "data_identifier", "component": "generic", "config": {"identifier_name": "US Social Security Number", "min_matches": 1}},
-                    {"condition_type": "keyword", "component": "generic", "config": {"keywords": ["patient", "diagnosis", "medical", "health", "treatment", "prescription", "hospital", "physician", "insurance"], "match_mode": "any"}},
+                    {
+                        "condition_type": "data_identifier",
+                        "component": "generic",
+                        "config": {
+                            "identifier_name": "US Social Security Number",
+                            "min_matches": 1,
+                        },
+                    },
+                    {
+                        "condition_type": "keyword",
+                        "component": "generic",
+                        "config": {
+                            "keywords": [
+                                "patient",
+                                "diagnosis",
+                                "medical",
+                                "health",
+                                "treatment",
+                                "prescription",
+                                "hospital",
+                                "physician",
+                                "insurance",
+                            ],
+                            "match_mode": "any",
+                        },
+                    },
                 ],
             },
         ],
@@ -197,14 +232,39 @@ POLICY_TEMPLATES = [
             {
                 "name": "IBAN Numbers",
                 "conditions": [
-                    {"condition_type": "data_identifier", "component": "generic", "config": {"identifier_name": "IBAN", "min_matches": 1}},
+                    {
+                        "condition_type": "data_identifier",
+                        "component": "generic",
+                        "config": {"identifier_name": "IBAN", "min_matches": 1},
+                    },
                 ],
             },
             {
                 "name": "Date of Birth with Personal Context",
                 "conditions": [
-                    {"condition_type": "data_identifier", "component": "generic", "config": {"identifier_name": "Date of Birth", "min_matches": 1}},
-                    {"condition_type": "keyword", "component": "generic", "config": {"keywords": ["name", "address", "passport", "nationality", "citizen", "resident"], "match_mode": "any"}},
+                    {
+                        "condition_type": "data_identifier",
+                        "component": "generic",
+                        "config": {
+                            "identifier_name": "Date of Birth",
+                            "min_matches": 1,
+                        },
+                    },
+                    {
+                        "condition_type": "keyword",
+                        "component": "generic",
+                        "config": {
+                            "keywords": [
+                                "name",
+                                "address",
+                                "passport",
+                                "nationality",
+                                "citizen",
+                                "resident",
+                            ],
+                            "match_mode": "any",
+                        },
+                    },
                 ],
             },
         ],
@@ -218,7 +278,30 @@ POLICY_TEMPLATES = [
             {
                 "name": "Financial Keywords",
                 "conditions": [
-                    {"condition_type": "keyword", "component": "generic", "config": {"keywords": ["confidential financial", "earnings report", "quarterly results", "revenue forecast", "merger", "acquisition", "insider", "material non-public", "10-K", "10-Q", "SEC filing", "audit report", "balance sheet", "income statement"], "match_mode": "any", "min_matches": 2}},
+                    {
+                        "condition_type": "keyword",
+                        "component": "generic",
+                        "config": {
+                            "keywords": [
+                                "confidential financial",
+                                "earnings report",
+                                "quarterly results",
+                                "revenue forecast",
+                                "merger",
+                                "acquisition",
+                                "insider",
+                                "material non-public",
+                                "10-K",
+                                "10-Q",
+                                "SEC filing",
+                                "audit report",
+                                "balance sheet",
+                                "income statement",
+                            ],
+                            "match_mode": "any",
+                            "min_matches": 2,
+                        },
+                    },
                 ],
             },
         ],
@@ -232,17 +315,42 @@ POLICY_TEMPLATES = [
             {
                 "name": "API Keys and Secrets",
                 "conditions": [
-                    {"condition_type": "regex", "component": "generic", "config": {"patterns": [
-                        r"(?:api[_-]?key|apikey|secret[_-]?key|access[_-]?token|auth[_-]?token)\s*[:=]\s*['\"][A-Za-z0-9+/=_-]{20,}['\"]",
-                        r"-----BEGIN (?:RSA |EC |DSA )?PRIVATE KEY-----",
-                        r"(?:password|passwd|pwd)\s*[:=]\s*['\"][^'\"]{8,}['\"]",
-                    ]}},
+                    {
+                        "condition_type": "regex",
+                        "component": "generic",
+                        "config": {
+                            "patterns": [
+                                r"(?:api[_-]?key|apikey|secret[_-]?key|access[_-]?token|auth[_-]?token)\s*[:=]\s*['\"][A-Za-z0-9+/=_-]{20,}['\"]",
+                                r"-----BEGIN (?:RSA |EC |DSA )?PRIVATE KEY-----",
+                                r"(?:password|passwd|pwd)\s*[:=]\s*['\"][^'\"]{8,}['\"]",
+                            ]
+                        },
+                    },
                 ],
             },
             {
                 "name": "Source Code Files",
                 "conditions": [
-                    {"condition_type": "file_type", "component": "attachment", "config": {"types": ["py", "js", "ts", "java", "c", "cpp", "h", "cs", "go", "rs", "rb", "php"]}},
+                    {
+                        "condition_type": "file_type",
+                        "component": "attachment",
+                        "config": {
+                            "types": [
+                                "py",
+                                "js",
+                                "ts",
+                                "java",
+                                "c",
+                                "cpp",
+                                "h",
+                                "cs",
+                                "go",
+                                "rs",
+                                "rb",
+                                "php",
+                            ]
+                        },
+                    },
                 ],
             },
         ],
@@ -256,7 +364,24 @@ POLICY_TEMPLATES = [
             {
                 "name": "Classification Markers",
                 "conditions": [
-                    {"condition_type": "keyword", "component": "generic", "config": {"keywords": ["CONFIDENTIAL", "RESTRICTED", "TOP SECRET", "INTERNAL ONLY", "DO NOT DISTRIBUTE", "PROPRIETARY", "TRADE SECRET", "NOT FOR PUBLIC RELEASE"], "case_sensitive": True, "match_mode": "any"}},
+                    {
+                        "condition_type": "keyword",
+                        "component": "generic",
+                        "config": {
+                            "keywords": [
+                                "CONFIDENTIAL",
+                                "RESTRICTED",
+                                "TOP SECRET",
+                                "INTERNAL ONLY",
+                                "DO NOT DISTRIBUTE",
+                                "PROPRIETARY",
+                                "TRADE SECRET",
+                                "NOT FOR PUBLIC RELEASE",
+                            ],
+                            "case_sensitive": True,
+                            "match_mode": "any",
+                        },
+                    },
                 ],
             },
         ],
@@ -284,7 +409,9 @@ async def seed():
         admin = User(
             username="admin",
             email="admin@akeso.local",
-            password_hash=bcrypt.hashpw(b"AkesoDLP2026!", bcrypt.gensalt(rounds=12)).decode(),
+            password_hash=bcrypt.hashpw(
+                b"AkesoDLP2026!", bcrypt.gensalt(rounds=12)
+            ).decode(),
             full_name="System Administrator",
             is_active=True,
             mfa_enabled=False,
@@ -292,7 +419,7 @@ async def seed():
         )
         session.add(admin)
         await session.flush()
-        print(f"  + admin (password: AkesoDLP2026!)")
+        print("  + admin (password: AkesoDLP2026!)")
 
         # --- Data Identifiers ---
         print("\nCreating data identifiers...")
@@ -332,7 +459,9 @@ async def seed():
 
         # --- Policy Group ---
         print("\nCreating policy group...")
-        template_group = PolicyGroup(name="Built-in Templates", description="Pre-configured policy templates")
+        template_group = PolicyGroup(
+            name="Built-in Templates", description="Pre-configured policy templates"
+        )
         session.add(template_group)
         await session.flush()
         print(f"  + {template_group.name}")

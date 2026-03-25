@@ -12,9 +12,7 @@ Provides:
 from __future__ import annotations
 
 import logging
-import math
 import uuid
-from datetime import datetime, timezone
 
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -113,8 +111,7 @@ async def list_notifications(
 
     # Fetch page
     stmt = (
-        base
-        .order_by(Notification.created_at.desc())
+        base.order_by(Notification.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )

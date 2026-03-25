@@ -41,7 +41,9 @@ async def list_identifiers(
     return list(result.scalars().all())
 
 
-@router.post("", response_model=DataIdentifierResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=DataIdentifierResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_identifier(
     body: DataIdentifierCreate,
     user=Depends(RequirePermission("policies:write")),
@@ -53,7 +55,9 @@ async def create_identifier(
         select(DataIdentifier).where(DataIdentifier.name == body.name)
     )
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail=f"Identifier '{body.name}' already exists")
+        raise HTTPException(
+            status_code=409, detail=f"Identifier '{body.name}' already exists"
+        )
 
     identifier = DataIdentifier(
         name=body.name,

@@ -15,12 +15,11 @@ Endpoints:
 from __future__ import annotations
 
 import logging
-import uuid
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import PlainTextResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -122,19 +121,25 @@ async def _fetch_incidents(
 
     records = []
     for r in rows:
-        records.append(IncidentRecord(
-            id=str(r.id),
-            policy_name=r.policy_name,
-            severity=r.severity.value if hasattr(r.severity, "value") else str(r.severity),
-            status=r.status.value if hasattr(r.status, "value") else str(r.status),
-            channel=r.channel.value if hasattr(r.channel, "value") else str(r.channel),
-            source_type=r.source_type or "unknown",
-            user=r.user,
-            file_name=r.file_name,
-            action_taken=r.action_taken or "log",
-            match_count=r.match_count,
-            created_at=r.created_at,
-        ))
+        records.append(
+            IncidentRecord(
+                id=str(r.id),
+                policy_name=r.policy_name,
+                severity=r.severity.value
+                if hasattr(r.severity, "value")
+                else str(r.severity),
+                status=r.status.value if hasattr(r.status, "value") else str(r.status),
+                channel=r.channel.value
+                if hasattr(r.channel, "value")
+                else str(r.channel),
+                source_type=r.source_type or "unknown",
+                user=r.user,
+                file_name=r.file_name,
+                action_taken=r.action_taken or "log",
+                match_count=r.match_count,
+                created_at=r.created_at,
+            )
+        )
     return records
 
 
@@ -151,8 +156,12 @@ async def summary_report(
 ):
     """Generate an incident summary report."""
     incidents = await _fetch_incidents(
-        db, body.start_date, body.end_date,
-        body.severity, body.channel, body.policy_name,
+        db,
+        body.start_date,
+        body.end_date,
+        body.severity,
+        body.channel,
+        body.policy_name,
     )
     start, end = body.start_date, body.end_date
     if not start or not end:
@@ -172,8 +181,12 @@ async def summary_csv(
 ):
     """Export summary report as CSV."""
     incidents = await _fetch_incidents(
-        db, body.start_date, body.end_date,
-        body.severity, body.channel, body.policy_name,
+        db,
+        body.start_date,
+        body.end_date,
+        body.severity,
+        body.channel,
+        body.policy_name,
     )
     start, end = body.start_date, body.end_date
     if not start or not end:
@@ -198,8 +211,12 @@ async def summary_pdf(
 ):
     """Export summary report as PDF."""
     incidents = await _fetch_incidents(
-        db, body.start_date, body.end_date,
-        body.severity, body.channel, body.policy_name,
+        db,
+        body.start_date,
+        body.end_date,
+        body.severity,
+        body.channel,
+        body.policy_name,
     )
     start, end = body.start_date, body.end_date
     if not start or not end:
@@ -229,8 +246,12 @@ async def detail_report(
 ):
     """Generate an incident detail report."""
     incidents = await _fetch_incidents(
-        db, body.start_date, body.end_date,
-        body.severity, body.channel, body.policy_name,
+        db,
+        body.start_date,
+        body.end_date,
+        body.severity,
+        body.channel,
+        body.policy_name,
     )
     start, end = body.start_date, body.end_date
     if not start or not end:
@@ -255,7 +276,9 @@ async def detail_report(
                 "file_name": inc.file_name,
                 "action_taken": inc.action_taken,
                 "match_count": inc.match_count,
-                "created_at": inc.created_at.isoformat() if hasattr(inc.created_at, "isoformat") else str(inc.created_at),
+                "created_at": inc.created_at.isoformat()
+                if hasattr(inc.created_at, "isoformat")
+                else str(inc.created_at),
             }
             for inc in report.incidents
         ],
@@ -270,8 +293,12 @@ async def detail_csv(
 ):
     """Export detail report as CSV."""
     incidents = await _fetch_incidents(
-        db, body.start_date, body.end_date,
-        body.severity, body.channel, body.policy_name,
+        db,
+        body.start_date,
+        body.end_date,
+        body.severity,
+        body.channel,
+        body.policy_name,
     )
     start, end = body.start_date, body.end_date
     if not start or not end:
@@ -296,8 +323,12 @@ async def detail_pdf(
 ):
     """Export detail report as PDF."""
     incidents = await _fetch_incidents(
-        db, body.start_date, body.end_date,
-        body.severity, body.channel, body.policy_name,
+        db,
+        body.start_date,
+        body.end_date,
+        body.severity,
+        body.channel,
+        body.policy_name,
     )
     start, end = body.start_date, body.end_date
     if not start or not end:
@@ -337,7 +368,9 @@ async def trend_report(
 
     # Previous period
     if body.previous_start and body.previous_end:
-        prev_incidents = await _fetch_incidents(db, body.previous_start, body.previous_end)
+        prev_incidents = await _fetch_incidents(
+            db, body.previous_start, body.previous_end
+        )
         prev_start, prev_end = body.previous_start, body.previous_end
     else:
         # Auto-calculate previous period of same duration
@@ -380,7 +413,9 @@ async def trend_csv(
     current_incidents = await _fetch_incidents(db, start, end)
 
     if body.previous_start and body.previous_end:
-        prev_incidents = await _fetch_incidents(db, body.previous_start, body.previous_end)
+        prev_incidents = await _fetch_incidents(
+            db, body.previous_start, body.previous_end
+        )
         prev_start, prev_end = body.previous_start, body.previous_end
     else:
         duration = end - start
@@ -427,8 +462,12 @@ async def user_risk(
                 "risk_level": get_risk_level(s.normalized_score),
                 "incident_count": s.incident_count,
                 "severity_breakdown": s.severity_breakdown,
-                "latest_incident": s.latest_incident.isoformat() if s.latest_incident else None,
-                "oldest_incident": s.oldest_incident.isoformat() if s.oldest_incident else None,
+                "latest_incident": s.latest_incident.isoformat()
+                if s.latest_incident
+                else None,
+                "oldest_incident": s.oldest_incident.isoformat()
+                if s.oldest_incident
+                else None,
             }
             for s in report.scores
         ],
@@ -446,10 +485,28 @@ def _summary_to_dict(report) -> dict:
         "start_date": report.start_date.isoformat(),
         "end_date": report.end_date.isoformat(),
         "total_incidents": report.total_incidents,
-        "by_severity": [{"key": b.key, "count": b.count, "percentage": b.percentage} for b in report.by_severity],
-        "by_policy": [{"key": b.key, "count": b.count, "percentage": b.percentage} for b in report.by_policy],
-        "by_channel": [{"key": b.key, "count": b.count, "percentage": b.percentage} for b in report.by_channel],
-        "by_status": [{"key": b.key, "count": b.count, "percentage": b.percentage} for b in report.by_status],
-        "by_source_type": [{"key": b.key, "count": b.count, "percentage": b.percentage} for b in report.by_source_type],
-        "top_users": [{"key": b.key, "count": b.count, "percentage": b.percentage} for b in report.top_users],
+        "by_severity": [
+            {"key": b.key, "count": b.count, "percentage": b.percentage}
+            for b in report.by_severity
+        ],
+        "by_policy": [
+            {"key": b.key, "count": b.count, "percentage": b.percentage}
+            for b in report.by_policy
+        ],
+        "by_channel": [
+            {"key": b.key, "count": b.count, "percentage": b.percentage}
+            for b in report.by_channel
+        ],
+        "by_status": [
+            {"key": b.key, "count": b.count, "percentage": b.percentage}
+            for b in report.by_status
+        ],
+        "by_source_type": [
+            {"key": b.key, "count": b.count, "percentage": b.percentage}
+            for b in report.by_source_type
+        ],
+        "top_users": [
+            {"key": b.key, "count": b.count, "percentage": b.percentage}
+            for b in report.top_users
+        ],
     }

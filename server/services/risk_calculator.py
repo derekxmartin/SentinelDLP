@@ -11,10 +11,8 @@ Score = sum(weight * 0.95^days_ago) for each incident, capped at 100.
 from __future__ import annotations
 
 import logging
-import math
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from typing import Sequence
+from datetime import datetime, timezone
 
 from server.services.report_generator import IncidentRecord
 
@@ -122,7 +120,7 @@ def _score_user(
         days_ago = max(0, (reference_time - inc_time).total_seconds() / 86400)
 
         # Apply decay
-        decayed_weight = weight * (DECAY_FACTOR ** days_ago)
+        decayed_weight = weight * (DECAY_FACTOR**days_ago)
         raw_score += decayed_weight
         dates.append(inc_time)
 

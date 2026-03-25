@@ -117,18 +117,10 @@ class DetectionResult:
     def match_count(self) -> int:
         return len(self.matches)
 
-    def matches_for_component(
-        self, component_type: ComponentType
-    ) -> list[Match]:
+    def matches_for_component(self, component_type: ComponentType) -> list[Match]:
         """Get matches for a specific component type."""
-        return [
-            m
-            for m in self.matches
-            if m.component.component_type == component_type
-        ]
+        return [m for m in self.matches if m.component.component_type == component_type]
 
     def matches_for_analyzer(self, analyzer_name: str) -> list[Match]:
         """Get matches from a specific analyzer."""
-        return [
-            m for m in self.matches if m.analyzer_name == analyzer_name
-        ]
+        return [m for m in self.matches if m.analyzer_name == analyzer_name]

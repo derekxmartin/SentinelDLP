@@ -41,7 +41,12 @@ from server.schemas.policy import (
     PolicyResponse,
     PolicyUpdate,
 )
-from server.policy_events import publish_policy_event, POLICY_ADD, POLICY_MODIFY, POLICY_REMOVE
+from server.policy_events import (
+    publish_policy_event,
+    POLICY_ADD,
+    POLICY_MODIFY,
+    POLICY_REMOVE,
+)
 from server.services import policy_service
 
 logger = logging.getLogger(__name__)
@@ -109,7 +114,9 @@ class FromTemplateRequest(BaseModel):
     description: str | None = None
 
 
-@router.post("/from-template", response_model=PolicyResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/from-template", response_model=PolicyResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_from_template(
     body: FromTemplateRequest,
     request: Request,
@@ -128,7 +135,10 @@ async def create_from_template(
         db, template, body.name, body.description
     )
     await _audit(
-        db, user, "policy.create_from_template", request,
+        db,
+        user,
+        "policy.create_from_template",
+        request,
         resource_id=str(policy.id),
         detail=f"Created from template '{body.template_name}'",
         changes={"template_name": body.template_name, "name": body.name},
@@ -154,8 +164,11 @@ async def list_policies(
 ):
     """List policies with pagination and optional filters."""
     policies, total = await policy_service.list_policies(
-        db, page=page, page_size=page_size,
-        status_filter=status_filter, search=search,
+        db,
+        page=page,
+        page_size=page_size,
+        status_filter=status_filter,
+        search=search,
     )
     return PolicyListResponse(
         items=policies,
@@ -177,7 +190,10 @@ async def create_policy(
     data = body.model_dump()
     policy = await policy_service.create_policy(db, data)
     await _audit(
-        db, user, "policy.create", request,
+        db,
+        user,
+        "policy.create",
+        request,
         resource_id=str(policy.id),
         detail=f"Created policy '{body.name}'",
         changes={"name": body.name},
@@ -220,10 +236,16 @@ async def update_policy(
     old_values = {k: getattr(policy, k) for k in update_data}
     policy = await policy_service.update_policy(db, policy, update_data)
     await _audit(
-        db, user, "policy.update", request,
+        db,
+        user,
+        "policy.update",
+        request,
         resource_id=str(policy.id),
         detail=f"Updated policy '{policy.name}'",
-        changes={"old": _serialize_changes(old_values), "new": _serialize_changes(update_data)},
+        changes={
+            "old": _serialize_changes(old_values),
+            "new": _serialize_changes(update_data),
+        },
     )
     await db.commit()
     await publish_policy_event(POLICY_MODIFY, str(policy.id))
@@ -245,7 +267,10 @@ async def delete_policy(
     pid = str(policy_id)
     await policy_service.delete_policy(db, policy)
     await _audit(
-        db, user, "policy.delete", request,
+        db,
+        user,
+        "policy.delete",
+        request,
         resource_id=pid,
         detail=f"Deleted policy '{name}'",
     )
@@ -272,7 +297,10 @@ async def activate_policy(
     old_status = policy.status.value
     policy = await policy_service.activate_policy(db, policy)
     await _audit(
-        db, user, "policy.activate", request,
+        db,
+        user,
+        "policy.activate",
+        request,
         resource_id=str(policy_id),
         detail=f"Activated policy '{policy.name}'",
         changes={"old_status": old_status, "new_status": "active"},
@@ -296,7 +324,10 @@ async def suspend_policy(
     old_status = policy.status.value
     policy = await policy_service.suspend_policy(db, policy)
     await _audit(
-        db, user, "policy.suspend", request,
+        db,
+        user,
+        "policy.suspend",
+        request,
         resource_id=str(policy_id),
         detail=f"Suspended policy '{policy.name}'",
         changes={"old_status": old_status, "new_status": "suspended"},
@@ -311,7 +342,11 @@ async def suspend_policy(
 # ---------------------------------------------------------------------------
 
 
-@router.post("/{policy_id}/rules", response_model=DetectionRuleResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{policy_id}/rules",
+    response_model=DetectionRuleResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_rule(
     policy_id: uuid.UUID,
     body: DetectionRuleCreate,
@@ -326,7 +361,10 @@ async def add_rule(
     data = body.model_dump()
     rule = await policy_service.add_rule(db, policy, data)
     await _audit(
-        db, user, "policy.add_rule", request,
+        db,
+        user,
+        "policy.add_rule",
+        request,
         resource_id=str(policy_id),
         detail=f"Added rule '{body.name}' to policy '{policy.name}'",
         changes={"rule_name": body.name},
@@ -357,7 +395,10 @@ async def remove_rule(
         )
 
     await _audit(
-        db, user, "policy.remove_rule", request,
+        db,
+        user,
+        "policy.remove_rule",
+        request,
         resource_id=str(policy_id),
         detail=f"Removed rule {rule_id} from policy '{policy.name}'",
         changes={"rule_id": str(rule_id)},
@@ -390,7 +431,10 @@ async def add_exception(
     data = body.model_dump()
     exc = await policy_service.add_exception(db, policy, data)
     await _audit(
-        db, user, "policy.add_exception", request,
+        db,
+        user,
+        "policy.add_exception",
+        request,
         resource_id=str(policy_id),
         detail=f"Added exception '{body.name}' to policy '{policy.name}'",
         changes={"exception_name": body.name},
@@ -423,7 +467,10 @@ async def remove_exception(
         )
 
     await _audit(
-        db, user, "policy.remove_exception", request,
+        db,
+        user,
+        "policy.remove_exception",
+        request,
         resource_id=str(policy_id),
         detail=f"Removed exception {exception_id} from policy '{policy.name}'",
         changes={"exception_id": str(exception_id)},
@@ -446,10 +493,16 @@ def _serialize_changes(d: dict) -> dict:
         elif hasattr(v, "value"):  # Enum
             result[k] = v.value
         elif isinstance(v, list):
-            result[k] = [
-                t if isinstance(t, dict) else {"threshold": t.threshold, "severity": t.severity}
-                for t in v
-            ] if v else []
+            result[k] = (
+                [
+                    t
+                    if isinstance(t, dict)
+                    else {"threshold": t.threshold, "severity": t.severity}
+                    for t in v
+                ]
+                if v
+                else []
+            )
         else:
             result[k] = v
     return result

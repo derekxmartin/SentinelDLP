@@ -82,9 +82,7 @@ class DetectionEngine:
                 matches = analyzer.analyze(message)
                 result.matches.extend(matches)
             except Exception as exc:
-                error_msg = (
-                    f"Analyzer {analyzer.name!r} failed: {exc}"
-                )
+                error_msg = f"Analyzer {analyzer.name!r} failed: {exc}"
                 logger.error(error_msg, exc_info=True)
                 result.errors.append(error_msg)
 

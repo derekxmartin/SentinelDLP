@@ -99,10 +99,14 @@ class DetectionRule(Base, UUIDMixin, TimestampMixin):
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    rule_type: Mapped[str] = mapped_column(String(50), nullable=False)  # "detection" or "group"
+    rule_type: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # "detection" or "group"
 
     policy_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("policies.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("policies.id", ondelete="CASCADE"),
+        nullable=False,
     )
     policy: Mapped["Policy"] = relationship(back_populates="detection_rules")
 
@@ -132,7 +136,9 @@ class RuleCondition(Base, UUIDMixin, TimestampMixin):
     match_count_min: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 
     detection_rule_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("detection_rules.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("detection_rules.id", ondelete="CASCADE"),
+        nullable=False,
     )
     detection_rule: Mapped["DetectionRule"] = relationship(back_populates="conditions")
 
@@ -145,10 +151,14 @@ class PolicyException(Base, UUIDMixin, TimestampMixin):
     scope: Mapped[ExceptionScope] = mapped_column(
         Enum(ExceptionScope), default=ExceptionScope.ENTIRE_MESSAGE, nullable=False
     )
-    exception_type: Mapped[str] = mapped_column(String(50), nullable=False)  # "detection" or "group"
+    exception_type: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # "detection" or "group"
 
     policy_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("policies.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("policies.id", ondelete="CASCADE"),
+        nullable=False,
     )
     policy: Mapped["Policy"] = relationship(back_populates="exceptions")
 
@@ -170,9 +180,13 @@ class ExceptionCondition(Base, UUIDMixin, TimestampMixin):
     match_count_min: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 
     policy_exception_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("policy_exceptions.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("policy_exceptions.id", ondelete="CASCADE"),
+        nullable=False,
     )
-    policy_exception: Mapped["PolicyException"] = relationship(back_populates="conditions")
+    policy_exception: Mapped["PolicyException"] = relationship(
+        back_populates="conditions"
+    )
 
 
 # Forward reference for Policy.response_rule

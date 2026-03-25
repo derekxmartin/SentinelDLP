@@ -52,8 +52,7 @@ def create_access_token(
 ) -> str:
     """Create a JWT access token."""
     expire = datetime.now(timezone.utc) + (
-        expires_delta
-        or timedelta(minutes=settings.access_token_expire_minutes)
+        expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
     )
     payload = {
         "sub": str(user_id),
@@ -105,26 +104,18 @@ def hash_refresh_token(token: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-async def get_user_by_username(
-    db: AsyncSession, username: str
-) -> User | None:
+async def get_user_by_username(db: AsyncSession, username: str) -> User | None:
     """Fetch a user by username, eagerly loading role."""
     result = await db.execute(
-        select(User)
-        .options(selectinload(User.role))
-        .where(User.username == username)
+        select(User).options(selectinload(User.role)).where(User.username == username)
     )
     return result.scalar_one_or_none()
 
 
-async def get_user_by_id(
-    db: AsyncSession, user_id: uuid.UUID
-) -> User | None:
+async def get_user_by_id(db: AsyncSession, user_id: uuid.UUID) -> User | None:
     """Fetch a user by ID, eagerly loading role."""
     result = await db.execute(
-        select(User)
-        .options(selectinload(User.role))
-        .where(User.id == user_id)
+        select(User).options(selectinload(User.role)).where(User.id == user_id)
     )
     return result.scalar_one_or_none()
 
@@ -146,9 +137,7 @@ async def create_session(
     return session
 
 
-async def get_session_by_token(
-    db: AsyncSession, refresh_token: str
-) -> Session | None:
+async def get_session_by_token(db: AsyncSession, refresh_token: str) -> Session | None:
     """Find a valid (not revoked, not expired) session by refresh token."""
     token_hash = hash_refresh_token(refresh_token)
     result = await db.execute(
@@ -182,21 +171,27 @@ async def get_roles(db: AsyncSession) -> list[Role]:
 # Role → allowed actions mapping
 ROLE_PERMISSIONS: dict[str, set[str]] = {
     "Admin": {
-        "users:read", "users:write",
-        "policies:read", "policies:write",
-        "incidents:read", "incidents:write",
-        "discovers:read", "discovers:write",
+        "users:read",
+        "users:write",
+        "policies:read",
+        "policies:write",
+        "incidents:read",
+        "incidents:write",
+        "discovers:read",
+        "discovers:write",
         "detection:run",
         "system:admin",
     },
     "Analyst": {
-        "incidents:read", "incidents:write",
+        "incidents:read",
+        "incidents:write",
         "policies:read",
         "discovers:read",
         "detection:run",
     },
     "Remediator": {
-        "incidents:read", "incidents:write",
+        "incidents:read",
+        "incidents:write",
     },
 }
 

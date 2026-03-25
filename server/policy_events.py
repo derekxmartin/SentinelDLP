@@ -67,7 +67,9 @@ class PolicyEventBus:
                 try:
                     q.put_nowait(event)
                 except asyncio.QueueFull:
-                    logger.warning("PolicyEventBus: subscriber queue full, dropping event")
+                    logger.warning(
+                        "PolicyEventBus: subscriber queue full, dropping event"
+                    )
 
     def get_version(self) -> int:
         return self._version
@@ -95,6 +97,7 @@ class RedisEventBridge:
 
     async def connect(self) -> None:
         import redis.asyncio as aioredis
+
         self._redis = aioredis.from_url(self._redis_url, decode_responses=True)
         await self._redis.ping()
         logger.info("RedisEventBridge: connected to %s", self._redis_url)

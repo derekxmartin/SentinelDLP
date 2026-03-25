@@ -16,7 +16,6 @@ from __future__ import annotations
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -94,7 +93,9 @@ async def execute(
         elif action == "escalate":
             return await _action_escalate(db, incident, incident_id, actor_id, params)
         else:
-            return SmartResponseOutcome(success=False, action=action, detail="Not implemented")
+            return SmartResponseOutcome(
+                success=False, action=action, detail="Not implemented"
+            )
     except Exception as e:
         logger.error("Smart response '%s' failed for %s: %s", action, incident_id, e)
         return SmartResponseOutcome(
@@ -149,7 +150,11 @@ async def _action_set_status(
             detail=f"Invalid status '{new_status}'. Valid: {', '.join(sorted(valid_statuses))}",
         )
 
-    old_status = incident.status.value if hasattr(incident.status, "value") else str(incident.status)
+    old_status = (
+        incident.status.value
+        if hasattr(incident.status, "value")
+        else str(incident.status)
+    )
     await incident_service.update_incident(
         db, incident, {"status": new_status}, actor_id=actor_id
     )
@@ -183,12 +188,16 @@ async def _action_send_email(
     subject = params.get("subject", "DLP Incident Notification")
     logger.info(
         "Email notification queued: to=%s, subject=%s, incident=%s",
-        recipient, subject, incident_id,
+        recipient,
+        subject,
+        incident_id,
     )
 
     # Record the action as a note
     await incident_service.add_note(
-        db, incident_id, actor_id,
+        db,
+        incident_id,
+        actor_id,
         f"[Smart Response] Email notification sent to {recipient} — Subject: {subject}",
     )
     await db.commit()
@@ -216,7 +225,9 @@ async def _action_escalate(
 
     # Add escalation note
     await incident_service.add_note(
-        db, incident_id, actor_id,
+        db,
+        incident_id,
+        actor_id,
         f"[Escalated] {reason}",
     )
     await db.commit()

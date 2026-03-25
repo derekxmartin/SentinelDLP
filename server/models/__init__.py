@@ -14,7 +14,11 @@ from server.models.incident import Incident, IncidentNote, IncidentHistory
 from server.models.agent import AgentGroup, Agent
 from server.models.audit import AuditLog
 from server.models.discover import DiscoverScan, DiscoverStatus
-from server.models.notification import Notification, NotificationType, NotificationSeverity
+from server.models.notification import (
+    Notification,
+    NotificationType,
+    NotificationSeverity,
+)
 
 __all__ = [
     "Base",

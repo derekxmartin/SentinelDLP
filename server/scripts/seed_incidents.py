@@ -15,12 +15,15 @@ Usage:
 
 import asyncio
 import random
-import uuid
 from datetime import datetime, timedelta, timezone
 
 from server.database import async_session
 from server.models.incident import Channel, Incident, IncidentNote, IncidentStatus
-from server.models.notification import Notification, NotificationSeverity, NotificationType
+from server.models.notification import (
+    Notification,
+    NotificationSeverity,
+    NotificationType,
+)
 from server.models.policy import Severity
 
 
@@ -29,8 +32,14 @@ from server.models.policy import Severity
 # ---------------------------------------------------------------------------
 
 USERS = [
-    "jsmith", "mwilliams", "acheng", "kpatel",
-    "rjohnson", "lgarcia", "tnguyen", "bthompson",
+    "jsmith",
+    "mwilliams",
+    "acheng",
+    "kpatel",
+    "rjohnson",
+    "lgarcia",
+    "tnguyen",
+    "bthompson",
 ]
 
 POLICIES = [
@@ -48,16 +57,51 @@ ACTIONS = ["block", "notify", "log", "quarantine"]
 SOURCE_TYPES = ["endpoint", "network", "discover"]
 
 FILES = [
-    ("customer_list.xlsx", "C:\\Users\\{user}\\Documents\\customer_list.xlsx", 245760, "xlsx"),
-    ("Q4_financials.pdf", "C:\\Users\\{user}\\Desktop\\Q4_financials.pdf", 1048576, "pdf"),
+    (
+        "customer_list.xlsx",
+        "C:\\Users\\{user}\\Documents\\customer_list.xlsx",
+        245760,
+        "xlsx",
+    ),
+    (
+        "Q4_financials.pdf",
+        "C:\\Users\\{user}\\Desktop\\Q4_financials.pdf",
+        1048576,
+        "pdf",
+    ),
     ("patient_records.csv", "C:\\Shared\\hr\\patient_records.csv", 512000, "csv"),
     ("api_keys.env", "C:\\Projects\\backend\\.env", 2048, "env"),
-    ("merger_deck.pptx", "C:\\Users\\{user}\\Downloads\\merger_deck.pptx", 5242880, "pptx"),
+    (
+        "merger_deck.pptx",
+        "C:\\Users\\{user}\\Downloads\\merger_deck.pptx",
+        5242880,
+        "pptx",
+    ),
     ("employee_ssn.txt", "C:\\Users\\{user}\\Desktop\\employee_ssn.txt", 8192, "txt"),
-    ("source_dump.zip", "C:\\Users\\{user}\\Downloads\\source_dump.zip", 10485760, "zip"),
-    ("board_minutes.docx", "C:\\Users\\{user}\\Documents\\board_minutes.docx", 327680, "docx"),
-    ("passport_scans.pdf", "C:\\Shared\\onboarding\\passport_scans.pdf", 2097152, "pdf"),
-    ("salary_report.xlsx", "C:\\Users\\{user}\\Desktop\\salary_report.xlsx", 163840, "xlsx"),
+    (
+        "source_dump.zip",
+        "C:\\Users\\{user}\\Downloads\\source_dump.zip",
+        10485760,
+        "zip",
+    ),
+    (
+        "board_minutes.docx",
+        "C:\\Users\\{user}\\Documents\\board_minutes.docx",
+        327680,
+        "docx",
+    ),
+    (
+        "passport_scans.pdf",
+        "C:\\Shared\\onboarding\\passport_scans.pdf",
+        2097152,
+        "pdf",
+    ),
+    (
+        "salary_report.xlsx",
+        "C:\\Users\\{user}\\Desktop\\salary_report.xlsx",
+        163840,
+        "xlsx",
+    ),
     (None, None, None, None),  # no file context
     (None, None, None, None),
 ]
@@ -144,9 +188,13 @@ def _make_incident(user: str, policy: dict, dt: datetime) -> Incident:
         destination=random.choice(DESTINATIONS),
         match_count=random.randint(1, 15),
         matched_content=random.choice(MATCHED_CONTENT_SAMPLES),
-        data_identifiers={"identifiers": ["credit_card", "ssn", "iban"][:random.randint(1, 3)]},
+        data_identifiers={
+            "identifiers": ["credit_card", "ssn", "iban"][: random.randint(1, 3)]
+        },
         action_taken=action,
-        user_justification=random.choice([None, None, "Business need", "Approved by manager"]),
+        user_justification=random.choice(
+            [None, None, "Business need", "Approved by manager"]
+        ),
         created_at=dt,
         updated_at=dt,
     )
@@ -293,7 +341,9 @@ async def seed_incidents():
             ]
             # Stagger creation times
             for i, notif in enumerate(sample_notifications):
-                notif.created_at = datetime.now(timezone.utc) - timedelta(hours=i * 3, minutes=random.randint(0, 59))
+                notif.created_at = datetime.now(timezone.utc) - timedelta(
+                    hours=i * 3, minutes=random.randint(0, 59)
+                )
             session.add_all(sample_notifications)
             notif_count = len(sample_notifications)
             print(f"\nCreated {notif_count} notifications for admin user")
@@ -306,16 +356,18 @@ async def seed_incidents():
     severity_counts = {}
     status_counts = {}
     for inc in incidents:
-        sev = inc.severity.value if hasattr(inc.severity, "value") else str(inc.severity)
+        sev = (
+            inc.severity.value if hasattr(inc.severity, "value") else str(inc.severity)
+        )
         st = inc.status.value if hasattr(inc.status, "value") else str(inc.status)
         severity_counts[sev] = severity_counts.get(sev, 0) + 1
         status_counts[st] = status_counts.get(st, 0) + 1
 
     print(f"\nCreated {len(incidents)} incidents + {note_count} notes")
-    print(f"\nBy severity:")
+    print("\nBy severity:")
     for sev, count in sorted(severity_counts.items()):
         print(f"  {sev}: {count}")
-    print(f"\nBy status:")
+    print("\nBy status:")
     for st, count in sorted(status_counts.items()):
         print(f"  {st}: {count}")
     print(f"\n{'=' * 50}")

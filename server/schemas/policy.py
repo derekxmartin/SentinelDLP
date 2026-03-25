@@ -16,6 +16,7 @@ from server.schemas.base import (
 
 # --- Rule Condition ---
 
+
 class RuleConditionCreate(BaseModel):
     condition_type: ConditionTypeEnum
     component: MessageComponentEnum = MessageComponentEnum.GENERIC
@@ -32,6 +33,7 @@ class RuleConditionResponse(CamelModel):
 
 
 # --- Detection Rule ---
+
 
 class DetectionRuleCreate(BaseModel):
     name: str = Field(max_length=255)
@@ -50,6 +52,7 @@ class DetectionRuleResponse(CamelModel):
 
 # --- Exception Condition ---
 
+
 class ExceptionConditionCreate(BaseModel):
     condition_type: ConditionTypeEnum
     component: MessageComponentEnum = MessageComponentEnum.GENERIC
@@ -66,6 +69,7 @@ class ExceptionConditionResponse(CamelModel):
 
 
 # --- Policy Exception ---
+
 
 class PolicyExceptionCreate(BaseModel):
     name: str = Field(max_length=255)
@@ -86,12 +90,14 @@ class PolicyExceptionResponse(CamelModel):
 
 # --- Severity Threshold ---
 
+
 class SeverityThreshold(BaseModel):
     threshold: int = Field(ge=1)
     severity: SeverityEnum
 
 
 # --- Policy Group ---
+
 
 class PolicyGroupCreate(BaseModel):
     name: str = Field(max_length=255)
@@ -105,6 +111,7 @@ class PolicyGroupResponse(CamelModel):
 
 
 # --- Policy ---
+
 
 class PolicyCreate(BaseModel):
     name: str = Field(max_length=255)

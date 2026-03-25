@@ -8,6 +8,7 @@ from server.schemas.base import CamelModel, PaginatedResponse
 
 # --- Audit Log ---
 
+
 class AuditLogResponse(CamelModel):
     id: uuid.UUID
     actor_id: uuid.UUID | None
@@ -26,6 +27,7 @@ class AuditLogListResponse(PaginatedResponse):
 
 # --- Search ---
 
+
 class SearchResult(CamelModel):
     category: str
     id: uuid.UUID
@@ -41,12 +43,14 @@ class SearchResponse(CamelModel):
 
 # --- Health ---
 
+
 class HealthResponse(CamelModel):
     status: str
     service: str
 
 
 # --- Report ---
+
 
 class ReportGenerateRequest(BaseModel):
     report_type: str  # "summary" or "detail"
@@ -65,6 +69,7 @@ class ReportResponse(CamelModel):
 
 # --- Discover ---
 
+
 class DiscoverScanCreate(BaseModel):
     name: str
     agent_group_ids: list[uuid.UUID] | None = None
@@ -82,6 +87,7 @@ class DiscoverScanResponse(CamelModel):
 
 
 # --- Template ---
+
 
 class TemplateResponse(CamelModel):
     id: uuid.UUID

@@ -20,7 +20,6 @@ import ssl
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any
 
 from server.services.report_generator import IncidentRecord
 
@@ -102,9 +101,7 @@ def format_cef(incident: IncidentRecord) -> str:
     if isinstance(incident.created_at, datetime):
         extensions["rt"] = str(int(incident.created_at.timestamp() * 1000))
 
-    ext_str = " ".join(
-        f"{k}={_cef_escape(str(v))}" for k, v in extensions.items()
-    )
+    ext_str = " ".join(f"{k}={_cef_escape(str(v))}" for k, v in extensions.items())
 
     return f"CEF:0|AkesoDLP|DLP|1.0|{sig_id}|{name}|{severity}|{ext_str}"
 
@@ -112,8 +109,7 @@ def format_cef(incident: IncidentRecord) -> str:
 def _cef_escape(value: str) -> str:
     """Escape special CEF characters."""
     return (
-        value
-        .replace("\\", "\\\\")
+        value.replace("\\", "\\\\")
         .replace("|", "\\|")
         .replace("=", "\\=")
         .replace("\n", "\\n")
@@ -194,7 +190,10 @@ class SyslogExporter:
             test_msg = f"<{self.config.facility * 8 + 6}>CEF:0|AkesoDLP|DLP|1.0|0|Connection Test|0|msg=test"
             self._send_message(test_msg)
             self._close()
-            return True, f"Successfully connected to {self.config.host}:{self.config.port} via {self.config.transport.value}"
+            return (
+                True,
+                f"Successfully connected to {self.config.host}:{self.config.port} via {self.config.transport.value}",
+            )
         except Exception as e:
             return False, f"Connection failed: {e}"
 

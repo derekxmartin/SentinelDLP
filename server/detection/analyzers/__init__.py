@@ -37,9 +37,7 @@ class BaseAnalyzer(ABC):
         self.name = name
         self.target_components = target_components
 
-    def get_target_components(
-        self, message: ParsedMessage
-    ) -> list[MessageComponent]:
+    def get_target_components(self, message: ParsedMessage) -> list[MessageComponent]:
         """Get the components this analyzer should scan."""
         if self.target_components is None:
             return message.get_components()

@@ -162,7 +162,10 @@ async def update_incident(
     )
 
     await _audit(
-        db, user, "incident.update", request,
+        db,
+        user,
+        "incident.update",
+        request,
         resource_id=str(incident_id),
         detail=f"Updated incident fields: {', '.join(update_data.keys())}",
         changes=update_data,
@@ -209,7 +212,10 @@ async def add_note(
     note = await incident_service.add_note(db, incident_id, user.id, body.content)
 
     await _audit(
-        db, user, "incident.add_note", request,
+        db,
+        user,
+        "incident.add_note",
+        request,
         resource_id=str(incident_id),
         detail="Added note to incident",
     )
@@ -241,7 +247,10 @@ async def smart_respond(
 
     if outcome.success:
         await _audit(
-            db, user, f"incident.smart_response.{body.action}", request,
+            db,
+            user,
+            f"incident.smart_response.{body.action}",
+            request,
             resource_id=str(incident_id),
             detail=outcome.detail,
         )

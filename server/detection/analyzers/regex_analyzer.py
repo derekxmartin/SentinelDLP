@@ -77,13 +77,9 @@ class RegexAnalyzer(BaseAnalyzer):
             try:
                 compiled = re2.compile(rp.pattern)
                 self._patterns.append((rp, compiled))
-                logger.debug(
-                    "Compiled pattern %r: %s", rp.name, rp.pattern
-                )
+                logger.debug("Compiled pattern %r: %s", rp.name, rp.pattern)
             except re2.error as exc:
-                logger.error(
-                    "Failed to compile pattern %r: %s", rp.name, exc
-                )
+                logger.error("Failed to compile pattern %r: %s", rp.name, exc)
                 raise
 
     @property

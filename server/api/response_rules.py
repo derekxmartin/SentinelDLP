@@ -43,7 +43,9 @@ async def list_response_rules(
     return list(result.scalars().all())
 
 
-@router.post("", response_model=ResponseRuleResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=ResponseRuleResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_response_rule(
     body: ResponseRuleCreate,
     user=Depends(RequirePermission("policies:write")),
@@ -116,12 +118,14 @@ async def update_response_rule(
 
     # Delete old actions explicitly via SQL
     from sqlalchemy import delete as sa_delete
+
     await db.execute(
         sa_delete(ResponseAction).where(ResponseAction.response_rule_id == rule_id)
     )
 
     # Update rule scalar fields via SQL to avoid stale ORM state
     from sqlalchemy import update as sa_update
+
     await db.execute(
         sa_update(ResponseRule)
         .where(ResponseRule.id == rule_id)
@@ -157,9 +161,7 @@ async def delete_response_rule(
     db: AsyncSession = Depends(get_db),
 ):
     """Delete a response rule."""
-    result = await db.execute(
-        select(ResponseRule).where(ResponseRule.id == rule_id)
-    )
+    result = await db.execute(select(ResponseRule).where(ResponseRule.id == rule_id))
     rule = result.scalar_one_or_none()
     if not rule:
         raise HTTPException(status_code=404, detail="Response rule not found")

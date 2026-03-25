@@ -73,12 +73,14 @@ async def global_search(
         .limit(MAX_RESULTS_PER_TYPE)
     )
     for inc in (await db.execute(stmt)).scalars():
-        results.append(SearchHit(
-            id=str(inc.id),
-            type="incident",
-            title=f"{inc.policy_name} — {inc.severity.value.upper()}",
-            subtitle=f"{inc.file_name or 'N/A'} | {inc.user or 'N/A'} | {inc.status.value}",
-        ))
+        results.append(
+            SearchHit(
+                id=str(inc.id),
+                type="incident",
+                title=f"{inc.policy_name} — {inc.severity.value.upper()}",
+                subtitle=f"{inc.file_name or 'N/A'} | {inc.user or 'N/A'} | {inc.status.value}",
+            )
+        )
 
     # Search policies (non-templates)
     stmt = (
@@ -90,12 +92,14 @@ async def global_search(
         .limit(MAX_RESULTS_PER_TYPE)
     )
     for pol in (await db.execute(stmt)).scalars():
-        results.append(SearchHit(
-            id=str(pol.id),
-            type="policy",
-            title=pol.name,
-            subtitle=f"{pol.status.value} | {pol.severity.value}",
-        ))
+        results.append(
+            SearchHit(
+                id=str(pol.id),
+                type="policy",
+                title=pol.name,
+                subtitle=f"{pol.status.value} | {pol.severity.value}",
+            )
+        )
 
     # Search users
     stmt = (
@@ -108,12 +112,14 @@ async def global_search(
         .limit(MAX_RESULTS_PER_TYPE)
     )
     for u in (await db.execute(stmt)).scalars():
-        results.append(SearchHit(
-            id=str(u.id),
-            type="user",
-            title=u.username,
-            subtitle=u.full_name or u.email,
-        ))
+        results.append(
+            SearchHit(
+                id=str(u.id),
+                type="user",
+                title=u.username,
+                subtitle=u.full_name or u.email,
+            )
+        )
 
     return SearchResponse(
         query=q,
