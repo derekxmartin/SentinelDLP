@@ -221,14 +221,17 @@ export default function AgentDetail() {
             onChange={(e) => handleGroupChange(e.target.value)}
             style={{
               width: '100%', padding: '0.5rem 0.75rem',
-              backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+              backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: '0.5rem', color: 'white', fontSize: '0.875rem',
-              marginBottom: '1rem',
+              marginBottom: '1rem', appearance: 'none',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M3 5l3 3 3-3'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center',
+              paddingRight: '2rem', cursor: 'pointer',
             }}
           >
-            <option value="">No group</option>
+            <option value="" style={{ backgroundColor: '#1e293b', color: '#94a3b8' }}>No group</option>
             {groups.map(g => (
-              <option key={g.id} value={g.id}>{g.name}</option>
+              <option key={g.id} value={g.id} style={{ backgroundColor: '#1e293b', color: 'white' }}>{g.name}</option>
             ))}
           </select>
 
