@@ -10,7 +10,30 @@ Validates that:
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pytest
+
+
+def _make_incident(**kwargs):
+    """Create an IncidentRecord for testing."""
+    from server.services.report_generator import IncidentRecord
+
+    defaults = {
+        "id": "test-001",
+        "policy_name": "PCI Protection",
+        "severity": "high",
+        "status": "new",
+        "channel": "endpoint",
+        "source_type": "usb",
+        "user": "jsmith",
+        "file_name": "payments.csv",
+        "action_taken": "block",
+        "match_count": 3,
+        "created_at": datetime.now(timezone.utc),
+    }
+    defaults.update(kwargs)
+    return IncidentRecord(**defaults)
 
 
 class TestSIEMEventFormatting:
@@ -20,18 +43,8 @@ class TestSIEMEventFormatting:
         """build_ecs_event produces correct ECS structure."""
         from server.services.siem_emitter import build_ecs_event, DLPEventType
 
-        event = build_ecs_event(
-            event_type=DLPEventType.POLICY_VIOLATION,
-            incident_id="test-001",
-            policy_name="PCI Protection",
-            severity="HIGH",
-            channel="endpoint",
-            source_type="usb",
-            file_name="payments.csv",
-            user="jsmith",
-            match_count=3,
-            action_taken="block",
-        )
+        incident = _make_incident()
+        event = build_ecs_event(incident, event_type=DLPEventType.POLICY_VIOLATION)
         assert event["source_type"] == "akeso_dlp"
         assert event["event_type"] == "dlp:policy_violation"
         assert "@timestamp" in event
@@ -40,18 +53,8 @@ class TestSIEMEventFormatting:
         """File blocked event has correct event_type."""
         from server.services.siem_emitter import build_ecs_event, DLPEventType
 
-        event = build_ecs_event(
-            event_type=DLPEventType.FILE_BLOCKED,
-            incident_id="test-002",
-            policy_name="HIPAA PHI",
-            severity="CRITICAL",
-            channel="network",
-            source_type="email",
-            file_name="records.docx",
-            user="nurse_johnson",
-            match_count=1,
-            action_taken="block",
-        )
+        incident = _make_incident(severity="critical", channel="network", source_type="email")
+        event = build_ecs_event(incident, event_type=DLPEventType.FILE_BLOCKED)
         assert event["source_type"] == "akeso_dlp"
         assert event["event_type"] == "dlp:file_blocked"
 
@@ -59,31 +62,18 @@ class TestSIEMEventFormatting:
         """Incident created event has correct event_type."""
         from server.services.siem_emitter import build_ecs_event, DLPEventType
 
-        event = build_ecs_event(
-            event_type=DLPEventType.INCIDENT_CREATED,
-            incident_id="test-003",
-            policy_name="SOX Financial",
-            severity="MEDIUM",
-            channel="discover",
-            source_type="file_share",
-            file_name="financials.xlsx",
-            user="SYSTEM",
-            match_count=5,
-            action_taken="quarantine",
-        )
+        incident = _make_incident(channel="discover", source_type="file_share")
+        event = build_ecs_event(incident, event_type=DLPEventType.INCIDENT_CREATED)
         assert event["event_type"] == "dlp:incident_created"
 
     def test_04_agent_status_event(self):
         """Agent status event has correct structure."""
-        from server.services.siem_emitter import build_status_event, DLPEventType
+        from server.services.siem_emitter import build_status_event
 
         event = build_status_event(
-            event_type=DLPEventType.AGENT_STATUS,
             agent_id="agent-001",
             hostname="DESKTOP-ABC123",
             status="online",
-            agent_version="0.1.0",
-            driver_version="0.1.0",
         )
         assert event["source_type"] == "akeso_dlp"
         assert event["event_type"] == "dlp:agent_status"
@@ -132,18 +122,8 @@ class TestSigmaRules:
         """ECS required fields populated in DLP events."""
         from server.services.siem_emitter import build_ecs_event, DLPEventType
 
-        event = build_ecs_event(
-            event_type=DLPEventType.POLICY_VIOLATION,
-            incident_id="ecs-check",
-            policy_name="Test Policy",
-            severity="LOW",
-            channel="endpoint",
-            source_type="clipboard",
-            file_name="memo.txt",
-            user="testuser",
-            match_count=1,
-            action_taken="log",
-        )
+        incident = _make_incident()
+        event = build_ecs_event(incident, event_type=DLPEventType.POLICY_VIOLATION)
         assert "@timestamp" in event
         assert "source_type" in event
         assert "event_type" in event
