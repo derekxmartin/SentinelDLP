@@ -148,8 +148,17 @@ TEST_INPUTS = [
     {"text": "Benefits enrollment SSN: 345-67-8901", "expect_match": True, "id": "ssn-benefits"},
     {"text": "Direct deposit setup CC 5105105105105100", "expect_match": True, "id": "cc-direct-deposit"},
     {"text": "Contractor payment Visa 4222222222222", "expect_match": True, "id": "cc-contractor"},
-    {"text": "Annual review — no sensitive data here", "expect_match": False, "id": "clean-review"},
+    {"text": "Annual review - no sensitive data here", "expect_match": False, "id": "clean-review"},
     {"text": "Product roadmap Q3 2026 priorities", "expect_match": False, "id": "clean-roadmap"},
+    {"text": "Routing number 021000021 for wire transfer", "expect_match": False, "id": "clean-routing"},
+    {"text": "Employee badge #4111 access granted", "expect_match": False, "id": "clean-badge"},
+    {"text": "SSN on new line:\n567-89-0123\nend", "expect_match": True, "id": "ssn-newline"},
+    {"text": "Two cards: 4111111111111111 and 378282246310005", "expect_match": True, "id": "compound-two-cc"},
+    {"text": "Backup SSN 678-90-1234 for recovery", "expect_match": True, "id": "ssn-backup"},
+    {"text": "Invoice total $1,234.56 no PII here", "expect_match": False, "id": "clean-invoice"},
+    {"text": "Conference call at 123-456-7890 ext 100", "expect_match": False, "id": "clean-phone-ext"},
+    {"text": "CC on file: 5500000000000004 exp 12/28", "expect_match": True, "id": "cc-with-expiry"},
+    {"text": "Fax number: 987-654-3210", "expect_match": False, "id": "clean-fax"},
 ]
 
 assert len(TEST_INPUTS) == 100, f"Expected 100 inputs, got {len(TEST_INPUTS)}"
