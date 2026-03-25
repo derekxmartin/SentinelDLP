@@ -50,10 +50,10 @@ install:
 	$(COMPOSE) build server console
 	$(COMPOSE) up -d postgres redis
 	@echo "Waiting for database..."
-	@sleep 5
+	@ping -n 6 127.0.0.1 >nul 2>&1 || sleep 5
 	$(COMPOSE) up -d server
 	@echo "Waiting for server..."
-	@sleep 8
+	@ping -n 9 127.0.0.1 >nul 2>&1 || sleep 8
 	$(COMPOSE) up -d console
 	@echo ""
 	@echo "=== AkesoDLP is running ==="
@@ -77,7 +77,7 @@ dev:
 	@echo "Starting infrastructure (Postgres + Redis)..."
 	$(COMPOSE) up -d postgres redis
 	@echo "Waiting for database..."
-	@sleep 5
+	@ping -n 6 127.0.0.1 >nul 2>&1 || sleep 5
 	@echo ""
 	@echo "Starting server (hot-reload)..."
 	$(COMPOSE) up -d server
@@ -118,9 +118,9 @@ reset:
 	docker volume rm claude-dlp_pgdata 2>/dev/null || true
 	@echo "Restarting with clean database..."
 	$(COMPOSE) up -d postgres redis
-	@sleep 5
+	@ping -n 6 127.0.0.1 >nul 2>&1 || sleep 5
 	$(COMPOSE) up -d server
-	@sleep 8
+	@ping -n 9 127.0.0.1 >nul 2>&1 || sleep 8
 	@echo "Database reset complete. Admin user auto-created on first start."
 	@echo ""
 
