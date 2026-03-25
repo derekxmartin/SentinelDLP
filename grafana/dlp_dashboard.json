@@ -1,0 +1,126 @@
+{
+  "__inputs": [
+    { "name": "DS_PROMETHEUS", "type": "datasource", "pluginId": "prometheus" }
+  ],
+  "title": "AkesoDLP Overview",
+  "uid": "akeso-dlp-overview",
+  "tags": ["dlp", "akeso"],
+  "timezone": "browser",
+  "editable": true,
+  "panels": [
+    {
+      "title": "Detections by Severity",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(dlp_detections_total[5m])) by (severity)",
+          "legendFormat": "{{severity}}"
+        }
+      ]
+    },
+    {
+      "title": "Detection Latency (p95)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(dlp_detection_duration_seconds_bucket[5m]))",
+          "legendFormat": "p95"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "steps": [
+        { "value": 0, "color": "green" },
+        { "value": 1, "color": "yellow" },
+        { "value": 2, "color": "red" }
+      ]}}}
+    },
+    {
+      "title": "Incidents by Channel",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(dlp_incidents_total) by (channel)",
+          "legendFormat": "{{channel}}"
+        }
+      ]
+    },
+    {
+      "title": "Agent Heartbeat Age",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "dlp_agent_heartbeat_age_seconds",
+          "legendFormat": "{{hostname}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" }}
+    },
+    {
+      "title": "gRPC Requests/s by Method",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "rate(dlp_grpc_requests_total[1m])",
+          "legendFormat": "{{rpc_method}}"
+        }
+      ]
+    },
+    {
+      "title": "TTD Round-Trip (p95)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 4 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(dlp_ttd_duration_seconds_bucket[5m]))",
+          "legendFormat": "p95"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "steps": [
+        { "value": 0, "color": "green" },
+        { "value": 2, "color": "yellow" },
+        { "value": 5, "color": "red" }
+      ]}}}
+    },
+    {
+      "title": "Queue Depth",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 4 },
+      "targets": [
+        { "expr": "dlp_queue_depth" }
+      ],
+      "fieldConfig": { "defaults": { "thresholds": { "steps": [
+        { "value": 0, "color": "green" },
+        { "value": 100, "color": "yellow" },
+        { "value": 500, "color": "red" }
+      ]}}}
+    },
+    {
+      "title": "TTD Outcomes",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum(dlp_ttd_requests_total) by (outcome)",
+          "legendFormat": "{{outcome}}"
+        }
+      ]
+    },
+    {
+      "title": "Policy Cache Hit Rate",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 16 },
+      "targets": [
+        {
+          "expr": "rate(dlp_policy_evaluation_cache_hits[5m])",
+          "legendFormat": "hits/s"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

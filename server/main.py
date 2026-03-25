@@ -20,6 +20,8 @@ from server.api.network_settings import router as network_settings_router
 from server.api.notifications import router as notifications_router
 from server.api.reports import router as reports_router
 from server.api.users import router as users_router
+from server.api.dead_letter import router as dlq_router
+from server.api.metrics_endpoint import router as metrics_router
 
 
 @asynccontextmanager
@@ -62,12 +64,19 @@ async def lifespan(app: FastAPI):
             exc,
         )
     yield
-    # Shutdown
-    from server.policy_events import shutdown_redis_bridge
+    # Coordinated shutdown (P11-T1)
+    from server.shutdown import ShutdownCoordinator
+    coordinator = ShutdownCoordinator()
 
-    await shutdown_redis_bridge()
+    from server.policy_events import shutdown_redis_bridge
+    coordinator.register("redis_bridge", shutdown_redis_bridge, priority=2)
+
     if grpc_server is not None:
-        await grpc_server.stop(grace=5)
+        async def _stop_grpc(grace: int = 5) -> None:
+            await grpc_server.stop(grace=grace)
+        coordinator.register("grpc_server", _stop_grpc, priority=1, grace=10)
+
+    await coordinator.shutdown_all(timeout=30)
 
 
 app = FastAPI(
@@ -102,6 +111,8 @@ app.include_router(response_rules_router)
 app.include_router(search_router)
 app.include_router(system_router)
 app.include_router(users_router)
+app.include_router(dlq_router)
+app.include_router(metrics_router)
 
 
 @app.get("/api/health")
