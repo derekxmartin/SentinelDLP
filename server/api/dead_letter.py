@@ -70,7 +70,7 @@ async def list_dlq(
     operation_type: str | None = None,
     include_dismissed: bool = False,
     db: AsyncSession = Depends(get_db),
-    _user: CurrentUser = Depends(RequirePermission("admin:read")),
+    _user: CurrentUser = Depends(RequirePermission("incidents:read")),
 ):
     """List dead letter queue entries."""
     entries, total = await dlq_service.list_entries(
@@ -104,7 +104,7 @@ async def list_dlq(
 @router.get("/stats", response_model=DLQStatsResponse)
 async def dlq_stats(
     db: AsyncSession = Depends(get_db),
-    _user: CurrentUser = Depends(RequirePermission("admin:read")),
+    _user: CurrentUser = Depends(RequirePermission("incidents:read")),
 ):
     """Get DLQ statistics."""
     return await dlq_service.get_stats(db)
@@ -114,7 +114,7 @@ async def dlq_stats(
 async def get_dlq_entry(
     entry_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _user: CurrentUser = Depends(RequirePermission("admin:read")),
+    _user: CurrentUser = Depends(RequirePermission("incidents:read")),
 ):
     """Get a single DLQ entry with full payload."""
     entry = await dlq_service.get_entry(db, entry_id)
@@ -140,7 +140,7 @@ async def get_dlq_entry(
 async def retry_dlq_entry(
     entry_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _user: CurrentUser = Depends(RequirePermission("admin:write")),
+    _user: CurrentUser = Depends(RequirePermission("incidents:write")),
 ):
     """Retry a failed DLQ entry."""
     entry = await dlq_service.retry(db, entry_id)
@@ -160,7 +160,7 @@ async def retry_dlq_entry(
 async def dismiss_dlq_entry(
     entry_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _user: CurrentUser = Depends(RequirePermission("admin:write")),
+    _user: CurrentUser = Depends(RequirePermission("incidents:write")),
 ):
     """Dismiss a DLQ entry (operator acknowledgment)."""
     entry = await dlq_service.dismiss(db, entry_id)
