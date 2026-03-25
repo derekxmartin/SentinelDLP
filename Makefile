@@ -9,39 +9,39 @@ COMPOSE = docker compose
 # ================================================================
 help:
 	@echo ""
-	@echo "  AkesoDLP — Data Loss Prevention Platform"
+	@echo "  AkesoDLP - Data Loss Prevention Platform"
 	@echo "  ========================================="
 	@echo ""
 	@echo "  Quickstart:"
-	@echo "    make install   — Build & start all services, seed admin user"
-	@echo "    make dev       — Hot-reload development (FastAPI + Vite HMR)"
-	@echo "    make demo      — Portfolio demo (install + 500+ incidents)"
-	@echo "    make clean     — Stop everything, drop database, remove volumes"
+	@echo "    make install   - Build & start all services, seed admin user"
+	@echo "    make dev       - Hot-reload development (FastAPI + Vite HMR)"
+	@echo "    make demo      - Portfolio demo (install + 500+ incidents)"
+	@echo "    make clean     - Stop everything, drop database, remove volumes"
 	@echo ""
 	@echo "  Services:"
-	@echo "    make up        — Start all Docker services (detached)"
-	@echo "    make down      — Stop all Docker services"
-	@echo "    make logs      — Tail all service logs"
-	@echo "    make server    — Run server locally (no Docker)"
-	@echo "    make console   — Run console locally (no Docker)"
+	@echo "    make up        - Start all Docker services (detached)"
+	@echo "    make down      - Stop all Docker services"
+	@echo "    make logs      - Tail all service logs"
+	@echo "    make server    - Run server locally (no Docker)"
+	@echo "    make console   - Run console locally (no Docker)"
 	@echo ""
 	@echo "  Database:"
-	@echo "    make db-migrate  — Run Alembic migrations"
-	@echo "    make demo-seed   — Load demo data (500+ incidents, 10 users)"
-	@echo "    make reset       — Drop DB, recreate, re-seed admin"
+	@echo "    make db-migrate  - Run Alembic migrations"
+	@echo "    make demo-seed   - Load demo data (500+ incidents, 10 users)"
+	@echo "    make reset       - Drop DB, recreate, re-seed admin"
 	@echo ""
 	@echo "  Agent (C/C++):"
-	@echo "    make agent     — Configure + build agent"
+	@echo "    make agent     - Configure + build agent"
 	@echo ""
 	@echo "  Quality:"
-	@echo "    make test      — Run server unit tests"
-	@echo "    make test-e2e  — Run Playwright E2E tests"
-	@echo "    make lint      — Lint server code"
-	@echo "    make format    — Auto-format server code"
+	@echo "    make test      - Run server unit tests"
+	@echo "    make test-e2e  - Run Playwright E2E tests"
+	@echo "    make lint      - Lint server code"
+	@echo "    make format    - Auto-format server code"
 	@echo ""
 
 # ================================================================
-#  Install — full setup from scratch
+#  Install - full setup from scratch
 # ================================================================
 install:
 	@echo ""
@@ -68,7 +68,7 @@ install:
 	@echo ""
 
 # ================================================================
-#  Dev — hot-reload development
+#  Dev - hot-reload development
 # ================================================================
 dev:
 	@echo ""
@@ -83,7 +83,7 @@ dev:
 	$(COMPOSE) up -d server
 	@echo ""
 	@echo "Starting console (Vite HMR)..."
-	@echo "  → cd console && npm run dev"
+	@echo "  -> cd console && npm run dev"
 	@echo ""
 	@echo "  Server:  http://localhost:8000 (FastAPI reload via Docker)"
 	@echo "  Console: http://localhost:3000 (run 'cd console && npm run dev')"
@@ -92,7 +92,7 @@ dev:
 	@echo ""
 
 # ================================================================
-#  Demo — portfolio demo with seed data
+#  Demo - portfolio demo with seed data
 # ================================================================
 demo: install demo-seed
 	@echo ""
@@ -109,7 +109,7 @@ demo-seed:
 	@echo "Demo data loaded."
 
 # ================================================================
-#  Reset — drop DB, recreate, fresh state
+#  Reset - drop DB, recreate, fresh state
 # ================================================================
 reset:
 	@echo "Stopping services..."
@@ -125,7 +125,7 @@ reset:
 	@echo ""
 
 # ================================================================
-#  Clean — full teardown
+#  Clean - full teardown
 # ================================================================
 clean:
 	@echo "Stopping all services and removing volumes..."
