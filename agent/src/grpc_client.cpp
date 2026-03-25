@@ -16,6 +16,14 @@
 #include <fstream>
 #include <sstream>
 
+#ifdef _WIN32
+#include <ws2tcpip.h>
+#else
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#endif
+
 #ifdef HAS_SPDLOG
 #include <spdlog/spdlog.h>
 #define LOG_INFO(...)    spdlog::info(__VA_ARGS__)
@@ -197,6 +205,7 @@ bool GrpcClient::Register(
     request.set_hostname(hostname);
     request.set_os_version(os_version);
     request.set_agent_version(agent_version);
+    request.set_driver_version("0.1.0");
     request.set_ip_address(ip_address);
 
     auto* caps = request.mutable_capabilities();
@@ -204,7 +213,7 @@ bool GrpcClient::Register(
     caps->set_network_share_monitor(true);
     caps->set_clipboard_monitor(true);
     caps->set_browser_monitor(true);
-    caps->set_discover(false);
+    caps->set_discover(true);
 
     akesodlp::RegisterResponse response;
     grpc::ClientContext context;
@@ -444,7 +453,22 @@ void GrpcClient::HeartbeatThread() {
             char hostname[256] = {};
             gethostname(hostname, sizeof(hostname));
 
-            if (!Register(hostname, "Windows", "0.1.0", "")) {
+            /* Get local IP address */
+            std::string local_ip;
+            {
+                struct addrinfo hints = {}, *res = nullptr;
+                hints.ai_family = AF_INET;
+                hints.ai_socktype = SOCK_DGRAM;
+                if (getaddrinfo(hostname, nullptr, &hints, &res) == 0 && res) {
+                    char ip_buf[INET_ADDRSTRLEN] = {};
+                    auto* addr = reinterpret_cast<struct sockaddr_in*>(res->ai_addr);
+                    inet_ntop(AF_INET, &addr->sin_addr, ip_buf, sizeof(ip_buf));
+                    local_ip = ip_buf;
+                    freeaddrinfo(res);
+                }
+            }
+
+            if (!Register(hostname, "Windows", "0.1.0", local_ip)) {
                 LOG_WARN("GrpcClient: Registration failed, will retry");
                 EnterBackoff();
                 continue;
