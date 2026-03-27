@@ -44,7 +44,7 @@ class DLPEventType(str, Enum):
 class SIEMConfig:
     """AkesoSIEM integration configuration."""
 
-    endpoint: str = "http://localhost:9200/api/v1/ingest"
+    endpoint: str = "http://localhost:8080/api/v1/ingest"
     api_key: str = ""
     timeout: float = 10.0
     verify_ssl: bool = True
@@ -272,7 +272,7 @@ class SIEMEmitter:
             "Content-Type": "application/json",
         }
         if self.config.api_key:
-            headers["Authorization"] = f"ApiKey {self.config.api_key}"
+            headers["X-API-Key"] = self.config.api_key
         return headers
 
     async def close(self) -> None:
