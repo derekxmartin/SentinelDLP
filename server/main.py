@@ -55,8 +55,11 @@ async def lifespan(app: FastAPI):
     try:
         from server.grpc_server import serve as grpc_serve
 
+        print(f"[STARTUP] Launching gRPC on port {settings.grpc_port}...", flush=True)
         grpc_server = await grpc_serve(port=settings.grpc_port)
+        print(f"[STARTUP] gRPC server started on port {settings.grpc_port}", flush=True)
     except Exception as exc:
+        print(f"[STARTUP] gRPC FAILED: {exc}", flush=True)
         _logger.warning(
             "gRPC server failed to start (port %s): %s — "
             "API will run without agent gRPC. Kill the stale process to restore.",

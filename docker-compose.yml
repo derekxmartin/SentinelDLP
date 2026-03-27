@@ -35,10 +35,14 @@ services:
       dockerfile: server/Dockerfile
     ports:
       - "8000:8000"
+      - "50051:50051"
     environment:
       DLP_DATABASE_URL: postgresql+asyncpg://akeso:akeso@postgres:5432/akeso_dlp
       DLP_REDIS_URL: redis://redis:6379/0
       DLP_DEBUG: "true"
+      DLP_SIEM_ENABLED: "true"
+      DLP_SIEM_ENDPOINT: "http://host.docker.internal:8080/api/v1/ingest"
+      DLP_SIEM_API_KEY: "nYDuNNAEkakSYAJCWZTZ269VXfJcbySygcMswGRQCmY"
     depends_on:
       postgres:
         condition: service_healthy

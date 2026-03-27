@@ -33,8 +33,28 @@ from server.detection.models import ComponentType, ParsedMessage
 from server.proto import akesodlp_pb2 as pb2
 from server.proto import akesodlp_pb2_grpc as pb2_grpc
 from server.services import agent_service
+from server.services.siem_emitter import SIEMConfig, SIEMEmitter, DLPEventType
+from server.services.report_generator import IncidentRecord
+from server.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Initialize SIEM emitter from env config.
+_siem_emitter: SIEMEmitter | None = None
+
+def _get_siem_emitter() -> SIEMEmitter | None:
+    global _siem_emitter
+    if _siem_emitter is not None:
+        return _siem_emitter
+    if getattr(settings, "siem_enabled", False):
+        cfg = SIEMConfig(
+            endpoint=getattr(settings, "siem_endpoint", "http://localhost:8080/api/v1/ingest"),
+            api_key=getattr(settings, "siem_api_key", ""),
+            enabled=True,
+        )
+        _siem_emitter = SIEMEmitter(cfg)
+        logger.info("SIEM emitter initialized: %s", cfg.endpoint)
+    return _siem_emitter
 
 
 # ---------------------------------------------------------------------------
@@ -119,6 +139,7 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
 
     async def Register(self, request, context):
         """Agent registration — creates or updates agent record."""
+        print(f"[gRPC] Register called: hostname={request.hostname}", flush=True)
         try:
             capabilities = None
             if request.HasField("capabilities"):
@@ -455,6 +476,31 @@ class AkesoDLPServicer(pb2_grpc.AkesoDLPServiceServicer):
                     user_justification=inc.user_justification or None,
                 )
                 await db.commit()
+
+                # Emit to SIEM.
+                emitter = _get_siem_emitter()
+                if emitter:
+                    sev_map = {v: k for k, v in _SEVERITY_TO_PROTO.items()}
+                    ch_map = {v: k for k, v in _CHANNEL_TO_PROTO.items()}
+                    record = IncidentRecord(
+                        id=str(incident.id),
+                        policy_name=inc.policy_name,
+                        severity=sev_map.get(inc.severity, "medium"),
+                        status="new",
+                        channel=ch_map.get(inc.channel, "unknown"),
+                        source_type=inc.source_type or "endpoint",
+                        user=inc.user or None,
+                        file_name=inc.file_name or None,
+                        action_taken=inc.action_taken or "log",
+                        match_count=inc.match_count,
+                        created_at=incident.created_at,
+                    )
+                    event_type = (
+                        DLPEventType.FILE_BLOCKED
+                        if inc.action_taken == "block"
+                        else DLPEventType.INCIDENT_CREATED
+                    )
+                    await emitter.emit_incident(record, event_type)
 
                 return pb2.ReportIncidentResponse(
                     success=True,
